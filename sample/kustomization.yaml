@@ -1,0 +1,101 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# [EDIT] Specify the Kubernetes namespace into which ZenHub will be deployed.
+namespace: <a_dedicated_namespace>
+
+bases:
+  - base
+
+# [EDIT] (Optional) specify any labels you want applied to the deployments.
+commonLabels:
+  app.kubernetes.io/instance: production
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/name: zenhub-enterprise
+  app.kubernetes.io/version: 3.0.0
+
+# [EDIT] If your cluster does not have access to our public Docker registry,
+# update the `newName` values with paths to your own private Docker registry.
+images:
+  - name: kraken-webapp
+    newName: us.gcr.io/zenhub-public/kraken-webapp
+    newTag: enterprise-3.0.0
+  - name: raptor-backend
+    newName: us.gcr.io/zenhub-public/raptor-backend
+    newTag: enterprise-3.0.0
+  - name: toad-backend
+    newName: us.gcr.io/zenhub-public/toad-backend
+    newTag: enterprise-3.0.0
+  - name: sanitycheck
+    newName: us.gcr.io/zenhub-public/sanitycheck
+    newTag: master
+
+configMapGenerator:
+  - name: configuration
+    behavior: merge
+    literals:
+      # [EDIT] Set your top-level domain where ZenHub will be served from. This
+      # is used to tell the ZenHub webapp how to reach the ZenHub APIs.
+      - domain_tld=yourcompany.dev
+      # [EDIT] Set the subdomain that ZenHub will be served from, or leave as
+      # default "zenhub" value.
+      - subdomain_suffix=zenhub
+      # [EDIT] Make sure this matches the value defined above in "namePrefix".
+      # This is used to generate various URLs which allow our services to reach
+      # each other. For example, this is how the `toad` service will connect to
+      # the `raptor` service based on the Kubernetes Service name.
+      #
+      # NOTE: You cannot set a `name_suffix` because the URLs would not match
+      # existing resources.
+      #
+      # NOTE: Make sure the value does not have a trailing slash.
+      - github_hostname=https://<github_enterprise_host>
+      # [EDIT] Specify the OAuth App ID for the ZenHub application. See here
+      # for instructions on how to setup an OAuth app on your GitHub server:
+      # https://docs.github.com/en/developers/apps/creating-an-oauth-app
+      # The secret value should be passed to `github_app_secret` below (in the
+      # "secretGenerator" section)
+      - github_app_id=<github_oauth_app_id>
+      # Buckets for object azure_rm_storage
+      - bucket_access_key_id=<access_key_id>
+      - bucket_region=<bucket_region>
+      - bucket_domain=<bucket_public_domain>
+      - files_bucket_name=<bucket_name>
+      - images_bucket_name=<bucket_name>
+
+secretGenerator:
+  - name: configuration
+    behavior: merge
+    literals:
+      # [EDIT] The full standard full credentials URI for PostgreSQL
+      - postgres_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/<postgres_schema>
+      # [EDIT] The full standard full credentials URI for MongoDB
+      - mongo_url=mongodb://<mongo_username>:<mongo_password>@<mongo_hostname>:<mongo_port>/zenhub
+      # [EDIT] The full standard full credentials URI for Redis
+      - redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/0
+      # [EDIT] The full standard full credentials URI for RabbitMQ
+      - rabbitmq_url=amqp://<rabbitmq_username>:<rabbitmq_password>@<rabbitmq_hostname>:<rabbitmq_port>
+      # [EDIT] The secret for the GitHub OAuth app. See github_app_id above.
+      - github_app_secret=<github_oauth_app_secret>
+      # [EDIT] Private key used to encrypt GitHub token retrieved and cached in
+      # the database. If you migrating from ZenHub Enterprise version 2, please
+      # recover the values from your existing installation (see our v2 to v3
+      # upgrade instructions).
+      - github_token_value_key=<some-key>
+      # [EDIT] Secret for authenticating GitHub webhooks from Raptor. This is
+      # set in your GitHub Enterprise instance.
+      - github_webhooks_secret=<some-secret>
+      # [EDIT] Encrypt repository ID. Part of the GitHub webhook callback URL.
+      - ghwebhook_pass=<some-secret>
+      # [EDIT] Should be the same value as `github_webhooks_secret` above. This
+      # one is used by the Toad services.
+      - ghwebhook_secret=<some-secret>
+      # [EDIT] A random string used to seed the encryption of sensitive data in
+      # the Raptor database.
+      #
+      # NOTE: If you migrating from ZenHub Enterprise version 2, please recover
+      # the values from your existing installation (see our v2 to v3 upgrade
+      # instructions)
+      - secret_key_base=<some-key>
+      # Bucket secret access key
+      - bucket_secret_access_key=<some-key>
