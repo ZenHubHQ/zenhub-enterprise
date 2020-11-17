@@ -1,0 +1,4489 @@
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: kraken-webapp
+  name: kraken-automount-sa-token-false-webapp
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-admin
+  name: raptor-automount-sa-token-false-admin
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-api
+  name: raptor-automount-sa-token-false-api
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-sidekiq-worker
+  name: raptor-automount-sa-token-false-sidekiq-worker
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-api
+  name: toad-automount-sa-token-false-api
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-cron
+  name: toad-automount-sa-token-false-cron
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-webhook
+  name: toad-automount-sa-token-false-webhook
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-websocket
+  name: toad-automount-sa-token-false-websocket
+  namespace: build
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-worker
+  name: toad-automount-sa-token-false-worker
+  namespace: build
+---
+apiVersion: v1
+data:
+  master.conf: |-
+    dir /data
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+  redis.conf: |-
+    # User-supplied configuration:
+    # Enable AOF https://redis.io/topics/persistence#append-only-file
+    appendonly yes
+    # Disable RDB persistence, AOF persistence already enabled.
+    save ""
+  replica.conf: |-
+    dir /data
+    slave-read-only yes
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+kind: ConfigMap
+metadata:
+  labels:
+    app: raptor-redis
+    chart: raptorCacheRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-raptor-redis
+  namespace: build
+---
+apiVersion: v1
+data:
+  ping_liveness_local.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+    response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_PASSWORD $no_auth_warning \
+        -h localhost \
+        -p $REDIS_PORT \
+        ping
+    )
+    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+      echo "$response"
+      exit 1
+    fi
+  ping_liveness_local_and_master.sh: |-
+    script_dir="$(dirname "$0")"
+    exit_status=0
+    "$script_dir/ping_liveness_local.sh" $1 || exit_status=$?
+    "$script_dir/ping_liveness_master.sh" $1 || exit_status=$?
+    exit $exit_status
+  ping_liveness_master.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+    response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_MASTER_PASSWORD $no_auth_warning \
+        -h $REDIS_MASTER_HOST \
+        -p $REDIS_MASTER_PORT_NUMBER \
+        ping
+    )
+    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+      echo "$response"
+      exit 1
+    fi
+  ping_readiness_local.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+    response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_PASSWORD $no_auth_warning \
+        -h localhost \
+        -p $REDIS_PORT \
+        ping
+    )
+    if [ "$response" != "PONG" ]; then
+      echo "$response"
+      exit 1
+    fi
+  ping_readiness_local_and_master.sh: |-
+    script_dir="$(dirname "$0")"
+    exit_status=0
+    "$script_dir/ping_readiness_local.sh" $1 || exit_status=$?
+    "$script_dir/ping_readiness_master.sh" $1 || exit_status=$?
+    exit $exit_status
+  ping_readiness_master.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+     response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_MASTER_PASSWORD $no_auth_warning \
+        -h $REDIS_MASTER_HOST \
+        -p $REDIS_MASTER_PORT_NUMBER \
+        ping
+    )
+    if [ "$response" != "PONG" ]; then
+      echo "$response"
+      exit 1
+    fi
+kind: ConfigMap
+metadata:
+  labels:
+    app: raptor-redis
+    chart: raptorCacheRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-raptor-redis-health
+  namespace: build
+---
+apiVersion: v1
+data:
+  start-master.sh: |
+    #!/bin/bash
+    useradd redis
+    chown -R redis /data
+    if [[ -n $REDIS_PASSWORD_FILE ]]; then
+      password_aux=`cat ${REDIS_PASSWORD_FILE}`
+      export REDIS_PASSWORD=$password_aux
+    fi
+    if [[ ! -f /opt/bitnami/redis/etc/master.conf ]];then
+      cp /opt/bitnami/redis/mounted-etc/master.conf /opt/bitnami/redis/etc/master.conf
+    fi
+    if [[ ! -f /opt/bitnami/redis/etc/redis.conf ]];then
+      cp /opt/bitnami/redis/mounted-etc/redis.conf /opt/bitnami/redis/etc/redis.conf
+    fi
+    ARGS=("--port" "${REDIS_PORT}")
+    ARGS+=("--requirepass" "${REDIS_PASSWORD}")
+    ARGS+=("--masterauth" "${REDIS_PASSWORD}")
+    ARGS+=("--include" "/opt/bitnami/redis/etc/redis.conf")
+    ARGS+=("--include" "/opt/bitnami/redis/etc/master.conf")
+    ARGS+=("--maxmemory-policy allkeys-lfu")
+    exec /run.sh "${ARGS[@]}"
+kind: ConfigMap
+metadata:
+  labels:
+    app: raptor-redis
+    chart: raptorCacheRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-raptor-redis-scripts
+  namespace: build
+---
+apiVersion: v1
+data:
+  master.conf: |-
+    dir /data
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+  redis.conf: |-
+    # User-supplied configuration:
+    # Enable AOF https://redis.io/topics/persistence#append-only-file
+    appendonly yes
+    # Disable RDB persistence, AOF persistence already enabled.
+    save ""
+  replica.conf: |-
+    dir /data
+    slave-read-only yes
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+kind: ConfigMap
+metadata:
+  labels:
+    app: toad-redis
+    chart: toadRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-toad-redis
+  namespace: build
+---
+apiVersion: v1
+data:
+  ping_liveness_local.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+    response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_PASSWORD $no_auth_warning \
+        -h localhost \
+        -p $REDIS_PORT \
+        ping
+    )
+    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+      echo "$response"
+      exit 1
+    fi
+  ping_liveness_local_and_master.sh: |-
+    script_dir="$(dirname "$0")"
+    exit_status=0
+    "$script_dir/ping_liveness_local.sh" $1 || exit_status=$?
+    "$script_dir/ping_liveness_master.sh" $1 || exit_status=$?
+    exit $exit_status
+  ping_liveness_master.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+    response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_MASTER_PASSWORD $no_auth_warning \
+        -h $REDIS_MASTER_HOST \
+        -p $REDIS_MASTER_PORT_NUMBER \
+        ping
+    )
+    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+      echo "$response"
+      exit 1
+    fi
+  ping_readiness_local.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+    response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_PASSWORD $no_auth_warning \
+        -h localhost \
+        -p $REDIS_PORT \
+        ping
+    )
+    if [ "$response" != "PONG" ]; then
+      echo "$response"
+      exit 1
+    fi
+  ping_readiness_local_and_master.sh: |-
+    script_dir="$(dirname "$0")"
+    exit_status=0
+    "$script_dir/ping_readiness_local.sh" $1 || exit_status=$?
+    "$script_dir/ping_readiness_master.sh" $1 || exit_status=$?
+    exit $exit_status
+  ping_readiness_master.sh: |-
+    #!/bin/bash
+    no_auth_warning=$([[ "$(redis-cli --version)" =~ (redis-cli 5.*) ]] && echo --no-auth-warning)
+     response=$(
+      timeout -s 3 $1 \
+      redis-cli \
+        -a $REDIS_MASTER_PASSWORD $no_auth_warning \
+        -h $REDIS_MASTER_HOST \
+        -p $REDIS_MASTER_PORT_NUMBER \
+        ping
+    )
+    if [ "$response" != "PONG" ]; then
+      echo "$response"
+      exit 1
+    fi
+kind: ConfigMap
+metadata:
+  labels:
+    app: toad-redis
+    chart: toadRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-toad-redis-health
+  namespace: build
+---
+apiVersion: v1
+data:
+  start-master.sh: |
+    #!/bin/bash
+    useradd redis
+    chown -R redis /data
+    if [[ -n $REDIS_PASSWORD_FILE ]]; then
+      password_aux=`cat ${REDIS_PASSWORD_FILE}`
+      export REDIS_PASSWORD=$password_aux
+    fi
+    if [[ ! -f /opt/bitnami/redis/etc/master.conf ]];then
+      cp /opt/bitnami/redis/mounted-etc/master.conf /opt/bitnami/redis/etc/master.conf
+    fi
+    if [[ ! -f /opt/bitnami/redis/etc/redis.conf ]];then
+      cp /opt/bitnami/redis/mounted-etc/redis.conf /opt/bitnami/redis/etc/redis.conf
+    fi
+    ARGS=("--port" "${REDIS_PORT}")
+    ARGS+=("--requirepass" "${REDIS_PASSWORD}")
+    ARGS+=("--masterauth" "${REDIS_PASSWORD}")
+    ARGS+=("--include" "/opt/bitnami/redis/etc/redis.conf")
+    ARGS+=("--include" "/opt/bitnami/redis/etc/master.conf")
+    exec /run.sh "${ARGS[@]}"
+kind: ConfigMap
+metadata:
+  labels:
+    app: toad-redis
+    chart: toadRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-toad-redis-scripts
+  namespace: build
+---
+apiVersion: v1
+data:
+  camo_domain_tld: ""
+  domain_tld: $(domain_tld)
+  github_hostname: $(github_hostname)
+  name_prefix: $(name_prefix)
+  not_used_1: domain.com
+  not_used_2: ""
+  not_used_3: build
+  raptor_service: raptor-api
+  subdomain_suffix: $(subdomain_suffix)
+  webhook_domain_tld: domain.com
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels: {}
+  name: configuration
+  namespace: build
+---
+apiVersion: v1
+data:
+  webapp-config.js: |
+    window.config = {
+      ZENHUB_SERVER_ADDRESS: "https://$(subdomain_suffix).$(domain_tld)/api",
+      ZENHUB_WEBAPP_ADDRESS: "https://$(subdomain_suffix).$(domain_tld)",
+      hostURL: "https://$(subdomain_suffix).$(domain_tld)/api",
+      loginURL: "https://$(subdomain_suffix).$(domain_tld)/api/auth/github",
+      dashboardURL: "https://$(subdomain_suffix).$(domain_tld)/dashboard",
+      webappURL: "https://$(subdomain_suffix).$(domain_tld)",
+      GITHUB_SERVER_ADDRESS: "$(github_hostname)",
+      githubURL: "$(github_hostname)",
+      githubRestApiUrl: "$(github_hostname)/api/v3",
+      githubGraphQLApiUrl: "$(github_hostname)/api/graphql",
+      marketplaceURL: "",
+      CAMO: "",
+      CAMO_HOST: "",
+      companyDomain: "ZenHub",
+      ENV: "enterprise",
+      env: "enterprise",
+      isEnterprise: true,
+      isDev: false,
+      webappPrefix: "",
+      mixpanel: "",
+      rollbar: "",
+      salesmachine: "",
+      stripe: "",
+      isLicenseGovernanceEnabled: false,
+      maxFileUpload: 15728640,
+      maxFileUploadString: "15 MB",
+      repoFetchPageLimit: 12,
+      isUploadFileToLocal: false,
+      isTrackerEnabled: true,
+      verboseLogs: false,
+      NO_CHECK_UPDATE_FOR_OPENED_ISSUE_VIEWER: true,
+    };
+kind: ConfigMap
+metadata:
+  name: kraken-7b69hht452
+  namespace: build
+---
+apiVersion: v1
+data:
+  disable_prepare_db: "1"
+  github_api_url: $(github_hostname)/api/v3
+  github_graphql_url: $(github_hostname)/api/graphql
+  github_html_url: $(github_hostname)
+  github_webhook_enabled: "true"
+  log_json: "1"
+  new_relic_agent_enabled: "false"
+  new_relic_app_name: ""
+  rails_env: production
+  rails_log_to_stdout: "1"
+  rollbar_env: ""
+  zenhub_webhook_domain_v1: https://$(subdomain_suffix).$(domain_tld)/webhook
+  zenhub_webhook_domain_v2: https://$(subdomain_suffix).$(domain_tld)/webhook
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels: {}
+  name: raptor-6gbb8c6khc
+  namespace: build
+---
+apiVersion: v1
+data:
+  admin_enabled: "1"
+  admin_username: admin
+  database_statement_timeout: 15s
+  rails_max_threads: "5"
+  web_concurrency: "4"
+kind: ConfigMap
+metadata:
+  name: raptor-admin-hmfm845kmm
+  namespace: build
+---
+apiVersion: v1
+data:
+  rails_max_threads: "5"
+  web_concurrency: "4"
+kind: ConfigMap
+metadata:
+  name: raptor-api-ddbb4h96dc
+  namespace: build
+---
+apiVersion: v1
+data:
+  rails_max_threads: "5"
+kind: ConfigMap
+metadata:
+  name: raptor-migrate-kg8cgm9847
+  namespace: build
+---
+apiVersion: v1
+data:
+  database_statement_timeout: 15s
+  rails_max_threads: "5"
+kind: ConfigMap
+metadata:
+  name: raptor-sidekiq-54g8fc4kct
+  namespace: build
+---
+apiVersion: v1
+data:
+  attribution_app_id: ""
+  ghwebhook_enabled: "true"
+  ghwebhook_whitelist: '*'
+  github_server_address: $(github_hostname)
+  mailchimp_key: ""
+  mailchimp_list: ""
+  mailgun_key: ""
+  mixpanel_key: ""
+  new_relic_enabled: "false"
+  newrelic_app_name: ""
+  newrelic_trace: ""
+  node_env: enterprise
+  node_options: --max-old-space-size=2048
+  port: "3031"
+  queue_backend: rabbitmq
+  queue_db: "0"
+  raptor_graphql_enabled: "1"
+  raptor_uri: http://$(name_prefix)raptor-api
+  redis_host: $(name_prefix)cache-toad-redis-master
+  redis_port: "6379"
+  s3_bucket: ""
+  s3_key: ""
+  s3_user_files_bucket: ""
+  s3_user_files_download_expiration: ""
+  s3_user_files_key: ""
+  s3_user_files_region: ""
+  s3_user_files_upload_expiration: ""
+  s3_user_images_bucket: ""
+  s3_user_images_download_expiration: ""
+  s3_user_images_key: ""
+  s3_user_images_region: ""
+  s3_user_images_upload_expiration: ""
+  slack_app_id: ""
+  stripe_public_key: ""
+  user_image_host: ""
+  zenhub_env: enterprise
+  zenhub_server_address: https://$(subdomain_suffix).$(domain_tld)/api
+  zenhub_staging_server_address: https://$(subdomain_suffix).$(domain_tld)/api
+  zenhub_staging_webapp_address: https://$(subdomain_suffix).$(domain_tld)
+  zenhub_webapp_address: https://$(subdomain_suffix).$(domain_tld)
+  zenhub_webhook_address: https://$(subdomain_suffix).$(domain_tld)/webhook
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels: {}
+  name: toad-c6b2k427fm
+  namespace: build
+---
+apiVersion: v1
+data:
+  web_concurrency: "4"
+  webhook_port: "3031"
+kind: ConfigMap
+metadata:
+  name: toad-webhook-khkf7m9cdb
+  namespace: build
+---
+apiVersion: v1
+data:
+  default.conf.template: "upstream webapp {\n  server ${WEBAPP};\n}\n\nupstream api {\n  server ${API};\n}\n\nupstream api-socket {\n  hash $remote_addr consistent;\n  server ${SOCKET};\n}\n\nupstream files {\n  server ${FILES};\n}\n\nupstream webhook {\n  server ${WEBHOOK};\n}\n\nupstream raptor-admin {\n  server ${RAPTORADMIN};\n}\n\n## Path based\n\nserver {\n    listen 80;\n    access_log /var/log/nginx/access.log;\n    error_log /var/log/nginx/error.log error;\n    server_name _;\n\n    error_page 503 /maintenance.html;\n\n    location /maintenance.html {\n        root /usr/share/nginx/html;\n        internal;\n    }\n\n    location /healthcheck {\n        access_log\toff;\n        error_log\toff;\n        return 200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n    location /status {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n\n        access_log\toff;\n        error_log\toff;\n        return 200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n    location /usage {\n        access_log\toff;\n        error_log\toff;\n        return 404;\n    }\n\n    keepalive_timeout 70;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubdomains\";\n    add_header X-Frame-Options DENY;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n    proxy_set_header X-Forwarded-Proto $scheme;\n\n    location /raptor-admin/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://raptor-admin/;\n        proxy_http_version 1.1;\n\n        client_max_body_size 30M;\n\n        proxy_redirect off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Connection \"\";\n        proxy_buffering off;\n    }\n\n    location /webhook/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://webhook/;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /api/socket.io {\n        rewrite ^/api/socket.io(.*)$ /socket.io$1;\n    }\n\n    location /socket.io {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://api-socket;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /api/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://api/;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /upload/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://api;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location / {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n\n        proxy_pass http://webapp;\n        proxy_http_version 1.1;\n\n        client_max_body_size 30M;\n\n        proxy_redirect off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Connection \"\";\n        proxy_buffering off;\n    }\n}\n"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-gw-conf
+  namespace: build
+---
+apiVersion: v1
+data:
+  api: toad-api
+  files: toad-api
+  raptoradmin: raptor-admin
+  socket: toad-websocket
+  webapp: kraken-webapp
+  webhook: toad-webhook
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-gw-vars
+  namespace: build
+---
+apiVersion: v1
+data:
+  maintenance.html: |
+    <!DOCTYPE html>
+    <html>
+
+      <head>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/style.css">
+      </head>
+
+      <body>
+        <center><h1>ZenHub Enterprise is currently in Maintenance</h1></center>
+        <center><h2>Please Contact your Administrator if you require assistance</h2></center>
+      </body>
+
+    <center><footer>Got a Question?</footer></center>
+    <center><footer><a href="mailto:enterprise@zenhub.com">Contact us</href></footer></center>
+    </html>
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-maitenance-page
+  namespace: build
+---
+apiVersion: v1
+data:
+  ghe-maintenance-monitor.sh: |-
+    #!/bin/bash
+    # GitHub Enterprise Maintenance Monitor Service V2 - K8s
+    # ZenHub (c)
+
+    DIR_FILE="/data/zhe-monitor/maintenance-status"
+
+    function create_file {
+      echo "ZHE Maintenance Enabled: Manual"
+      echo "[$(date)] ZHE maintenance Enable" > $DIR_FILE
+    }
+
+    function delete_file {
+      echo "ZHE Maintenance Disabled: ${responseHistory[*]}"
+      rm $DIR_FILE
+    }
+
+    ### --- MAIN BLOCK --- ###
+    while true; do
+
+      if [ "$MAINTENANCE_MODE" == "TRUE" ]
+      then
+        create_file
+
+      else
+
+        # make sure the test file is not present
+        # if [ -e $DIR_FILE ]; then
+
+        #   rm $DIR_FILE
+
+        # fi
+
+        # Init: Because we need it for later, Reset: Because we no longer need it at the end of the iteration
+        goodCode=0;
+        maintCode=0;
+        response=$(curl -s -o /dev/null -H "Cache-Control: no-cache" -w "%{http_code}" "$GITHUB_SERVER_ADDRESS"/status)
+
+        # Replaces the array values for the last three HTTP codes
+        responseHistory[0]=${responseHistory[1]};
+        responseHistory[1]=${responseHistory[2]};
+        responseHistory[2]=$response;
+
+        for i in "${responseHistory[@]}"; do
+
+          case $i in
+
+            200) let goodCode=goodCode+1;;
+            503) let maintCode=maintCode+1;;
+            *) echo "The response ($i) is ignored";;
+
+          esac
+
+        done
+
+        echo "G:$goodCode // M:$maintCode // A:${responseHistory[*]}";
+
+        if [ $goodCode -eq 3 ]; then
+
+          # if file exists -> remove file to disable maintenance
+          # if file DNE -> don't do anything
+          if [ -e $DIR_FILE ]; then
+
+            delete_file
+
+          fi
+
+        elif [ $maintCode -eq 3 ]; then
+
+          # if file exists -> don't do anything
+          # if file DNE -> create file to enable maintenance
+          if [ ! -e $DIR_FILE ]; then
+
+            create_file
+
+          fi
+
+        fi
+
+      fi
+
+    sleep ${WAITING_TIME:-30};
+
+    done
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-monitor
+  namespace: build
+---
+apiVersion: v1
+data:
+  raptor_redis_password: VE9ET19wYXNzX3JhcHRvcl9yZWRpcw==
+  toad_redis_password: VE9ET19wYXNzX3RvYWRfcmVkaXM=
+kind: Secret
+metadata:
+  name: cache-credentials-6k85t6b85m
+  namespace: build
+type: Opaque
+---
+apiVersion: v1
+data:
+  redis-password: VE9ET19wYXNzX3JhcHRvcl9yZWRpcw==
+kind: Secret
+metadata:
+  labels:
+    app: raptor-redis
+    chart: raptorCacheRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-raptor-redis
+  namespace: build
+type: Opaque
+---
+apiVersion: v1
+data:
+  redis-password: VE9ET19wYXNzX3RvYWRfcmVkaXM=
+kind: Secret
+metadata:
+  labels:
+    app: toad-redis
+    chart: toadRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-toad-redis
+  namespace: build
+type: Opaque
+---
+apiVersion: v1
+data:
+  internal_auth_token: VE9ET19yYW5kb20=
+kind: Secret
+metadata:
+  name: common-7562hkg2t4
+  namespace: build
+type: Opaque
+---
+apiVersion: v1
+data: null
+kind: Secret
+metadata:
+  name: configuration
+  namespace: build
+---
+apiVersion: v1
+data:
+  admin_password: VE9ET19hZG1pbl9wYXNzd29yZA==
+kind: Secret
+metadata:
+  annotations: {}
+  labels: {}
+  name: raptor-admin-45ddf9bg92
+  namespace: build
+type: Opaque
+---
+apiVersion: v1
+data:
+  ld_sdk_key: ""
+  lockbox_master_key: ""
+  new_relic_license_key: ""
+  rollbar_access_token: ""
+kind: Secret
+metadata:
+  name: raptor-g66fmgkch7
+  namespace: build
+type: Opaque
+---
+apiVersion: v1
+data:
+  autopilot_api_key: ""
+  crypto_pass: VE9ET19yYW5kb20=
+  ghwebhook_invite_code: ""
+  knowtify_token: ""
+  launchdarkly_sdk_key: ""
+  mixpanel_secret: ""
+  newrelic_licence_key: ""
+  rollbar_account_read_token: ""
+  rollbar_account_write_token: ""
+  s3_secret: ""
+  s3_user_files_secret: ""
+  s3_user_images_secret: ""
+  salesmachine_api_token: ""
+  slack_app_secret: ""
+  slack_webhook: ""
+  stripe_secret_key: ""
+kind: Secret
+metadata:
+  name: toad-7ff8fd277f
+  namespace: build
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: raptor-redis
+    chart: raptorCacheRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-raptor-redis-headless
+  namespace: build
+spec:
+  clusterIP: None
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+  selector:
+    app: raptor-redis
+    release: cache
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: raptor-redis
+    chart: raptorCacheRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-raptor-redis-master
+  namespace: build
+spec:
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+  selector:
+    app: raptor-redis
+    release: cache
+    role: master
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: toad-redis
+    chart: toadRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-toad-redis-headless
+  namespace: build
+spec:
+  clusterIP: None
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+  selector:
+    app: toad-redis
+    release: cache
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: toad-redis
+    chart: toadRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-toad-redis-master
+  namespace: build
+spec:
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+  selector:
+    app: toad-redis
+    release: cache
+    role: master
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: kraken-webapp
+  name: kraken-webapp
+  namespace: build
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: kraken-webapp
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: nginx-gateway
+  namespace: build
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  selector:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  sessionAffinity: ClientIP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-admin
+  name: raptor-admin
+  namespace: build
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: raptor-admin
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-api
+  name: raptor-api
+  namespace: build
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: raptor-api
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-api
+  name: toad-api
+  namespace: build
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: toad-api
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-webhook
+  name: toad-webhook
+  namespace: build
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: toad-webhook
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-websocket
+  name: toad-websocket
+  namespace: build
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: toad-websocket
+  sessionAffinity: ClientIP
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: kraken-webapp
+  name: kraken-webapp
+  namespace: build
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: kraken-webapp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: kraken-webapp
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: kraken-webapp
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: kraken-webapp
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - image: kraken-webapp
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /version.json
+            port: http
+          periodSeconds: 10
+        name: kraken-webapp
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /version.json
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 750m
+            memory: 400Mi
+          requests:
+            cpu: 250m
+            memory: 200Mi
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html/extension
+          name: kraken-extension
+        - mountPath: /usr/share/nginx/html/dist/config
+          name: kraken-webapp-config
+      - env:
+        - name: WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_SERVER_ADDRESS
+          value: $(github_hostname)
+        - name: MANIFEST_FIREFOX_UPDATE_URL
+          value: $(WEBAPP_ADDRESS)/zhe-public/ff-ext-signed/update.json
+        image: kraken-extension
+        imagePullPolicy: Always
+        name: kraken-extension
+        resources:
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /root/built-final
+          name: kraken-extension
+        - mountPath: /root/config
+          name: kraken-webapp-config
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      serviceAccountName: kraken-automount-sa-token-false-webapp
+      volumes:
+      - name: kraken-extension
+      - configMap:
+          items:
+          - key: webapp-config.js
+            path: config.js
+          name: kraken-7b69hht452
+        name: kraken-webapp-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: nginx-gateway
+  namespace: build
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: nginx-gateway
+      app.kubernetes.io/managed-by: kustomize
+      app.kubernetes.io/name: nginx-gateway
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: nginx-gateway
+        app.kubernetes.io/managed-by: kustomize
+        app.kubernetes.io/name: nginx-gateway
+    spec:
+      containers:
+      - env:
+        - name: MY_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: WEBAPP
+          valueFrom:
+            configMapKeyRef:
+              key: webapp
+              name: zhe-gw-vars
+        - name: API
+          valueFrom:
+            configMapKeyRef:
+              key: api
+              name: zhe-gw-vars
+        - name: SOCKET
+          valueFrom:
+            configMapKeyRef:
+              key: socket
+              name: zhe-gw-vars
+        - name: FILES
+          valueFrom:
+            configMapKeyRef:
+              key: files
+              name: zhe-gw-vars
+        - name: WEBHOOK
+          valueFrom:
+            configMapKeyRef:
+              key: webhook
+              name: zhe-gw-vars
+        - name: RAPTORADMIN
+          valueFrom:
+            configMapKeyRef:
+              key: raptoradmin
+              name: zhe-gw-vars
+        image: nginx
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: http
+        name: nginx-gateway
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /data/zhe-monitor
+          name: monitor
+        - mountPath: /etc/nginx/templates/default.conf.template
+          name: proxy-conf-volume
+          subPath: default.conf.template
+        - mountPath: /usr/share/nginx/html/maintenance.html
+          name: maitenance-page-volume
+          subPath: maintenance.html
+      - command:
+        - ghe-maintenance-monitor.sh
+        env:
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad-c6b2k427fm
+        - name: WAITING_TIME
+          value: "30"
+        - name: MAINTENANCE_MODE
+          value: ""
+        image: nginx
+        name: monitor
+        volumeMounts:
+        - mountPath: /data/zhe-monitor
+          name: monitor
+        - mountPath: /usr/bin/ghe-maintenance-monitor.sh
+          name: zhe-monitor-volume
+          subPath: ghe-maintenance-monitor.sh
+      volumes:
+      - emptyDir: {}
+        name: monitor
+      - configMap:
+          name: zhe-gw-conf
+        name: proxy-conf-volume
+      - configMap:
+          name: zhe-maitenance-page
+        name: maitenance-page-volume
+      - configMap:
+          defaultMode: 511
+          name: zhe-monitor
+        name: zhe-monitor-volume
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-admin
+  name: raptor-admin
+  namespace: build
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: raptor-admin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: raptor-admin
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-admin
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-admin
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - bundle
+        - exec
+        - rails
+        - s
+        - -b
+        - 0.0.0.0
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: NAME_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              key: name_prefix
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: raptor_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: RAILS_MAX_THREADS
+          valueFrom:
+            configMapKeyRef:
+              key: rails_max_threads
+              name: raptor-admin-hmfm845kmm
+        - name: DATABASE_STATEMENT_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: database_statement_timeout
+              name: raptor-admin-hmfm845kmm
+        - name: ADMIN_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: admin_enabled
+              name: raptor-admin-hmfm845kmm
+        - name: ADMIN_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: admin_username
+              name: raptor-admin-hmfm845kmm
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: admin_password
+              name: raptor-admin-45ddf9bg92
+        - name: WEB_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              key: web_concurrency
+              name: raptor-admin-hmfm845kmm
+        - name: RUBYOPT
+          value: -W0
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rails_env
+              name: raptor-6gbb8c6khc
+        - name: RAILS_LOG_TO_STDOUT
+          valueFrom:
+            configMapKeyRef:
+              key: rails_log_to_stdout
+              name: raptor-6gbb8c6khc
+        - name: LOG_JSON
+          valueFrom:
+            configMapKeyRef:
+              key: log_json
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_HTML_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_html_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_API_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_api_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_GRAPHQL_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_graphql_url
+              name: raptor-6gbb8c6khc
+        - name: ROLLBAR_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rollbar_env
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_AGENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_agent_enabled
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_app_name
+              name: raptor-6gbb8c6khc
+        - name: DISABLE_PREPARE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: disable_prepare_db
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_WEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: github_webhook_enabled
+              name: raptor-6gbb8c6khc
+        - name: ZENHUB_WEBHOOK_DOMAIN_V1
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v1
+              name: raptor-6gbb8c6khc
+        - name: ZENHUB_WEBHOOK_DOMAIN_V2
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v2
+              name: raptor-6gbb8c6khc
+        - name: SIDEKIQ_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: redis_url
+              name: configuration
+        - name: CACHE_REDIS_URL
+          value: redis://default:$(REDIS_PASSWORD)@$(NAME_PREFIX)cache-raptor-redis-master:6379/0
+        - name: LD_OFFLINE
+          value: "1"
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              key: secret_key_base
+              name: configuration
+        - name: LOCKBOX_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: lockbox_master_key
+              name: raptor-g66fmgkch7
+        - name: GITHUB_TOKEN_VALUE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: github_token_value_key
+              name: configuration
+        - name: GITHUB_WEBHOOKS_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_webhooks_secret
+              name: configuration
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: LD_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: ld_sdk_key
+              name: raptor-g66fmgkch7
+        - name: ROLLBAR_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_access_token
+              name: raptor-g66fmgkch7
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: new_relic_license_key
+              name: raptor-g66fmgkch7
+        - name: TOAD_MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: TOAD_RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        image: raptor-backend
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /ping/all
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: raptor-admin
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping/all
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 4000Mi
+          requests:
+            cpu: 1600m
+            memory: 2000Mi
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-api
+  name: raptor-api
+  namespace: build
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: raptor-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: raptor-api
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-api
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-api
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - bundle
+        - exec
+        - rails
+        - s
+        - -b
+        - 0.0.0.0
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: NAME_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              key: name_prefix
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: raptor_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: RAILS_MAX_THREADS
+          valueFrom:
+            configMapKeyRef:
+              key: rails_max_threads
+              name: raptor-api-ddbb4h96dc
+        - name: WEB_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              key: web_concurrency
+              name: raptor-api-ddbb4h96dc
+        - name: RUBYOPT
+          value: -W0
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rails_env
+              name: raptor-6gbb8c6khc
+        - name: RAILS_LOG_TO_STDOUT
+          valueFrom:
+            configMapKeyRef:
+              key: rails_log_to_stdout
+              name: raptor-6gbb8c6khc
+        - name: LOG_JSON
+          valueFrom:
+            configMapKeyRef:
+              key: log_json
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_HTML_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_html_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_API_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_api_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_GRAPHQL_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_graphql_url
+              name: raptor-6gbb8c6khc
+        - name: ROLLBAR_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rollbar_env
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_AGENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_agent_enabled
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_app_name
+              name: raptor-6gbb8c6khc
+        - name: DISABLE_PREPARE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: disable_prepare_db
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_WEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: github_webhook_enabled
+              name: raptor-6gbb8c6khc
+        - name: ZENHUB_WEBHOOK_DOMAIN_V1
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v1
+              name: raptor-6gbb8c6khc
+        - name: ZENHUB_WEBHOOK_DOMAIN_V2
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v2
+              name: raptor-6gbb8c6khc
+        - name: SIDEKIQ_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: redis_url
+              name: configuration
+        - name: CACHE_REDIS_URL
+          value: redis://default:$(REDIS_PASSWORD)@$(NAME_PREFIX)cache-raptor-redis-master:6379/0
+        - name: LD_OFFLINE
+          value: "1"
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              key: secret_key_base
+              name: configuration
+        - name: LOCKBOX_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: lockbox_master_key
+              name: raptor-g66fmgkch7
+        - name: GITHUB_TOKEN_VALUE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: github_token_value_key
+              name: configuration
+        - name: GITHUB_WEBHOOKS_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_webhooks_secret
+              name: configuration
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: LD_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: ld_sdk_key
+              name: raptor-g66fmgkch7
+        - name: ROLLBAR_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_access_token
+              name: raptor-g66fmgkch7
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: new_relic_license_key
+              name: raptor-g66fmgkch7
+        - name: TOAD_MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: TOAD_RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        image: raptor-backend
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /ping/all
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: raptor-api
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping/all
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 4000Mi
+          requests:
+            cpu: 1600m
+            memory: 2000Mi
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-sidekiq-worker
+  name: raptor-sidekiq-worker
+  namespace: build
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: raptor-sidekiq-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: raptor-sidekiq-worker
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-sidekiq-worker
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-sidekiq-worker
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - bundle
+        - exec
+        - sidekiq
+        - -c
+        - $(RAILS_MAX_THREADS)
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: NAME_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              key: name_prefix
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: raptor_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: RAILS_MAX_THREADS
+          valueFrom:
+            configMapKeyRef:
+              key: rails_max_threads
+              name: raptor-sidekiq-54g8fc4kct
+        - name: DATABASE_STATEMENT_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: database_statement_timeout
+              name: raptor-sidekiq-54g8fc4kct
+        - name: RUBYOPT
+          value: -W0
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rails_env
+              name: raptor-6gbb8c6khc
+        - name: RAILS_LOG_TO_STDOUT
+          valueFrom:
+            configMapKeyRef:
+              key: rails_log_to_stdout
+              name: raptor-6gbb8c6khc
+        - name: LOG_JSON
+          valueFrom:
+            configMapKeyRef:
+              key: log_json
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_HTML_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_html_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_API_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_api_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_GRAPHQL_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_graphql_url
+              name: raptor-6gbb8c6khc
+        - name: ROLLBAR_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rollbar_env
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_AGENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_agent_enabled
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_app_name
+              name: raptor-6gbb8c6khc
+        - name: DISABLE_PREPARE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: disable_prepare_db
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_WEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: github_webhook_enabled
+              name: raptor-6gbb8c6khc
+        - name: ZENHUB_WEBHOOK_DOMAIN_V1
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v1
+              name: raptor-6gbb8c6khc
+        - name: ZENHUB_WEBHOOK_DOMAIN_V2
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v2
+              name: raptor-6gbb8c6khc
+        - name: SIDEKIQ_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: redis_url
+              name: configuration
+        - name: CACHE_REDIS_URL
+          value: redis://default:$(REDIS_PASSWORD)@$(NAME_PREFIX)cache-raptor-redis-master:6379/0
+        - name: LD_OFFLINE
+          value: "1"
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              key: secret_key_base
+              name: configuration
+        - name: LOCKBOX_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: lockbox_master_key
+              name: raptor-g66fmgkch7
+        - name: GITHUB_TOKEN_VALUE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: github_token_value_key
+              name: configuration
+        - name: GITHUB_WEBHOOKS_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_webhooks_secret
+              name: configuration
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: LD_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: ld_sdk_key
+              name: raptor-g66fmgkch7
+        - name: ROLLBAR_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_access_token
+              name: raptor-g66fmgkch7
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: new_relic_license_key
+              name: raptor-g66fmgkch7
+        - name: TOAD_MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: TOAD_RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        image: raptor-backend
+        imagePullPolicy: Always
+        livenessProbe:
+          exec:
+            command:
+            - /app/docker/sidekick-health-check
+          periodSeconds: 60
+        name: raptor-sidekiq-worker
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+          requests:
+            cpu: 750m
+            memory: 350Mi
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-api
+  name: toad-api
+  namespace: build
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: toad-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: toad-api
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-api
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-api
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - /usr/local/bin/node
+        - /zenhub/app/app.js
+        env:
+        - name: IS_UPLOAD_FILE_TO_LOCAL
+          value: "false"
+        - name: S3_USER_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_domain
+              name: configuration
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: ZENHUB_WEBAPP_PREFIX
+          value: ""
+        - name: GRAPHQL_SCHEMA_CHECK_DURATION_MS
+          value: "60000"
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: node_env
+              name: toad-c6b2k427fm
+        - name: ZENHUB_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_env
+              name: toad-c6b2k427fm
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: port
+              name: toad-c6b2k427fm
+        - name: QUEUE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: queue_db
+              name: toad-c6b2k427fm
+        - name: QUEUE_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: queue_backend
+              name: toad-c6b2k427fm
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: redis_host
+              name: toad-c6b2k427fm
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: redis_port
+              name: toad-c6b2k427fm
+        - name: RAPTOR_URI
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_uri
+              name: toad-c6b2k427fm
+        - name: RAPTOR_GRAPHQL_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_graphql_enabled
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_webapp_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: SLACK_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: slack_app_id
+              name: toad-c6b2k427fm
+        - name: MAILGUN_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailgun_key
+              name: toad-c6b2k427fm
+        - name: MIXPANEL_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mixpanel_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_LIST
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_list
+              name: toad-c6b2k427fm
+        - name: STRIPE_PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_public_key
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBHOOK_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_address
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_enabled
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_WHITELIST
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_whitelist
+              name: toad-c6b2k427fm
+        - name: NEW_RELIC_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_enabled
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_app_name
+              name: toad-c6b2k427fm
+        - name: NODE_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              key: node_options
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_TRACE
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_trace
+              name: toad-c6b2k427fm
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_bucket
+              name: toad-c6b2k427fm
+        - name: S3_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: files_bucket_name
+              name: configuration
+        - name: S3_USER_FILES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_download_expiration
+              name: configuration
+        - name: S3_USER_FILES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_access_key_id
+              name: configuration
+        - name: S3_USER_FILES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_region
+              name: configuration
+        - name: S3_USER_FILES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_upload_expiration
+              name: configuration
+        - name: S3_USER_IMAGES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: images_bucket_name
+              name: configuration
+        - name: S3_USER_IMAGES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_download_expiration
+              name: configuration
+        - name: S3_USER_IMAGES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_access_key_id
+              name: configuration
+        - name: S3_USER_IMAGES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_region
+              name: configuration
+        - name: S3_USER_IMAGES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_upload_expiration
+              name: configuration
+        - name: USER_IMAGE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: user_image_host
+              name: toad-c6b2k427fm
+        - name: ATTRIBUTION_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: attribution_app_id
+              name: toad-c6b2k427fm
+        - name: MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
+              name: configuration
+        - name: GHWEBHOOK_INVITE_CODE
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_invite_code
+              name: toad-7ff8fd277f
+        - name: LAUNCHDARKLY_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: launchdarkly_sdk_key
+              name: toad-7ff8fd277f
+        - name: SALESMACHINE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: salesmachine_api_token
+              name: toad-7ff8fd277f
+        - name: SLACK_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              key: slack_webhook
+              name: toad-7ff8fd277f
+        - name: SLACK_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: slack_app_secret
+              name: toad-7ff8fd277f
+        - name: MIXPANEL_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_secret
+              name: toad-7ff8fd277f
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: stripe_secret_key
+              name: toad-7ff8fd277f
+        - name: CRYPTO_PASS
+          valueFrom:
+            secretKeyRef:
+              key: crypto_pass
+              name: toad-7ff8fd277f
+        - name: GHWEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_secret
+              name: configuration
+        - name: GHWEBHOOK_PASS
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_pass
+              name: configuration
+        - name: NEWRELIC_LICENCE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: newrelic_licence_key
+              name: toad-7ff8fd277f
+        - name: S3_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_IMAGES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: bucket_secret_access_key
+              name: configuration
+        - name: S3_USER_FILES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: bucket_secret_access_key
+              name: configuration
+        - name: AUTOPILOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: autopilot_api_key
+              name: toad-7ff8fd277f
+        - name: KNOWTIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: knowtify_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_READ_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_read_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_WRITE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_write_token
+              name: toad-7ff8fd277f
+        image: toad-backend
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: toad-api
+        ports:
+        - containerPort: 3031
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 4096Mi
+          requests:
+            cpu: 750m
+            memory: 2048Mi
+        volumeMounts:
+        - mountPath: /data/upload/
+          name: toad-upload
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database: PASSED''; do echo waiting for ''Schema''; sleep 2; done'
+        env:
+        - name: RAPTOR_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_service
+              name: configuration
+        image: busybox
+        name: init-toad
+      serviceAccountName: toad-automount-sa-token-false-api
+      volumes:
+      - name: toad-upload
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-cron
+  name: toad-cron
+  namespace: build
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: toad-cron
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: toad-cron
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-cron
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-cron
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - /usr/local/bin/node
+        - /zenhub/app/jobs/cron.js
+        env:
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: GRAPHQL_SCHEMA_CHECK_DURATION_MS
+          value: "60000"
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: node_env
+              name: toad-c6b2k427fm
+        - name: ZENHUB_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_env
+              name: toad-c6b2k427fm
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: port
+              name: toad-c6b2k427fm
+        - name: QUEUE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: queue_db
+              name: toad-c6b2k427fm
+        - name: QUEUE_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: queue_backend
+              name: toad-c6b2k427fm
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: redis_host
+              name: toad-c6b2k427fm
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: redis_port
+              name: toad-c6b2k427fm
+        - name: RAPTOR_URI
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_uri
+              name: toad-c6b2k427fm
+        - name: RAPTOR_GRAPHQL_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_graphql_enabled
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_webapp_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: SLACK_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: slack_app_id
+              name: toad-c6b2k427fm
+        - name: MAILGUN_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailgun_key
+              name: toad-c6b2k427fm
+        - name: MIXPANEL_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mixpanel_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_LIST
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_list
+              name: toad-c6b2k427fm
+        - name: STRIPE_PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_public_key
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBHOOK_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_address
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_enabled
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_WHITELIST
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_whitelist
+              name: toad-c6b2k427fm
+        - name: NEW_RELIC_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_enabled
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_app_name
+              name: toad-c6b2k427fm
+        - name: NODE_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              key: node_options
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_TRACE
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_trace
+              name: toad-c6b2k427fm
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_bucket
+              name: toad-c6b2k427fm
+        - name: S3_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_download_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_download_expiration
+              name: toad-c6b2k427fm
+        - name: USER_IMAGE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: user_image_host
+              name: toad-c6b2k427fm
+        - name: ATTRIBUTION_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: attribution_app_id
+              name: toad-c6b2k427fm
+        - name: MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
+              name: configuration
+        - name: GHWEBHOOK_INVITE_CODE
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_invite_code
+              name: toad-7ff8fd277f
+        - name: LAUNCHDARKLY_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: launchdarkly_sdk_key
+              name: toad-7ff8fd277f
+        - name: SALESMACHINE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: salesmachine_api_token
+              name: toad-7ff8fd277f
+        - name: SLACK_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              key: slack_webhook
+              name: toad-7ff8fd277f
+        - name: SLACK_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: slack_app_secret
+              name: toad-7ff8fd277f
+        - name: MIXPANEL_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_secret
+              name: toad-7ff8fd277f
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: stripe_secret_key
+              name: toad-7ff8fd277f
+        - name: CRYPTO_PASS
+          valueFrom:
+            secretKeyRef:
+              key: crypto_pass
+              name: toad-7ff8fd277f
+        - name: GHWEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_secret
+              name: configuration
+        - name: GHWEBHOOK_PASS
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_pass
+              name: configuration
+        - name: NEWRELIC_LICENCE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: newrelic_licence_key
+              name: toad-7ff8fd277f
+        - name: S3_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_IMAGES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_images_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_FILES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_files_secret
+              name: toad-7ff8fd277f
+        - name: AUTOPILOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: autopilot_api_key
+              name: toad-7ff8fd277f
+        - name: KNOWTIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: knowtify_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_READ_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_read_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_WRITE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_write_token
+              name: toad-7ff8fd277f
+        image: toad-backend
+        imagePullPolicy: Always
+        name: toad-cron
+        resources:
+          limits:
+            cpu: 500m
+            memory: 300Mi
+          requests:
+            cpu: 50m
+            memory: 100Mi
+        volumeMounts:
+        - mountPath: /data/upload/
+          name: toad-upload
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database: PASSED''; do echo waiting for ''Schema''; sleep 2; done'
+        env:
+        - name: RAPTOR_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_service
+              name: configuration
+        image: busybox
+        name: init-toad
+      serviceAccountName: toad-automount-sa-token-false-cron
+      volumes:
+      - name: toad-upload
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-webhook
+  name: toad-webhook
+  namespace: build
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: toad-webhook
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: toad-webhook
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-webhook
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-webhook
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - /usr/local/bin/node
+        - /zenhub/webhook/app.js
+        env:
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: GRAPHQL_SCHEMA_CHECK_DURATION_MS
+          value: "60000"
+        - name: WEBHOOK_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: webhook_port
+              name: toad-webhook-khkf7m9cdb
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: node_env
+              name: toad-c6b2k427fm
+        - name: ZENHUB_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_env
+              name: toad-c6b2k427fm
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: port
+              name: toad-c6b2k427fm
+        - name: QUEUE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: queue_db
+              name: toad-c6b2k427fm
+        - name: QUEUE_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: queue_backend
+              name: toad-c6b2k427fm
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: redis_host
+              name: toad-c6b2k427fm
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: redis_port
+              name: toad-c6b2k427fm
+        - name: RAPTOR_URI
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_uri
+              name: toad-c6b2k427fm
+        - name: RAPTOR_GRAPHQL_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_graphql_enabled
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_webapp_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: SLACK_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: slack_app_id
+              name: toad-c6b2k427fm
+        - name: MAILGUN_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailgun_key
+              name: toad-c6b2k427fm
+        - name: MIXPANEL_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mixpanel_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_LIST
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_list
+              name: toad-c6b2k427fm
+        - name: STRIPE_PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_public_key
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBHOOK_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_address
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_enabled
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_WHITELIST
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_whitelist
+              name: toad-c6b2k427fm
+        - name: NEW_RELIC_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_enabled
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_app_name
+              name: toad-c6b2k427fm
+        - name: NODE_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              key: node_options
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_TRACE
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_trace
+              name: toad-c6b2k427fm
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_bucket
+              name: toad-c6b2k427fm
+        - name: S3_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_download_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_download_expiration
+              name: toad-c6b2k427fm
+        - name: USER_IMAGE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: user_image_host
+              name: toad-c6b2k427fm
+        - name: ATTRIBUTION_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: attribution_app_id
+              name: toad-c6b2k427fm
+        - name: MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
+              name: configuration
+        - name: GHWEBHOOK_INVITE_CODE
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_invite_code
+              name: toad-7ff8fd277f
+        - name: LAUNCHDARKLY_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: launchdarkly_sdk_key
+              name: toad-7ff8fd277f
+        - name: SALESMACHINE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: salesmachine_api_token
+              name: toad-7ff8fd277f
+        - name: SLACK_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              key: slack_webhook
+              name: toad-7ff8fd277f
+        - name: SLACK_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: slack_app_secret
+              name: toad-7ff8fd277f
+        - name: MIXPANEL_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_secret
+              name: toad-7ff8fd277f
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: stripe_secret_key
+              name: toad-7ff8fd277f
+        - name: CRYPTO_PASS
+          valueFrom:
+            secretKeyRef:
+              key: crypto_pass
+              name: toad-7ff8fd277f
+        - name: GHWEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_secret
+              name: configuration
+        - name: GHWEBHOOK_PASS
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_pass
+              name: configuration
+        - name: NEWRELIC_LICENCE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: newrelic_licence_key
+              name: toad-7ff8fd277f
+        - name: S3_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_IMAGES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_images_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_FILES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_files_secret
+              name: toad-7ff8fd277f
+        - name: AUTOPILOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: autopilot_api_key
+              name: toad-7ff8fd277f
+        - name: KNOWTIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: knowtify_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_READ_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_read_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_WRITE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_write_token
+              name: toad-7ff8fd277f
+        image: toad-backend
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: toad-webhook
+        ports:
+        - containerPort: 3031
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 750m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 150Mi
+        volumeMounts:
+        - mountPath: /data/upload/
+          name: toad-upload
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database: PASSED''; do echo waiting for ''Schema''; sleep 2; done'
+        env:
+        - name: RAPTOR_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_service
+              name: configuration
+        image: busybox
+        name: init-toad
+      serviceAccountName: toad-automount-sa-token-false-webhook
+      volumes:
+      - name: toad-upload
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-websocket
+  name: toad-websocket
+  namespace: build
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: toad-websocket
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: toad-websocket
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-websocket
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-websocket
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - /usr/local/bin/node
+        - /zenhub/app/app.js
+        env:
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: GRAPHQL_SCHEMA_CHECK_DURATION_MS
+          value: "60000"
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: node_env
+              name: toad-c6b2k427fm
+        - name: ZENHUB_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_env
+              name: toad-c6b2k427fm
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: port
+              name: toad-c6b2k427fm
+        - name: QUEUE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: queue_db
+              name: toad-c6b2k427fm
+        - name: QUEUE_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: queue_backend
+              name: toad-c6b2k427fm
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: redis_host
+              name: toad-c6b2k427fm
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: redis_port
+              name: toad-c6b2k427fm
+        - name: RAPTOR_URI
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_uri
+              name: toad-c6b2k427fm
+        - name: RAPTOR_GRAPHQL_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_graphql_enabled
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_webapp_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: SLACK_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: slack_app_id
+              name: toad-c6b2k427fm
+        - name: MAILGUN_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailgun_key
+              name: toad-c6b2k427fm
+        - name: MIXPANEL_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mixpanel_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_LIST
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_list
+              name: toad-c6b2k427fm
+        - name: STRIPE_PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_public_key
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBHOOK_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_address
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_enabled
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_WHITELIST
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_whitelist
+              name: toad-c6b2k427fm
+        - name: NEW_RELIC_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_enabled
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_app_name
+              name: toad-c6b2k427fm
+        - name: NODE_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              key: node_options
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_TRACE
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_trace
+              name: toad-c6b2k427fm
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_bucket
+              name: toad-c6b2k427fm
+        - name: S3_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_download_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_download_expiration
+              name: toad-c6b2k427fm
+        - name: USER_IMAGE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: user_image_host
+              name: toad-c6b2k427fm
+        - name: ATTRIBUTION_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: attribution_app_id
+              name: toad-c6b2k427fm
+        - name: MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
+              name: configuration
+        - name: GHWEBHOOK_INVITE_CODE
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_invite_code
+              name: toad-7ff8fd277f
+        - name: LAUNCHDARKLY_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: launchdarkly_sdk_key
+              name: toad-7ff8fd277f
+        - name: SALESMACHINE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: salesmachine_api_token
+              name: toad-7ff8fd277f
+        - name: SLACK_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              key: slack_webhook
+              name: toad-7ff8fd277f
+        - name: SLACK_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: slack_app_secret
+              name: toad-7ff8fd277f
+        - name: MIXPANEL_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_secret
+              name: toad-7ff8fd277f
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: stripe_secret_key
+              name: toad-7ff8fd277f
+        - name: CRYPTO_PASS
+          valueFrom:
+            secretKeyRef:
+              key: crypto_pass
+              name: toad-7ff8fd277f
+        - name: GHWEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_secret
+              name: configuration
+        - name: GHWEBHOOK_PASS
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_pass
+              name: configuration
+        - name: NEWRELIC_LICENCE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: newrelic_licence_key
+              name: toad-7ff8fd277f
+        - name: S3_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_IMAGES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_images_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_FILES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_files_secret
+              name: toad-7ff8fd277f
+        - name: AUTOPILOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: autopilot_api_key
+              name: toad-7ff8fd277f
+        - name: KNOWTIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: knowtify_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_READ_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_read_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_WRITE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_write_token
+              name: toad-7ff8fd277f
+        image: toad-backend
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: toad-websocket
+        ports:
+        - containerPort: 3031
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 4096Mi
+          requests:
+            cpu: 750m
+            memory: 2048Mi
+        volumeMounts:
+        - mountPath: /data/upload/
+          name: toad-upload
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database: PASSED''; do echo waiting for ''Schema''; sleep 2; done'
+        env:
+        - name: RAPTOR_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_service
+              name: configuration
+        image: busybox
+        name: init-toad
+      serviceAccountName: toad-automount-sa-token-false-websocket
+      volumes:
+      - name: toad-upload
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-worker
+  name: toad-worker
+  namespace: build
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: toad-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: toad-worker
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-worker
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-worker
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - /usr/local/bin/node
+        - /zenhub/app/workers/worker.js
+        env:
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: GRAPHQL_SCHEMA_CHECK_DURATION_MS
+          value: "60000"
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: node_env
+              name: toad-c6b2k427fm
+        - name: ZENHUB_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_env
+              name: toad-c6b2k427fm
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: port
+              name: toad-c6b2k427fm
+        - name: QUEUE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: queue_db
+              name: toad-c6b2k427fm
+        - name: QUEUE_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: queue_backend
+              name: toad-c6b2k427fm
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: redis_host
+              name: toad-c6b2k427fm
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: redis_port
+              name: toad-c6b2k427fm
+        - name: RAPTOR_URI
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_uri
+              name: toad-c6b2k427fm
+        - name: RAPTOR_GRAPHQL_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_graphql_enabled
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_STAGING_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_webapp_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_server_address
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad-c6b2k427fm
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: SLACK_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: slack_app_id
+              name: toad-c6b2k427fm
+        - name: MAILGUN_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailgun_key
+              name: toad-c6b2k427fm
+        - name: MIXPANEL_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mixpanel_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_key
+              name: toad-c6b2k427fm
+        - name: MAILCHIMP_LIST
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_list
+              name: toad-c6b2k427fm
+        - name: STRIPE_PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_public_key
+              name: toad-c6b2k427fm
+        - name: ZENHUB_WEBHOOK_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_address
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_enabled
+              name: toad-c6b2k427fm
+        - name: GHWEBHOOK_WHITELIST
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_whitelist
+              name: toad-c6b2k427fm
+        - name: NEW_RELIC_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_enabled
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_app_name
+              name: toad-c6b2k427fm
+        - name: NODE_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              key: node_options
+              name: toad-c6b2k427fm
+        - name: NEWRELIC_TRACE
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_trace
+              name: toad-c6b2k427fm
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_bucket
+              name: toad-c6b2k427fm
+        - name: S3_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_FILES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_download_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_bucket
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_region
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_key
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_upload_expiration
+              name: toad-c6b2k427fm
+        - name: S3_USER_IMAGES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_download_expiration
+              name: toad-c6b2k427fm
+        - name: USER_IMAGE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: user_image_host
+              name: toad-c6b2k427fm
+        - name: ATTRIBUTION_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: attribution_app_id
+              name: toad-c6b2k427fm
+        - name: MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
+              name: configuration
+        - name: GHWEBHOOK_INVITE_CODE
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_invite_code
+              name: toad-7ff8fd277f
+        - name: LAUNCHDARKLY_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: launchdarkly_sdk_key
+              name: toad-7ff8fd277f
+        - name: SALESMACHINE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: salesmachine_api_token
+              name: toad-7ff8fd277f
+        - name: SLACK_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              key: slack_webhook
+              name: toad-7ff8fd277f
+        - name: SLACK_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: slack_app_secret
+              name: toad-7ff8fd277f
+        - name: MIXPANEL_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_secret
+              name: toad-7ff8fd277f
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: stripe_secret_key
+              name: toad-7ff8fd277f
+        - name: CRYPTO_PASS
+          valueFrom:
+            secretKeyRef:
+              key: crypto_pass
+              name: toad-7ff8fd277f
+        - name: GHWEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_secret
+              name: configuration
+        - name: GHWEBHOOK_PASS
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_pass
+              name: configuration
+        - name: NEWRELIC_LICENCE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: newrelic_licence_key
+              name: toad-7ff8fd277f
+        - name: S3_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_IMAGES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_images_secret
+              name: toad-7ff8fd277f
+        - name: S3_USER_FILES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_files_secret
+              name: toad-7ff8fd277f
+        - name: AUTOPILOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: autopilot_api_key
+              name: toad-7ff8fd277f
+        - name: KNOWTIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: knowtify_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_READ_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_read_token
+              name: toad-7ff8fd277f
+        - name: ROLLBAR_ACCOUNT_WRITE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_write_token
+              name: toad-7ff8fd277f
+        image: toad-backend
+        imagePullPolicy: Always
+        name: toad-worker
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 4096Mi
+          requests:
+            cpu: 750m
+            memory: 2048Mi
+        volumeMounts:
+        - mountPath: /data/upload/
+          name: toad-upload
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database: PASSED''; do echo waiting for ''Schema''; sleep 2; done'
+        env:
+        - name: RAPTOR_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_service
+              name: configuration
+        image: busybox
+        name: init-toad
+      serviceAccountName: toad-automount-sa-token-false-worker
+      volumes:
+      - name: toad-upload
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: raptor-redis
+    chart: raptorCacheRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-raptor-redis-master
+  namespace: build
+spec:
+  selector:
+    matchLabels:
+      app: raptor-redis
+      release: cache
+      role: master
+  serviceName: cache-raptor-redis-headless
+  template:
+    metadata:
+      annotations:
+        checksum/configmap: 46db79426a5bfbba05cfea1d18824aca10bfab784905a6e1bae5c216228380a4
+        checksum/health: c12f2dd6e78b1cce5c0d9d87a61ff58b580f7fc9207ba99b9cf0b4c5e7bce8d2
+        checksum/secret: d9b18ed6a2b97ab0dacee0c80923725304e3558a0f16770802327c9b048caef0
+      labels:
+        app: raptor-redis
+        chart: raptorCacheRedis-11.2.3
+        release: cache
+        role: master
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -c
+        - /opt/bitnami/scripts/start-scripts/start-master.sh
+        env:
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: cache-raptor-redis
+        - name: REDIS_TLS_ENABLED
+          value: "no"
+        - name: REDIS_PORT
+          value: "6379"
+        image: docker.io/bitnami/redis:5.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /health/ping_liveness_local.sh 5
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 6
+        name: raptor-redis
+        ports:
+        - containerPort: 6379
+          name: redis
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /health/ping_readiness_local.sh 1
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 2
+        resources: null
+        securityContext:
+          runAsUser: 1001
+        volumeMounts:
+        - mountPath: /opt/bitnami/scripts/start-scripts
+          name: start-scripts
+        - mountPath: /health
+          name: health
+        - mountPath: /data
+          name: redis-data
+          subPath: null
+        - mountPath: /opt/bitnami/redis/mounted-etc
+          name: config
+        - mountPath: /opt/bitnami/redis/etc/
+          name: redis-tmp-conf
+      securityContext:
+        fsGroup: 1001
+      serviceAccountName: default
+      volumes:
+      - configMap:
+          defaultMode: 493
+          name: cache-raptor-redis-scripts
+        name: start-scripts
+      - configMap:
+          defaultMode: 493
+          name: cache-raptor-redis-health
+        name: health
+      - configMap:
+          name: cache-raptor-redis
+        name: config
+      - emptyDir: {}
+        name: redis-data
+      - emptyDir: {}
+        name: redis-tmp-conf
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates: []
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: toad-redis
+    chart: toadRedis-11.2.3
+    heritage: Helm
+    release: cache
+  name: cache-toad-redis-master
+  namespace: build
+spec:
+  selector:
+    matchLabels:
+      app: toad-redis
+      release: cache
+      role: master
+  serviceName: cache-toad-redis-headless
+  template:
+    metadata:
+      annotations:
+        checksum/configmap: 7b4bbf31689d5fa99c64497442d2d8845ac93f592898622e5c9dcbd21b734a77
+        checksum/health: 6e024f52954d759908ecbee0c2d2605aaf46c3ffcf58eef1874cd61976b5a275
+        checksum/secret: 9d5949f8d017cb8e5c5f78782979aa28290d0a94acc680dbb26525557cd9a8d3
+      labels:
+        app: toad-redis
+        chart: toadRedis-11.2.3
+        release: cache
+        role: master
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -c
+        - /opt/bitnami/scripts/start-scripts/start-master.sh
+        env:
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: cache-toad-redis
+        - name: REDIS_TLS_ENABLED
+          value: "no"
+        - name: REDIS_PORT
+          value: "6379"
+        image: docker.io/bitnami/redis:5.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /health/ping_liveness_local.sh 5
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 6
+        name: toad-redis
+        ports:
+        - containerPort: 6379
+          name: redis
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /health/ping_readiness_local.sh 1
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 2
+        resources: null
+        securityContext:
+          runAsUser: 1001
+        volumeMounts:
+        - mountPath: /opt/bitnami/scripts/start-scripts
+          name: start-scripts
+        - mountPath: /health
+          name: health
+        - mountPath: /data
+          name: redis-data
+          subPath: null
+        - mountPath: /opt/bitnami/redis/mounted-etc
+          name: config
+        - mountPath: /opt/bitnami/redis/etc/
+          name: redis-tmp-conf
+      securityContext:
+        fsGroup: 1001
+      serviceAccountName: default
+      volumes:
+      - configMap:
+          defaultMode: 493
+          name: cache-toad-redis-scripts
+        name: start-scripts
+      - configMap:
+          defaultMode: 493
+          name: cache-toad-redis-health
+        name: health
+      - configMap:
+          name: cache-toad-redis
+        name: config
+      - emptyDir: {}
+        name: redis-data
+      - emptyDir: {}
+        name: redis-tmp-conf
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates: []
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-api
+  name: raptor-api
+  namespace: build
+spec:
+  maxReplicas: 1
+  metrics:
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 80
+        type: Utilization
+    type: Resource
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: raptor-api
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-api
+  name: toad-api
+  namespace: build
+spec:
+  maxReplicas: 1
+  metrics:
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 80
+        type: Utilization
+    type: Resource
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: toad-api
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-websocket
+  name: toad-websocket
+  namespace: build
+spec:
+  maxReplicas: 1
+  metrics:
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 80
+        type: Utilization
+    type: Resource
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: toad-websocket
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: raptor-db-migrate
+  namespace: build
+spec:
+  backoffLimit: 4
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      containers:
+      - args:
+        - bundle
+        - exec
+        - rake
+        - db:setup_or_migrate_safely
+        env:
+        - name: DATABASE_STATEMENT_TIMEOUT
+          value: 120s
+        - name: SAFETY_ASSURED
+          value: "1"
+        - name: RUBYOPT
+          value: -W0
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rails_env
+              name: raptor-6gbb8c6khc
+        - name: RAILS_LOG_TO_STDOUT
+          valueFrom:
+            configMapKeyRef:
+              key: rails_log_to_stdout
+              name: raptor-6gbb8c6khc
+        - name: LOG_JSON
+          valueFrom:
+            configMapKeyRef:
+              key: log_json
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_HTML_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_html_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_API_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_api_url
+              name: raptor-6gbb8c6khc
+        - name: GITHUB_GRAPHQL_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_graphql_url
+              name: raptor-6gbb8c6khc
+        - name: ROLLBAR_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rollbar_env
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_AGENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_agent_enabled
+              name: raptor-6gbb8c6khc
+        - name: NEW_RELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_app_name
+              name: raptor-6gbb8c6khc
+        - name: SIDEKIQ_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: redis_url
+              name: configuration
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              key: secret_key_base
+              name: configuration
+        - name: LOCKBOX_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: lockbox_master_key
+              name: raptor-g66fmgkch7
+        - name: GITHUB_TOKEN_VALUE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: github_token_value_key
+              name: configuration
+        - name: GITHUB_WEBHOOKS_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_webhooks_secret
+              name: configuration
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: common-7562hkg2t4
+        - name: LD_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: ld_sdk_key
+              name: raptor-g66fmgkch7
+        - name: ROLLBAR_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_access_token
+              name: raptor-g66fmgkch7
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: new_relic_license_key
+              name: raptor-g66fmgkch7
+        - name: TOAD_MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: TOAD_RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: MIGRATIONS_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: NAME_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              key: name_prefix
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: raptor_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: CACHE_REDIS_URL
+          value: redis://default:$(REDIS_PASSWORD)@$(NAME_PREFIX)cache-raptor-redis-master:6379/0
+        - name: LD_OFFLINE
+          value: "1"
+        - name: IS_ENTERPRISE
+          value: "true"
+        - name: RAILS_MAX_THREADS
+          valueFrom:
+            configMapKeyRef:
+              key: rails_max_threads
+              name: raptor-migrate-kg8cgm9847
+        image: raptor-backend
+        imagePullPolicy: Always
+        name: raptor-db-migrate
+        resources:
+          limits:
+            cpu: "1"
+            memory: 8Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sanitycheck
+  namespace: build
+spec:
+  template:
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: redis_url
+              name: configuration
+        - name: MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: GITHUB_ENTERPRISE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: github_hostname
+              name: configuration
+        - name: INTERNAL_LEGACY_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: raptor_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: INTERNAL_LEGACY_CACHE_REDIS_URL
+          value: redis://default:$(INTERNAL_LEGACY_REDIS_PASSWORD)@$(name_prefix)cache-toad-redis-master:6379/0
+        - name: INTERNAL_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: cache-credentials-6k85t6b85m
+        - name: INTERNAL_CACHE_REDIS_URL
+          value: redis://default:$(INTERNAL_REDIS_PASSWORD)@$(name_prefix)cache-raptor-redis-master:6379/0
+        image: sanitycheck
+        imagePullPolicy: Always
+        name: sanitycheck
+      imagePullSecrets:
+      - name: zenhub-docker-registry-credentials
+      restartPolicy: OnFailure
+  ttlSecondsAfterFinished: 86400
