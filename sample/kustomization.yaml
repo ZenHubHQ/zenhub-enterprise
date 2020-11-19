@@ -6,6 +6,7 @@ namespace: <a_dedicated_namespace>
 
 bases:
   - base
+  # - https://github.com/ZenHubHQ/zenhub-enterprise.git//base
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
@@ -20,6 +21,9 @@ images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
     newTag: enterprise-3.0.0
+  - name: kraken-extension
+    newName: us.gcr.io/zenhub-public/kraken-extension
+    newTag: enterprise-3.0.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
     newTag: enterprise-3.0.0
@@ -28,7 +32,7 @@ images:
     newTag: enterprise-3.0.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: master
+    newTag: enterprise-3.0.0
 
 configMapGenerator:
   - name: configuration
