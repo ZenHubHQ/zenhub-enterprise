@@ -256,6 +256,8 @@ spec:
 
 > ⚠️ **NOTE:** TLS is not taken into account here, depending on what is installed on your cluster, it could also be handled by the Ingress
 
+> ⚠️ **NOTE:** If you are using SAML SSO or LDAP for your GitHub Enterprise Server, ensure the top and second level domain used by ZenHub are identical to that used by GitHub. This will help ensure that ZenHub can retrieve public assets (like user avatars) from GitHub.
+
 ## 6. Deployment
 
 When you are ready to deploy your cluster, you can review the diff via:
