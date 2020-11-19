@@ -8,25 +8,25 @@
 
 ## Table of Contents
 
-- [1. ZenHub On-Premise Variants](#1)
-- [2. Terms of Use](#2)
-- [3. Architecture](#3)
-- [4. Requirements](#4)
-  - [4.1 Kubernetes](#4.1)
-  - [4.2 PostgreSQL](#4.2)
-  - [4.3 MongoDB](#4.3)
-  - [4.4 RabbitMQ](#4.4)
-  - [4.5 Redis](#4.5)
-- [5. Configuration](#5)
-  - [5.1 Docker Registry](#5.1)
-  - [5.2 Resource Scaling](#5.2)
-  - [5.3 Ingress](#5.3)
-- [6. Deployment](#6)
-  - [6.1 Sanity Check](#6.1)
-  - [6.2 Application Check](#6.2)
-- [7. Upgrades](#7)
-  - [7.1 From v2 to v3](#7.1)
-  - [7.2 From v3 to v3.x](#7.2)
+- [1. ZenHub On-Premise Variants](#1.-ZenHub-On-Premise-Variants)
+- [2. Terms of Use](#2.-Terms-of-Use)
+- [3. Architecture](#3.-Architecture)
+- [4. Requirements](#4.-Requirements)
+  - [4.1 Kubernetes](#4.1-Kubernetes)
+  - [4.2 PostgreSQL](#4.2-PostgreSQL)
+  - [4.3 MongoDB](#4.3-MongoDB)
+  - [4.4 RabbitMQ](#4.4-RabbitMQ)
+  - [4.5 Redis](#4.5-Redis)
+- [5. Configuration](#5-Configuration)
+  - [5.1 Docker Registry](#5.1-Docker-Registry)
+  - [5.2 Resource Scaling](#5.2-Resource-Scaling)
+  - [5.3 Ingress](#5.3-Ingress)
+- [6. Deployment](#6-Deployment)
+  - [6.1 Sanity Check](#6.1-Sanity-Check)
+  - [6.2 Application Check](#6.2Application-Check)
+- [7. Upgrades](#7-Upgrades)
+  - [7.1 From v2 to v3](#7.1-From-v2-to-v3)
+  - [7.2 From v3 to v3.x](#7.2-From-v3-to-v3.x)
 
 ## 1. ZenHub On-Premise Variants
 
@@ -126,6 +126,7 @@ The default configuration file assumes your cluster will have access to pull Doc
 
 - Along with your ZenHub license, there will be a `dockerpassword` file which contains a base64 encoded password.
 - You will need to generate a `kubernetes.io/dockerconfigjson` secret with the following command (where `<namespace>` is the name of the Kubernetes namespace you will be deploying to):
+
   ```bash
   kubectl -n <namespace> create secret docker-registry zenhub-docker-registry-credentials \
   --docker-server=https://us.gcr.io \
@@ -134,14 +135,9 @@ The default configuration file assumes your cluster will have access to pull Doc
   --docker-password="$(cat dockerpassword | base64 --decode)"
   ```  
 
-The secret name `zenhub-docker-registry-credentials` will be expected by ZenHub deployments. You should add this to your `kustomization.yaml` file via:
+The secret name `zenhub-docker-registry-credentials` will be expected by ZenHub deployments.
 
-```yaml
-patchesStrategicMerge:
-  - set-pull-image-secret.yaml
-```
-
-**Using Your Private Registry**
+**- NOT IMPLEMENTED -** **Using Your Private Registry**
 
 Alternatively, you can choose to configure the cluster to pull images from you own private registry. To do this, edit your `kustomization.yaml` file, and change the following (where `your_own_registry` is the hostname of your private registry):
 
