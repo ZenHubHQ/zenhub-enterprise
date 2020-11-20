@@ -4466,17 +4466,47 @@ spec:
             configMapKeyRef:
               key: github_hostname
               name: configuration
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: bucket_secret_access_key
+              name: configuration
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_access_key_id
+              name: configuration
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_region
+              name: configuration
+        - name: BUCKET_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_domain
+              name: configuration
+        - name: FILES_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: files_bucket_name
+              name: configuration
+        - name: IMAGES_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: images_bucket_name
+              name: configuration
         - name: INTERNAL_LEGACY_REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: raptor_redis_password
+              key: toad_redis_password
               name: cache-credentials-6k85t6b85m
         - name: INTERNAL_LEGACY_CACHE_REDIS_URL
           value: redis://default:$(INTERNAL_LEGACY_REDIS_PASSWORD)@$(name_prefix)cache-toad-redis-master:6379/0
         - name: INTERNAL_REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: toad_redis_password
+              key: raptor_redis_password
               name: cache-credentials-6k85t6b85m
         - name: INTERNAL_CACHE_REDIS_URL
           value: redis://default:$(INTERNAL_REDIS_PASSWORD)@$(name_prefix)cache-raptor-redis-master:6379/0
