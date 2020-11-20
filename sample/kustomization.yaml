@@ -20,19 +20,19 @@ commonLabels:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-3.0.0
+    newTag: enterprise-2.44
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-3.0.0
+    newTag: enterprise-2.44
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-3.0.0
+    newTag: enterprise-2.44
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-3.0.0
+    newTag: enterprise-2.44
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: enterprise-3.0.0
+    newTag: enterprise-2.44
 
 configMapGenerator:
   - name: configuration

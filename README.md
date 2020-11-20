@@ -145,13 +145,19 @@ Alternatively, you can choose to configure the cluster to pull images from you o
 images:
 - name: kraken-webapp
   newName: <your_own_registry>/kraken-webapp
-  newTag: enterprise-3.0.0
+  newTag: enterprise-2.44
 - name: raptor-backend
   newName: <your_own_registry>/raptor-backend
-  newTag: enterprise-3.0.0
+  newTag: enterprise-2.44
 - name: toad-backend
   newName: <your_own_registry>/toad-backend
-  newTag: enterprise-3.0.0
+  newTag: enterprise-2.44
+- name: kraken-extension
+  newName: <your_own_registry>/kraken-extension
+  newTag: enterprise-2.44
+- name: sanitycheck
+  newName: <your_own_registry>/sanitycheck
+  newTag: enterprise-2.44
 
 patchesStrategicMerge:
   - set-custom-pull-image-secret.yaml
