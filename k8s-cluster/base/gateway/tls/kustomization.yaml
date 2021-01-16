@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesStrategicMerge:
+  - set-gateway-tls.yaml
+  - set-gateway-buckets-vars.yaml
+
+configMapGenerator:
+  - name: zhe-gw-conf
+    behavior: replace
+    files:
+      - default.conf.template
+# secretGenerator:
+#   - name: gw-certificate
+#     files:
+#       - ssl/tls.crt
+#       - ssl/tls.key
+#     type: "kubernetes.io/tls"

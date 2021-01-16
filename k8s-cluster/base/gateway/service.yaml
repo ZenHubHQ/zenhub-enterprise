@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: nginx-gateway
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  selector:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  sessionAffinity: ClientIP
+  type: ClusterIP
+---

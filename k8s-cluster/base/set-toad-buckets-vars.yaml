@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-api
+          env:
+            # FIXME put that mapping in base and udpate Cloud with it
+            # FIXME see https://app.zenhub.com/workspaces/devops-5b9af195dfeccd3433cd71b3/issues/zenhubhq/devops/663
+            - name: IS_UPLOAD_FILE_TO_LOCAL
+              # value: "false"
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: local_files
+            - name: S3_USER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_domain
+            - name: S3_USER_FILES_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: files_bucket_name
+            - name: S3_USER_FILES_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_access_key_id
+            - name: S3_USER_FILES_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_region
+            - name: S3_USER_IMAGES_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: images_bucket_name
+            - name: S3_USER_IMAGES_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_access_key_id
+            - name: S3_USER_IMAGES_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_region
+            - name: S3_USER_IMAGES_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: bucket_secret_access_key
+                  name: configuration
+            - name: S3_USER_FILES_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: bucket_secret_access_key
+                  name: configuration
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-websocket
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-websocket
+          env:
+            # FIXME put that mapping in base and udpate Cloud with it
+            - name: IS_UPLOAD_FILE_TO_LOCAL
+              # value: "false"
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: local_files
+            - name: S3_USER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_domain
+            - name: S3_USER_FILES_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: files_bucket_name
+            - name: S3_USER_FILES_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_access_key_id
+            - name: S3_USER_FILES_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_region
+            - name: S3_USER_IMAGES_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: images_bucket_name
+            - name: S3_USER_IMAGES_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_access_key_id
+            - name: S3_USER_IMAGES_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_region
+            - name: S3_USER_IMAGES_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: bucket_secret_access_key
+                  name: configuration
+            - name: S3_USER_FILES_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: bucket_secret_access_key
+                  name: configuration

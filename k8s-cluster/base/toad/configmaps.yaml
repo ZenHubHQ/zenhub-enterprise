@@ -1,0 +1,55 @@
+apiVersion: v1
+data:
+  web_concurrency: "4"
+  webhook_port: "3031"
+kind: ConfigMap
+metadata:
+  name: toad-webhook
+---
+apiVersion: v1
+data:
+  attribution_app_id: ""
+  ghwebhook_enabled: "true"
+  ghwebhook_whitelist: "*"
+  github_server_address: $(github_hostname)
+  is_enterprise: "true"
+  mailchimp_key: ""
+  mailchimp_list: ""
+  mailgun_key: ""
+  mixpanel_key: ""
+  new_relic_enabled: "false"
+  newrelic_app_name: ""
+  newrelic_trace: ""
+  node_env: enterprise
+  node_options: --max-old-space-size=2048
+  port: "3031"
+  queue_backend: rabbitmq
+  queue_db: "0"
+  raptor_graphql_enabled: "1"
+  raptor_uri: http://raptor-api
+  redis_host: cache-toad-redis-master
+  redis_port: "6379"
+  s3_bucket: ""
+  s3_key: ""
+  s3_user_files_bucket: ""
+  s3_user_files_download_expiration: "60000"
+  s3_user_files_key: ""
+  s3_user_files_region: ""
+  s3_user_files_upload_expiration: "300000"
+  s3_user_images_bucket: ""
+  s3_user_images_download_expiration: "300000"
+  s3_user_images_key: ""
+  s3_user_images_region: ""
+  s3_user_images_upload_expiration: "300000"
+  slack_app_id: ""
+  stripe_public_key: ""
+  user_image_host: $(subdomain_suffix).$(domain_tld)/images
+  zenhub_env: enterprise
+  zenhub_server_address: https://$(subdomain_suffix).$(domain_tld)/api
+  zenhub_staging_server_address: https://$(subdomain_suffix).$(domain_tld)/api
+  zenhub_staging_webapp_address: https://$(subdomain_suffix).$(domain_tld)
+  zenhub_webapp_address: https://$(subdomain_suffix).$(domain_tld)
+  zenhub_webhook_address: https://$(subdomain_suffix).$(domain_tld)/webhook
+kind: ConfigMap
+metadata:
+  name: toad

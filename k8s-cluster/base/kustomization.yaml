@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - caches
+  - configuration
+  # - gateway # disabled while offering the option to use local files  /options/gateway-buckets and options/gateway-local-files
+  - kraken
+  - raptor
+  - toad
+
+# temporary dirty hack, until https://app.zenhub.com/workspaces/devops-5b9af195dfeccd3433cd71b3/issues/zenhubhq/devops/663 is tackled
+# this should not be in enterprise/base (since ZHE vanilla doesn't need this)
+patchesStrategicMerge:
+  - set-toad-buckets-vars.yaml
+  - set-db-ca-mounts.yaml
+  - set-docker-pull.yaml
+  - set-var-mongo-shortindex.yaml
+
+secretGenerator:
+  - name: postgres-ca-bundle
+    literals:
+      - postgres-ca.pem=""
+  - name: mongo-ca-bundle
+    literals:
+      - mongo-ca.pem=""
