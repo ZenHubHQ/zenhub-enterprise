@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx-gateway
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              scheme: HTTPS
+              port: https
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/nginx/ssl/
+              name: gw-crt-volume
+              readOnly: true
+          resources:
+            limits:
+              cpu: 500m
+              memory: 400Mi
+            requests:
+              cpu: 250m
+              memory: 200Mi
+        - name: monitor
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 250m
+              memory: 200Mi
+            requests:
+              cpu: 250m
+              memory: 200Mi
+      volumes:
+        - name: gw-crt-volume
+          secret:
+            secretName: nginx-ssl
+            items:
+              - key: tls.key
+                path: nginx-gw.key
+              - key: tls.crt
+                path: nginx-gw.crt
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-gateway
+spec:
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443

@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-api
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-toad
+          imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-cron
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-toad
+          imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-websocket
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-toad
+          imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-webhook
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-toad
+          imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-worker
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-toad
+          imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-api
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-admin
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-sidekiq-worker
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: raptor-db-migrate
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kraken-webapp
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+# ---
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: sanitycheck
+# spec:
+#   template:
+#     spec:
+#       imagePullSecrets:
+#         - name: zenhub-docker-registry-credentials

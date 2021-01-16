@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- apps_v1_deployment_kraken-webapp.yaml
+- configmaps.yaml
+- secret.yaml
+- service.yaml

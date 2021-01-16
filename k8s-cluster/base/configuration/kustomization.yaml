@@ -1,0 +1,165 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# resources:
+#   - configMap.yaml
+#   - secret.yaml
+
+configMapGenerator:
+  - name: configuration
+    literals:
+      - mongodb_short_index=no
+      - local_files=no
+      - bucket_domain="local"
+      - files_bucket_name="local"
+      - bucket_access_key_id="local"
+      - bucket_region="local"
+      - images_bucket_name="local"
+
+secretGenerator:
+  - name: configuration
+    literals:
+      - bucket_secret_access_key="local"
+  - name: internal
+
+configurations:
+  - var_references.yaml
+
+vars:
+  # following are used in configMap kraken-webapp and toad
+  - name: domain_tld
+    objref:
+      kind: ConfigMap
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.domain_tld
+  - name: subdomain_suffix
+    objref:
+      kind: ConfigMap
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.subdomain_suffix
+  - name: github_hostname
+    objref:
+      kind: ConfigMap
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.github_hostname
+
+  # following are read but not used (simple existence assertion to catch misconfiguration early at the kustomize build step)
+  - name: github_hostname_from_config_map_configuration
+    objref:
+      kind: ConfigMap
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.github_hostname
+  - name: enterprise_license_token_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.enterprise_license_token
+  - name: github_app_secret_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.github_app_secret
+  - name: postgres_url_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.postgres_url
+  - name: mongo_url_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.mongo_url
+  - name: redis_url_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.redis_url
+  - name: rabbitmq_url_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.rabbitmq_url
+  - name: internal_auth_token_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.internal_auth_token
+  - name: crypto_pass_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.crypto_pass
+  - name: secret_key_base_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.secret_key_base
+  - name: raptor_admin_password_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.raptor_admin_password
+  - name: raptor_lockbox_master_key_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.lockbox_master_key
+  # following are soon to be legacy
+  - name: github_token_value_key_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.raptor_admin_password
+  - name: github_webhooks_secret_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.raptor_admin_password
+  - name: ghwebhook_pass_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.raptor_admin_password
+  - name: ghwebhook_secret_from_secret_internal
+    objref:
+      kind: Secret
+      name: internal
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.raptor_admin_password

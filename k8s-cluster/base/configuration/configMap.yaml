@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configuration
+data:
+  mongodb_short_index: "true"
+  local_files: "false"
+  bucket_domain: ""
+  files_bucket_name: ""
+  bucket_access_key_id: ""
+  bucket_region: ""
+  images_bucket_name: ""
+  # subdomain_suffix ...
+  # domain_tld ...
+  # github_app_id: ...
+  # github_hostname: ...

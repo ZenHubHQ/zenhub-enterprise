@@ -4,15 +4,26 @@ kind: Kustomization
 # [EDIT] Specify the Kubernetes namespace into which ZenHub will be deployed.
 namespace: <a_dedicated_namespace>
 
-bases:
-  - base
-  # - https://github.com/ZenHubHQ/zenhub-enterprise.git//base
+resources:
+  - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/base
+  - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/gateway-buckets
+  # optional Job to check configuration is setup properly (test databases/caches and storage access)
+  - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/sanitycheck
+  # - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/gateway-local-files # to use in an environment without buckets
+  # to use with a cloned repository
+  # - base
+  # - options/sanitycheck
+  # - options/gateway-buckets
+  # # - options/gateway-local-files # to use in an environment without buckets
+  # Example of ingress
+  # - options/ingress
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
-  app.kubernetes.io/instance: production
+  app.kubernetes.io/part-of: zenhub-enterprise
+  app.kubernetes.io/name: zenhub
+  app.kubernetes.io/instance: zhe-vanilla
   app.kubernetes.io/managed-by: kustomize
-  app.kubernetes.io/name: zenhub-enterprise
   app.kubernetes.io/version: 3.0.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
@@ -31,8 +42,14 @@ images:
     newName: us.gcr.io/zenhub-public/toad-backend
     newTag: enterprise-2.44
   - name: sanitycheck
-    newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: enterprise-2.44
+    newName: us.gcr.io/zenhub-ops/sanitycheck
+    newTag: master
+  - name: busybox
+    newName: docker.io/library/busybox
+    newTag: latest
+  - name: nginx
+    newName: docker.io/library/nginx
+    newTag: latest
 
 configMapGenerator:
   - name: configuration
@@ -60,12 +77,16 @@ configMapGenerator:
       # The secret value should be passed to `github_app_secret` below (in the
       # "secretGenerator" section)
       - github_app_id=<github_oauth_app_id>
+      # Local files instead of buckets !! Only for test !!
+      # - local_files=yes
       # Buckets for object azure_rm_storage
       - bucket_access_key_id=<access_key_id>
       - bucket_region=<bucket_region>
       - bucket_domain=<bucket_public_domain>
       - files_bucket_name=<bucket_name>
       - images_bucket_name=<bucket_name>
+      # AWS DocumentDB as MongoDB
+      # - mongodb_short_index=yes
 
 secretGenerator:
   - name: configuration
@@ -81,25 +102,61 @@ secretGenerator:
       - rabbitmq_url=amqp://<rabbitmq_username>:<rabbitmq_password>@<rabbitmq_hostname>:<rabbitmq_port>
       # [EDIT] The secret for the GitHub OAuth app. See github_app_id above.
       - github_app_secret=<github_oauth_app_secret>
-      # [EDIT] Private key used to encrypt GitHub token retrieved and cached in
-      # the database. If you migrating from ZenHub Enterprise version 2, please
-      # recover the values from your existing installation (see our v2 to v3
-      # upgrade instructions).
-      - github_token_value_key=<some-key>
-      # [EDIT] Secret for authenticating GitHub webhooks from Raptor. This is
-      # set in your GitHub Enterprise instance.
-      - github_webhooks_secret=<some-secret>
-      # [EDIT] Encrypt repository ID. Part of the GitHub webhook callback URL.
-      - ghwebhook_pass=<some-secret>
-      # [EDIT] Should be the same value as `github_webhooks_secret` above. This
-      # one is used by the Toad services.
-      - ghwebhook_secret=<some-secret>
-      # [EDIT] A random string used to seed the encryption of sensitive data in
-      # the Raptor database.
-      #
-      # NOTE: If you migrating from ZenHub Enterprise version 2, please recover
+      # [EDIT] Bucket secret access key
+      - bucket_secret_access_key=<some-key>
+      # [EDIT] License Token
+      - enterprise_license_token=<zhe-license-jwt>
+
+  - name: internal
+    # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer
+    behavior:
+      merge
+      # NOTE:
+      # => If you migrating from ZenHub Enterprise version 2, please recover
       # the values from your existing installation (see our v2 to v3 upgrade
       # instructions)
-      - secret_key_base=<some-key>
-      # Bucket secret access key
-      - bucket_secret_access_key=<some-key>
+      # => If you are setting up a new Zenhub Enterprise, respect the regexp format
+      # on Linux, you can run the following to generate the secret as follow
+      # for most secret
+      # tr -dc A-Za-z0-9 </dev/urandom | head -c ${1-38} ; echo ''
+      # for the one requiring an hex format
+      # tr -dc a-f0-9 </dev/urandom | head -c ${1-64} ; echo ''
+    literals:
+      # [EDIT]
+      - toad_redis_password=<[A-Za-z0-9]{24}>
+      # [EDIT]
+      - raptor_redis_password=<[A-Za-z0-9]{24}>
+      # [EDIT]
+      - internal_auth_token=<[A-Za-z0-9]{38}>
+      # [EDIT]
+      - raptor_admin_password=<[A-Za-z0-9]{38}>
+      # [EDIT]
+      - crypto_pass=<[A-Za-z0-9]{38}>
+      # [EDIT]
+      - lockbox_master_key=<[a-f0-9]{64}>
+      # [EDIT] A random string used to seed the encryption of sensitive data in
+      # the Raptor database.
+      - secret_key_base=<[A-Za-z0-9]{38}>
+      # [EDIT] Private key used to encrypt GitHub token retrieved and cached in
+      # the database.
+      - github_token_value_key=<[a-f0-9]{64}>
+      # [EDIT] Secret for authenticating GitHub webhooks from Raptor. This is
+      # set in your GitHub Enterprise instance.
+      - github_webhooks_secret=<[A-Za-z0-9]{38}>
+      # [EDIT] Encrypt repository ID. Part of the GitHub webhook callback URL.
+      - ghwebhook_pass=<[A-Za-z0-9]{38}>
+      # [EDIT] Should be the same value as `github_webhooks_secret` above. This
+      # one is used by the Toad services.
+      - ghwebhook_secret=<[A-Za-z0-9]{38}>
+
+  # Certificates for SSL/TLS
+  - name: nginx-ssl
+    files:
+      # certificate name must be tls.crt and certificate key must be tls.key
+      - <some_path>/tls.crt
+      - <some_path>/tls.key
+    type: "kubernetes.io/tls"
+  # - name: postgres-ca-bundle
+  #   behavior: replace
+  #   files:
+  #     - <some_path>/<some_pem>

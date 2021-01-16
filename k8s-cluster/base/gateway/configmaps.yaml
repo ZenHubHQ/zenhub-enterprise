@@ -1,0 +1,148 @@
+apiVersion: v1
+data:
+  default.conf.template: "upstream webapp {\n  server ${WEBAPP};\n}\n\nupstream api {\n  server ${API};\n}\n\nupstream api-socket {\n  hash $remote_addr consistent;\n  server ${SOCKET};\n}\n\nupstream files {\n  server ${FILES};\n}\n\nupstream webhook {\n  server ${WEBHOOK};\n}\n\nupstream raptor-admin {\n  server ${RAPTORADMIN};\n}\n\n## Path based\n\nserver {\n    listen 80;\n    access_log /var/log/nginx/access.log;\n    error_log /var/log/nginx/error.log error;\n    server_name _;\n\n    error_page 503 /maintenance.html;\n\n    location /maintenance.html {\n        root /usr/share/nginx/html;\n        internal;\n    }\n\n    location /healthcheck {\n        access_log\toff;\n        error_log\toff;\n        return 200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n    location /status {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n\n        access_log\toff;\n        error_log\toff;\n        return 200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n    location /usage {\n        access_log\toff;\n        error_log\toff;\n        return 404;\n    }\n\n    keepalive_timeout 70;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubdomains\";\n    add_header X-Frame-Options DENY;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n    proxy_set_header X-Forwarded-Proto $scheme;\n\n    location /raptor-admin/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://raptor-admin/;\n        proxy_http_version 1.1;\n\n        client_max_body_size 30M;\n\n        proxy_redirect off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Connection \"\";\n        proxy_buffering off;\n    }\n\n    location /webhook/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://webhook/;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /api/socket.io {\n        rewrite ^/api/socket.io(.*)$ /socket.io$1;\n    }\n\n    location /socket.io {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://api-socket;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /api/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://api/;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /upload/ {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n        \n        proxy_pass http://api;\n        proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location / {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n\n        proxy_pass http://webapp;\n        proxy_http_version 1.1;\n\n        client_max_body_size 30M;\n\n        proxy_redirect off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Connection \"\";\n        proxy_buffering off;\n    }\n}\n"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-gw-conf
+---
+apiVersion: v1
+data:
+  api: toad-api
+  files: toad-api
+  raptoradmin: raptor-admin
+  socket: toad-websocket
+  webapp: kraken-webapp
+  webhook: toad-webhook
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-gw-vars
+---
+apiVersion: v1
+data:
+  maintenance.html: |
+    <!DOCTYPE html>
+    <html>
+
+      <head>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/style.css">
+      </head>
+
+      <body>
+        <center><h1>ZenHub Enterprise is currently in Maintenance</h1></center>
+        <center><h2>Please Contact your Administrator if you require assistance</h2></center>
+      </body>
+
+    <center><footer>Got a Question?</footer></center>
+    <center><footer><a href="mailto:enterprise@zenhub.com">Contact us</href></footer></center>
+    </html>
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-maitenance-page
+---
+apiVersion: v1
+data:
+  ghe-maintenance-monitor.sh: |-
+    #!/bin/bash
+    # GitHub Enterprise Maintenance Monitor Service V2 - K8s
+    # ZenHub (c)
+
+    DIR_FILE="/data/zhe-monitor/maintenance-status"
+
+    function create_file {
+      echo "ZHE Maintenance Enabled: Manual"
+      echo "[$(date)] ZHE maintenance Enable" > $DIR_FILE
+    }
+
+    function delete_file {
+      echo "ZHE Maintenance Disabled: ${responseHistory[*]}"
+      rm $DIR_FILE
+    }
+
+    ### --- MAIN BLOCK --- ###
+    while true; do
+
+      if [ "$MAINTENANCE_MODE" == "TRUE" ]
+      then
+        create_file
+
+      else
+
+        # make sure the test file is not present
+        # if [ -e $DIR_FILE ]; then
+
+        #   rm $DIR_FILE
+
+        # fi
+
+        # Init: Because we need it for later, Reset: Because we no longer need it at the end of the iteration
+        goodCode=0;
+        maintCode=0;
+        response=$(curl -s -o /dev/null -H "Cache-Control: no-cache" -w "%{http_code}" "$GITHUB_SERVER_ADDRESS"/status)
+
+        # Replaces the array values for the last three HTTP codes
+        responseHistory[0]=${responseHistory[1]};
+        responseHistory[1]=${responseHistory[2]};
+        responseHistory[2]=$response;
+
+        for i in "${responseHistory[@]}"; do
+
+          case $i in
+
+            200) let goodCode=goodCode+1;;
+            503) let maintCode=maintCode+1;;
+            *) echo "The response ($i) is ignored";;
+
+          esac
+
+        done
+
+        echo "G:$goodCode // M:$maintCode // A:${responseHistory[*]}";
+
+        if [ $goodCode -eq 3 ]; then
+
+          # if file exists -> remove file to disable maintenance
+          # if file DNE -> don't do anything
+          if [ -e $DIR_FILE ]; then
+
+            delete_file
+
+          fi
+
+        elif [ $maintCode -eq 3 ]; then
+
+          # if file exists -> don't do anything
+          # if file DNE -> create file to enable maintenance
+          if [ ! -e $DIR_FILE ]; then
+
+            create_file
+
+          fi
+
+        fi
+
+      fi
+
+    sleep ${WAITING_TIME:-30};
+
+    done
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: zhe-monitor
+---

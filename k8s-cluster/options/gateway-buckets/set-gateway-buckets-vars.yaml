@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx-gateway
+          env:
+            - name: BUCKET_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  key: bucket_domain
+                  name: configuration
+            - name: BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  key: images_bucket_name
+                  name: configuration
