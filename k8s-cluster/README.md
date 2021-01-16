@@ -275,7 +275,13 @@ To create the TLS secret fill the secret generator section at the bottom of the 
     type: "kubernetes.io/tls"
 ```
 
-- a bash script to create a self signed certificate is provided [here](options/tls/ssl/self-signed-creator.sh)
+- a bash script to create a self signed certificate is provided [here](options/tls/ssl/self-signed-creator.sh) 
+
+- usage:
+
+```bash
+./self-signed-creator.sh <your_namesapce>
+```
 
 ```bash
 #!/bin/bash
