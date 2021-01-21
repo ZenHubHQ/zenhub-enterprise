@@ -6,10 +6,10 @@ namespace: <a_dedicated_namespace>
 
 resources:
   - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/base
-  - github.com/ZenHubHQ/zenhub-enterprise.git/tree/3.0.0-beta.3/k8s-cluster/options/gateway-buckets
+  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/gateway-buckets
   # optional Job to check configuration is setup properly (test databases/caches and storage access)
-  - github.com/ZenHubHQ/zenhub-enterprise.git/tree/3.0.0-beta.3/k8s-cluster/options/sanitycheck
-  # - github.com/ZenHubHQ/zenhub-enterprise.git/tree/3.0.0-beta.3/k8s-cluster/options/gateway-local-files # to use in an environment without buckets
+  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/sanitycheck
+  # - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/gateway-local-files # to use in an environment without buckets
   # to use with a cloned repository
   # - base
   # - options/sanitycheck
