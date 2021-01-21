@@ -31,19 +31,19 @@ commonLabels:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: sanitycheck
     newName: us.gcr.io/zenhub-ops/sanitycheck
-    newTag: master
+    newTag: 3.0.0-beta3
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -149,12 +149,7 @@ secretGenerator:
       # one is used by the Toad services.
       - ghwebhook_secret=<[A-Za-z0-9]{38}>
 
-  # Certificates for SSL/TLS
-  - name: nginx-ssl
-    files:
-      # certificate name must be tls.crt and certificate key must be tls.key
-      - <some_path>/tls.crt
-      - <some_path>/tls.key
+    # Certificates for SSL/TLS
     type: "kubernetes.io/tls"
   # - name: postgres-ca-bundle
   #   behavior: replace

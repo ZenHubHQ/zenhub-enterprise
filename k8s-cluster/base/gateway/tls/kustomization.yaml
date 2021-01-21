@@ -9,9 +9,3 @@ configMapGenerator:
     behavior: replace
     files:
       - default.conf.template
-# secretGenerator:
-#   - name: gw-certificate
-#     files:
-#       - ssl/tls.crt
-#       - ssl/tls.key
-#     type: "kubernetes.io/tls"

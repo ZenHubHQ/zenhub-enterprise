@@ -12,6 +12,7 @@
   - [2.3 MongoDB](#23-mongodb)
   - [2.4 RabbitMQ](#24-rabbitmq)
   - [2.5 Redis](#25-redis)
+  - [2.6 Files and Images Storage](#26-Files-and-Images-Storage)
 - [3. Configuration](#3-configuration)
   - [3.1 Docker Registry](#31-docker-registry)
   - [3.2 Resource Scaling](#32-resource-scaling)
@@ -19,9 +20,13 @@
 - [4. Deployment](#4-deployment)
   - [4.1 Sanity Check](#41-sanity-check)
   - [4.2 Application Check](#42-application-check)
+  - [4.3 TLS/SSL](#43-TLS/SSL)
+  - [4.4 Buckets](#44-Buckets)
+  - [4.5 AWS DocumentDB as MongoDB](#45-aws-documentdb-as-mongodb)
 - [5. Upgrades](#5-upgrades)
   - [5.1 Migration from ZHE2 to ZHE3](#51-migration-from-zhe2-to-zhe3)
   - [5.2 From v3 to v3.x](#52-from-v3-to-v3x)
+- [6. Roadmap](#6-roadmap)
 
 ## 1. Getting Started
 This README will be your guide to setting up ZenHub in your Kubernetes cluster. If you do not currently run a Kubernetes cluster, but you still want to self-host ZenHub, please go back to the [**virtual-machine**](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine) folder. If this is your first time using ZenHub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Slack community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
@@ -36,7 +41,7 @@ In order to get started with ZenHub, you must have an existing Kubernetes cluste
 
 - Be using Kubernetes version 1.16 or greater
 - Have `kubectl` installed locally with credentials to access the cluster
-- Have `kustomize` installed locally (tested with 3.7 and 3.9)
+- Have [`kustomize`](https://kustomize.io/) installed locally (tested with 3.7 and 3.9)
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
 - Have the capability to pull the Docker images from ZenHub's public Docker registry or have access to a private Docker registry where you can push images (and the cluster should have the ability to pull from that private registry)
 
@@ -61,6 +66,29 @@ ZenHub will require a connection to RabbitMQ. We recommend the latest 3.x versio
 ZenHub makes use of 1 externally managed Redis instance. This Redis instance that is used by our `raptor-sidekiq-worker` service requires data persistence. We recommend the latest 5.x version.
 
 There are two additional Redis instanceses that will run inside the cluster via our configuration. You do not need to worry about those.
+
+### 2.6 Files and Images Storage
+
+Zenhub will required two object storage buckets to store files and images attached to issues using Zenhub's webbapp.
+
+Resources required:
+
+- 2 buckets
+  * `files` bucket
+  * `images` bucket
+- IAM user access_key_id
+- IAM user access_key_secret
+- Bucket policy or permissions allowing bucket `list` and objects `get` from K8s nodes
+
+> ⚠️ **NOTE:** At the moment only AWS S3 API is supported.
+
+To access and write these objects Zenhub also require CLI/API crdentials ( access_key_id/access_key_secret or simmiliar ) for a IAM user with at least read and write access.
+
+> ⚠️ **NOTE:** At the moment only IAM credentials are supported. There is some work in progress to support roles.
+
+IAM credetials are used by ZHE to write ( `put` ) objects and to create temporary pre-signed links.
+
+To read ( `get` ) images and allow users to see uploaded images embebed in the issues, the cluster nodes or network need to have propper access.
 
 ## 3. Configuration
 
@@ -101,19 +129,19 @@ Alternatively, you can choose to configure the cluster to pull images from you o
 images:
 - name: kraken-webapp
   newName: <your_own_registry>/kraken-webapp
-  newTag: enterprise-2.44
+  newTag: enterprise-2.44-beta3
 - name: raptor-backend
   newName: <your_own_registry>/raptor-backend
-  newTag: enterprise-2.44
+  newTag: enterprise-2.44-beta3
 - name: toad-backend
   newName: <your_own_registry>/toad-backend
-  newTag: enterprise-2.44
+  newTag: enterprise-2.44-beta3
 - name: kraken-extension
   newName: <your_own_registry>/kraken-extension
-  newTag: enterprise-2.44
+  newTag: enterprise-2.44-beta3
 - name: sanitycheck
   newName: <your_own_registry>/sanitycheck
-  newTag: enterprise-2.44
+  newTag: 3.0.0-beta3
 ```
 
 This will configure all the deployments to use your registry.
@@ -127,8 +155,8 @@ docker login -u _json_key -p "$(cat dockerpassword | base64 --decode)" https://u
 
 # Push, tag and pull ZenHub images into your registry
 your_registry=<your_own_registry_without_trailing_slash>
-tag=enterprise-3.0.0
-images="kraken-webapp toad-backend raptor-backend"
+tag=enterprise-2.44-beta3
+images="kraken-webapp toad-backend raptor-backend kraken-extension"
 for i in $(echo $images); do docker pull us.gcr.io/zenhub-ops/${i}:${tag} && docker tag us.gcr.io/zenhub-public/${i}:master ${your_registry}/${i}:${tag} && docker push ${your_registry}/${i}:${tag}; done
 ```
 
@@ -175,9 +203,9 @@ spec:
 
 ### 3.3 Ingress
 
-By default, we don't make any assumptions about the type of Ingress that is used with the cluster. It will be your responsibility to expose ZenHub through your preferred Ingress. The only requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 80.
+By default, we don't make any assumptions about the type of Ingress that is used with the cluster. It will be your responsibility to expose ZenHub through your preferred Ingress. The only requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 443.
 
-The provided manifests exposes ZenHub behind a single ClusterIP service, listening on port 80. You will need to setup and configure HTTPS through your Ingress (SSL configuration is not within the scope of "ZenHub for Kubernetes").
+The provided manifests exposes ZenHub behind a single ClusterIP service, listening on port 443. You will need to setup and configure HTTPS through your Ingress (Public facing SSL configuration is not within the scope of "ZenHub for Kubernetes").
 
 An example of the ClusterIP definition:
 
@@ -189,9 +217,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - name: http
-      port: 80
-      targetPort: 80
+    - name: https
+      port: 443
+      targetPort: 443
 ```
 
 An example of the Ingress definition:
@@ -212,7 +240,7 @@ spec:
 
 > ⚠️ **NOTE:** These examples don't make any assumptions about your cluster. They might not work exactly as shown as they could be missing some annotations to interoperate with your existing Ingress definition.
 
-> ⚠️ **NOTE:** TLS is not taken into account here, depending on what is installed on your cluster, it could also be handled by the Ingress
+> ⚠️ **NOTE:** Public Facing TLS is not taken into account here, depending on what is installed on your cluster, it could also be handled by the Ingress
 
 > ⚠️ **NOTE:** If you are using SAML SSO or LDAP for your GitHub Enterprise Server, ensure the top and second level domain used by ZenHub are identical to that used by GitHub. This will help ensure that ZenHub can retrieve public assets (like user avatars) from GitHub.
 
@@ -261,54 +289,12 @@ To verify that you deployment was successful, you should be able to visit the Ze
 
 ### 4.3 TLS/SSL
 
-The `nginx-gateway` entrypoint require a self signed ssl certificate.
+#### 4.3.1 Application entrypoint
 
-To create the TLS secret fill the secret generator section at the bottom of the [kutomization.yaml](kustomization.yaml)
+The `nginx-gateway` entrypoint uses HTTPS by default and utilizes a self signed ssl certificate.
+The certificate is automatic created.
 
-```yaml
-# Certificates for SSL/TLS
-  - name: nginx-ssl
-    files:
-      # certificate name must be tls.crt and certificate key must be tls.key
-      - <some_path>/tls.crt
-      - <some_path>/tls.key
-    type: "kubernetes.io/tls"
-```
-
-- a bash script to create a self signed certificate is provided [here](options/tls/ssl/self-signed-creator.sh) 
-
-- usage:
-
-```bash
-./self-signed-creator.sh <your_namesapce>
-```
-
-```bash
-#!/bin/bash
-set -e
-
-NAMESPACE=$1
-DURATION=1095
-NAME=tls
-
-function create_self_signed {
-    openssl req -x509 \
-    -nodes \
-    -days $DURATION \
-    -newkey rsa:2048 \
-    -keyout $NAME.key \
-    -subj "/C=CA/ST=BC/L=Vancouver/O=Zenhub, Inc./CN=*.${NAMESPACE}.svc.cluster.local" \
-    -out $NAME.crt
-}
-
-create_self_signed
-```
-
-- certificate and key files must be named `tls.crt` and `tls.key`
-
-- the files can be store any were and referenced inthe code with the full path.
-
-#### 4.4.1 Database CA certificate
+#### 4.3.2 Database CA certificate
 
 TLS connection with Postgres utilizes the secret generator at the end of the [kutomization.yaml](kustomization.yaml)
 
@@ -321,13 +307,39 @@ TLS connection with Postgres utilizes the secret generator at the end of the [ku
 
 - the files can be store any were and referenced inthe code with the full path.
 
-**⚠️ NOTE**: TLS connection for MongoDB is still in progress
+> ⚠️ **NOTE:** TLS connection for MongoDB is still in progress
 
-### 4.4 Enviroment without buckets
+### 4.4 Buckets
 
-**⚠️ NOTE**: This option will only be avalible during the `BETA` phase
+To configure ZHE to store uploaded images and files as object in buckets all this varibales need to provided in kustomization.yaml
 
-**⚠️ NOTE**: Using this option the enviroment is fucntional but files can **not** be uploaded. A error message will be shown.
+```yaml
+configMap:
+  - bucket_access_key_id=<access_key_id>
+  - bucket_region=<bucket_region>
+  - bucket_domain=<bucket_public_domain>
+  - files_bucket_name=<bucket_name>
+  - images_bucket_name=<bucket_name>
+secret:
+  - bucket_secret_access_key=<some-key>
+```
+
+> ⚠️ **NOTE:** At the moment only AWS S3 API is supported.
+> ⚠️ **NOTE:** At the moment only IAM credentials are supported. There is some work in progress to support roles.
+
+IAM credetials are used by ZHE to write ( `put` ) objects and to create temporary pre-signed links.
+
+To read ( `get` ) images and allow users to see uploaded images embebed in the issues, the cluster nodes or network need to have propper access. This access can be provided indifferent ways:
+
+- Bucket policy/permissions allowing bucket `list` and objects `get` to K8s cluster VPC
+- Bucket policy/permissions allowing bucket `list` and objects `get` to K8s cluster VPC S3 Endpoint
+- Bucket policy/permissions allowing bucket `list` and objects `get` to K8s nodes role
+
+#### 4.4.1 Enviroment without buckets
+
+> ⚠️ **NOTE:** This option will only be avalible during the `BETA` phase
+
+> ⚠️ **NOTE:** Using this option the enviroment is fucntional but files can **not** be uploaded. A error message will be shown.
 
 To create a test enviroment whitout buckets
 
@@ -363,8 +375,7 @@ To utilize AWS DocumentDB as MongoDB:
 
 - TLS need to be disabled in the parameter group
 
-**⚠️ NOTE**: We are investigation a solution to utilize TLS connections
-
+> ⚠️ **NOTE:** We are investigation a solution to utilize TLS connections
 
 ## 5. Upgrades
 
@@ -481,3 +492,14 @@ kustomize build . | kubectl apply -f-
 
 ##### 3. Finalize
 * store the updated `kustomization.yaml`
+
+## 6. Roadmap
+
+Future features in progress:
+
+- MongoDB/DocuemntDB TLS
+- Browsers extensions downlaod
+- Admin interface UI
+- previous ZHE versions migration scripts
+- support for Github Enterprise 3
+- support IAM roles to authorize ZHE to write bucket objects
