@@ -12,7 +12,7 @@
   - [2.3 MongoDB](#23-mongodb)
   - [2.4 RabbitMQ](#24-rabbitmq)
   - [2.5 Redis](#25-redis)
-  - [2.6 Files and Images Storage](#26-Files-and-Images-Storage)
+  - [2.6 File and Image Storage](#26-File-and-Image-Storage)
 - [3. Configuration](#3-configuration)
   - [3.1 Docker Registry](#31-docker-registry)
   - [3.2 Resource Scaling](#32-resource-scaling)
@@ -20,8 +20,8 @@
 - [4. Deployment](#4-deployment)
   - [4.1 Sanity Check](#41-sanity-check)
   - [4.2 Application Check](#42-application-check)
-  - [4.3 TLS/SSL](#43-TLS/SSL)
-  - [4.4 Buckets](#44-Buckets)
+  - [4.3 TLS/SSL](#43-tls-ssl)
+  - [4.4 Buckets](#44-buckets)
   - [4.5 AWS DocumentDB as MongoDB](#45-aws-documentdb-as-mongodb)
 - [5. Upgrades](#5-upgrades)
   - [5.1 Migration from ZHE2 to ZHE3](#51-migration-from-zhe2-to-zhe3)
@@ -67,28 +67,28 @@ ZenHub makes use of 1 externally managed Redis instance. This Redis instance tha
 
 There are two additional Redis instanceses that will run inside the cluster via our configuration. You do not need to worry about those.
 
-### 2.6 Files and Images Storage
+### 2.6 File and Image Storage
 
-Zenhub will required two object storage buckets to store files and images attached to issues using Zenhub's webbapp.
+ZenHub requires two object storage buckets. One to store files (PDFs, Word documents, etc...) and another to store images and videos which are attached to issues using ZenHub's webapp.
 
 Resources required:
 
 - 2 buckets
   * `files` bucket
   * `images` bucket
-- IAM user access_key_id
-- IAM user access_key_secret
-- Bucket policy or permissions allowing bucket `list` and objects `get` from K8s nodes
+- IAM user `access_key_id`
+- IAM user `access_key_secret`
+- Bucket policy or permissions allowing bucket `list` and objects `get` from Kubernetes nodes
 
-> ⚠️ **NOTE:** At the moment only AWS S3 API is supported.
+> ⚠️ **NOTE:** At the moment, only AWS S3 API is supported for buckets. S3-compatible APIs (such as IBM Cloud's Object Storage) should also work.
 
-To access and write these objects Zenhub also require CLI/API crdentials ( access_key_id/access_key_secret or simmiliar ) for a IAM user with at least read and write access.
+To access and write these objects ZenHub also requires CLI/API credentials (`access_key_id`/`access_key_secret` or similar) for a IAM user with at least read and write access.
 
-> ⚠️ **NOTE:** At the moment only IAM credentials are supported. There is some work in progress to support roles.
+> ⚠️ **NOTE:** At the moment, only authentication via IAM credentials is supported. Support for role-based authentication is planned for a future release.
 
-IAM credetials are used by ZHE to write ( `put` ) objects and to create temporary pre-signed links.
+IAM credentials are used by ZenHub to write (`put`) objects and to create temporary pre-signed links.
 
-To read ( `get` ) images and allow users to see uploaded images embebed in the issues, the cluster nodes or network need to have propper access.
+To read (`get`) images and allow users to see uploaded images embedded in the issue page, the cluster nodes or network need to have proper access.
 
 ## 3. Configuration
 
@@ -205,7 +205,7 @@ spec:
 
 By default, we don't make any assumptions about the type of Ingress that is used with the cluster. It will be your responsibility to expose ZenHub through your preferred Ingress. The only requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 443.
 
-The provided manifests exposes ZenHub behind a single ClusterIP service, listening on port 443. You will need to setup and configure HTTPS through your Ingress (Public facing SSL configuration is not within the scope of "ZenHub for Kubernetes").
+The provided manifests exposes ZenHub behind a single ClusterIP service, listening on port 443. You will need to setup and configure HTTPS through your Ingress (public facing SSL configuration is not within the scope of "ZenHub for Kubernetes").
 
 An example of the ClusterIP definition:
 
@@ -291,8 +291,8 @@ To verify that you deployment was successful, you should be able to visit the Ze
 
 #### 4.3.1 Application entrypoint
 
-The `nginx-gateway` entrypoint uses HTTPS by default and utilizes a self signed ssl certificate.
-The certificate is automatic created.
+The `nginx-gateway` entrypoint uses HTTPS by default and utilizes a self-signed SSL certificate.
+The certificate is automatically created when the pod starts.
 
 #### 4.3.2 Database CA certificate
 
@@ -307,11 +307,11 @@ TLS connection with Postgres utilizes the secret generator at the end of the [ku
 
 - the files can be store any were and referenced inthe code with the full path.
 
-> ⚠️ **NOTE:** TLS connection for MongoDB is still in progress
+> ⚠️ **NOTE:** TLS connection for MongoDB is not supported at this time, but is being actively worked on
 
 ### 4.4 Buckets
 
-To configure ZHE to store uploaded images and files as object in buckets all this varibales need to provided in kustomization.yaml
+To configure ZenHub to store uploaded images and files as objects in buckets, the following variables need to provided in `kustomization.yaml`
 
 ```yaml
 configMap:
@@ -324,8 +324,6 @@ secret:
   - bucket_secret_access_key=<some-key>
 ```
 
-> ⚠️ **NOTE:** At the moment only AWS S3 API is supported.
-> ⚠️ **NOTE:** At the moment only IAM credentials are supported. There is some work in progress to support roles.
 
 IAM credetials are used by ZHE to write ( `put` ) objects and to create temporary pre-signed links.
 
@@ -341,7 +339,7 @@ To read ( `get` ) images and allow users to see uploaded images embebed in the i
 
 > ⚠️ **NOTE:** Using this option the enviroment is fucntional but files can **not** be uploaded. A error message will be shown.
 
-To create a test enviroment whitout buckets
+To create a test environment without buckets
 
 - uncomment the resource `options/gateway-local-files` or `github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/gateway-local-files`
 - comment out the resource `options/gateway-buckets` or `github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/gateway-buckets`
@@ -495,11 +493,11 @@ kustomize build . | kubectl apply -f-
 
 ## 6. Roadmap
 
-Future features in progress:
+ZenHub Enterprise On-Premise 3.0.0 is actively in development and is currently available as a beta release. Prior to launching our Release Candidate, we are planning to add the following features:
 
-- MongoDB/DocuemntDB TLS
-- Browsers extensions downlaod
-- Admin interface UI
-- previous ZHE versions migration scripts
-- support for Github Enterprise 3
-- support IAM roles to authorize ZHE to write bucket objects
+- TLS support for MongoDB/DocumentDB
+- Support for downloading and serving ZenHub browser extensions
+- An administration interface UI for some internal application configuration
+- Scripts for facilitate migration between 2.x.x and 3.x.x versions of ZenHub Enterprise On-Premise
+- Support for GitHub Enterprise Server 3.0.0
+- Support for IAM role authorization when writing objects to S3 buckets
