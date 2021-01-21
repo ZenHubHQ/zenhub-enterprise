@@ -12,7 +12,7 @@
   - [2.3 MongoDB](#23-mongodb)
   - [2.4 RabbitMQ](#24-rabbitmq)
   - [2.5 Redis](#25-redis)
-  - [2.6 File and Image Storage](#26-File-and-Image-Storage)
+  - [2.6 File and Image Storage](#26-file-and-image-storage)
 - [3. Configuration](#3-configuration)
   - [3.1 Docker Registry](#31-docker-registry)
   - [3.2 Resource Scaling](#32-resource-scaling)
@@ -498,6 +498,6 @@ ZenHub Enterprise On-Premise 3.0.0 is actively in development and is currently a
 - TLS support for MongoDB/DocumentDB
 - Support for downloading and serving ZenHub browser extensions
 - An administration interface UI for some internal application configuration
-- Scripts for facilitate migration between 2.x.x and 3.x.x versions of ZenHub Enterprise On-Premise
+- Scripts to facilitate migration between 2.x.x and 3.x.x versions of ZenHub Enterprise On-Premise
 - Support for GitHub Enterprise Server 3.0.0
 - Support for IAM role authorization when writing objects to S3 buckets
