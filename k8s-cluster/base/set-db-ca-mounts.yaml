@@ -1,0 +1,223 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-api
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-cron
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-cron
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-websocket
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-websocket
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-webhook
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-webhook
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-worker
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-api
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-admin
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-admin
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-sidekiq-worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-sidekiq-worker
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: raptor-db-migrate
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-db-migrate
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle

@@ -1,0 +1,403 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: toad-api
+  name: toad-api
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: toad-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: toad-api
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-api
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: toad-api
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - /usr/local/bin/node
+        - /zenhub/app/app.js
+        env:
+        - name: GRAPHQL_SCHEMA_CHECK_DURATION_MS
+          value: "60000"
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: node_env
+              name: toad
+        - name: ZENHUB_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_env
+              name: toad
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: port
+              name: toad
+        - name: QUEUE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: queue_db
+              name: toad
+        - name: QUEUE_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: queue_backend
+              name: toad
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: redis_host
+              name: toad
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: redis_port
+              name: toad
+        - name: RAPTOR_URI
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_uri
+              name: toad
+        - name: RAPTOR_GRAPHQL_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_graphql_enabled
+              name: toad
+        - name: ZENHUB_STAGING_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad
+        - name: ZENHUB_STAGING_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_webapp_address
+              name: toad
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_server_address
+              name: toad
+        - name: ZENHUB_WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: SLACK_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: slack_app_id
+              name: toad
+        - name: MAILGUN_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailgun_key
+              name: toad
+        - name: MIXPANEL_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mixpanel_key
+              name: toad
+        - name: MAILCHIMP_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_key
+              name: toad
+        - name: MAILCHIMP_LIST
+          valueFrom:
+            configMapKeyRef:
+              key: mailchimp_list
+              name: toad
+        - name: STRIPE_PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_public_key
+              name: toad
+        - name: ZENHUB_WEBHOOK_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_address
+              name: toad
+        - name: GHWEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_enabled
+              name: toad
+        - name: GHWEBHOOK_WHITELIST
+          valueFrom:
+            configMapKeyRef:
+              key: ghwebhook_whitelist
+              name: toad
+        - name: NEW_RELIC_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_enabled
+              name: toad
+        - name: NEWRELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_app_name
+              name: toad
+        - name: NODE_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              key: node_options
+              name: toad
+        - name: NEWRELIC_TRACE
+          valueFrom:
+            configMapKeyRef:
+              key: newrelic_trace
+              name: toad
+        - name: S3_USER_FILES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_bucket
+              name: toad
+        - name: S3_USER_FILES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_region
+              name: toad
+        - name: S3_USER_IMAGES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_region
+              name: toad
+        - name: S3_USER_FILES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_key
+              name: toad
+        - name: S3_USER_IMAGES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_key
+              name: toad
+        - name: S3_BUCKET
+          value: _DEPRECATED_
+        - name: S3_KEY
+          value: _DEPRECATED_
+        - name: S3_SECRET
+          value: _DEPRECATED_
+        - name: S3_USER_FILES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_upload_expiration
+              name: toad
+        - name: S3_USER_FILES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_download_expiration
+              name: toad
+        - name: S3_USER_IMAGES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_bucket
+              name: toad
+        - name: S3_USER_IMAGES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_upload_expiration
+              name: toad
+        - name: S3_USER_IMAGES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_download_expiration
+              name: toad
+        - name: USER_IMAGE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: user_image_host
+              name: toad
+        - name: IS_ENTERPRISE
+          valueFrom:
+            configMapKeyRef:
+              key: is_enterprise
+              name: toad
+        - name: ATTRIBUTION_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: attribution_app_id
+              name: toad
+        - name: MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: internal
+        - name: ENTERPRISE_LICENSE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: enterprise_license_token
+              name: configuration
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: internal
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
+              name: configuration
+        - name: GHWEBHOOK_INVITE_CODE
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_invite_code
+              name: toad
+        - name: LAUNCHDARKLY_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: launchdarkly_sdk_key
+              name: toad
+        - name: SALESMACHINE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: salesmachine_api_token
+              name: toad
+        - name: SLACK_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              key: slack_webhook
+              name: toad
+        - name: SLACK_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: slack_app_secret
+              name: toad
+        - name: MIXPANEL_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_secret
+              name: toad
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: stripe_secret_key
+              name: toad
+        - name: CRYPTO_PASS
+          valueFrom:
+            secretKeyRef:
+              key: crypto_pass
+              name: internal
+        - name: GHWEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_secret
+              name: internal
+        - name: GHWEBHOOK_PASS
+          valueFrom:
+            secretKeyRef:
+              key: ghwebhook_pass
+              name: internal
+        - name: NEWRELIC_LICENCE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: newrelic_licence_key
+              name: toad
+        - name: S3_USER_IMAGES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_images_secret
+              name: toad
+        - name: S3_USER_FILES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_files_secret
+              name: toad
+        - name: AUTOPILOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: autopilot_api_key
+              name: toad
+        - name: KNOWTIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: knowtify_token
+              name: toad
+        - name: ROLLBAR_ACCOUNT_READ_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_read_token
+              name: toad
+        - name: ROLLBAR_ACCOUNT_WRITE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_account_write_token
+              name: toad
+        image: toad-backend
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: toad-api
+        ports:
+        - containerPort: 3031
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 4096Mi
+          requests:
+            cpu: 750m
+            memory: 2048Mi
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database: PASSED''; do echo waiting for ''Schema''; sleep 2; done'
+        env:
+        - name: RAPTOR_SERVICE
+          value: raptor-api
+        image: busybox
+        name: init-toad
+      serviceAccountName: toad-automount-sa-token-false-api

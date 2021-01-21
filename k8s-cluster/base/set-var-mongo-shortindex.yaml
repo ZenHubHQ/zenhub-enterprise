@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-api
+          env:
+            - name: MONGODB_SHORT_INDEX_NAMES
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: mongodb_short_index
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-cron
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-cron
+          env:
+            - name: MONGODB_SHORT_INDEX_NAMES
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: mongodb_short_index
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-websocket
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-websocket
+          env:
+            - name: MONGODB_SHORT_INDEX_NAMES
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: mongodb_short_index
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-webhook
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-webhook
+          env:
+            - name: MONGODB_SHORT_INDEX_NAMES
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: mongodb_short_index
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-worker
+          env:
+            - name: MONGODB_SHORT_INDEX_NAMES
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: mongodb_short_index

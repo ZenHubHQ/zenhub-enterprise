@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: nginx-gateway
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: nginx-gateway
+  name: nginx-gateway
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: nginx-gateway
+      app.kubernetes.io/managed-by: kustomize
+      app.kubernetes.io/name: nginx-gateway
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: nginx-gateway
+        app.kubernetes.io/managed-by: kustomize
+        app.kubernetes.io/name: nginx-gateway
+    spec:
+      containers:
+      - env:
+        - name: MY_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: WEBAPP
+          valueFrom:
+            configMapKeyRef:
+              key: webapp
+              name: zhe-gw-vars
+        - name: API
+          valueFrom:
+            configMapKeyRef:
+              key: api
+              name: zhe-gw-vars
+        - name: SOCKET
+          valueFrom:
+            configMapKeyRef:
+              key: socket
+              name: zhe-gw-vars
+        - name: FILES
+          valueFrom:
+            configMapKeyRef:
+              key: files
+              name: zhe-gw-vars
+        - name: WEBHOOK
+          valueFrom:
+            configMapKeyRef:
+              key: webhook
+              name: zhe-gw-vars
+        - name: RAPTORADMIN
+          valueFrom:
+            configMapKeyRef:
+              key: raptoradmin
+              name: zhe-gw-vars
+        image: nginx
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: http
+        name: nginx-gateway
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /data/zhe-monitor
+          name: monitor
+        - mountPath: /etc/nginx/templates/default.conf.template
+          name: proxy-conf-volume
+          subPath: default.conf.template
+        - mountPath: /usr/share/nginx/html/maintenance.html
+          name: maitenance-page-volume
+          subPath: maintenance.html
+      - command:
+        - ghe-maintenance-monitor.sh
+        env:
+        - name: GITHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: github_server_address
+              name: toad
+        - name: WAITING_TIME
+          value: "30"
+        - name: MAINTENANCE_MODE
+          value: ""
+        image: nginx
+        name: monitor
+        volumeMounts:
+        - mountPath: /data/zhe-monitor
+          name: monitor
+        - mountPath: /usr/bin/ghe-maintenance-monitor.sh
+          name: zhe-monitor-volume
+          subPath: ghe-maintenance-monitor.sh
+      volumes:
+      - emptyDir: {}
+        name: monitor
+      - configMap:
+          name: zhe-gw-conf
+        name: proxy-conf-volume
+      - configMap:
+          name: zhe-maitenance-page
+        name: maitenance-page-volume
+      - configMap:
+          defaultMode: 511
+          name: zhe-monitor
+        name: zhe-monitor-volume

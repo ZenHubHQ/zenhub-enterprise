@@ -1,0 +1,90 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sanitycheck
+spec:
+  ttlSecondsAfterFinished: 86400 # 24 hours
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: sanitycheck
+          image: sanitycheck
+          imagePullPolicy: Always
+          env:
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: configuration
+                  key: postgres_url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: configuration
+                  key: redis_url
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: configuration
+                  key: mongo_url
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: configuration
+                  key: rabbitmq_url
+            - name: GITHUB_ENTERPRISE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: github_hostname
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: configuration
+                  key: bucket_secret_access_key
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_access_key_id
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_region
+            - name: BUCKET_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: bucket_domain
+            - name: FILES_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: files_bucket_name
+            - name: IMAGES_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: images_bucket_name
+
+            # also check internal redis because Raptor doesn't to a nice job of checking its redis at boot time and leave
+            # the health check to do that, which is way worse to troubleshoot
+            - name: INTERNAL_LEGACY_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: internal
+                  key: toad_redis_password
+            - name: INTERNAL_LEGACY_CACHE_REDIS_URL
+              # valueFrom:
+              # pattern is duplicated in kustomization.yaml
+              value: redis://default:$(INTERNAL_LEGACY_REDIS_PASSWORD)@cache-toad-redis-master:6379/0
+            - name: INTERNAL_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: internal
+                  key: raptor_redis_password
+            - name: INTERNAL_CACHE_REDIS_URL
+              # valueFrom:
+              # pattern is duplicated in kustomization.yaml
+              value: redis://default:$(INTERNAL_REDIS_PASSWORD)@cache-raptor-redis-master:6379/0

@@ -1,0 +1,227 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-api
+  name: raptor-api
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: raptor-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: raptor-api
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-api
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: raptor-api
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - args:
+        - bundle
+        - exec
+        - rails
+        - s
+        - -b
+        - 0.0.0.0
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: raptor_redis_password
+              name: internal
+        - name: RAILS_MAX_THREADS
+          valueFrom:
+            configMapKeyRef:
+              key: rails_max_threads
+              name: raptor-api
+        - name: WEB_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              key: web_concurrency
+              name: raptor-api
+        - name: RUBYOPT
+          value: -W0
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rails_env
+              name: raptor
+        - name: RAILS_LOG_TO_STDOUT
+          valueFrom:
+            configMapKeyRef:
+              key: rails_log_to_stdout
+              name: raptor
+        - name: LOG_JSON
+          valueFrom:
+            configMapKeyRef:
+              key: log_json
+              name: raptor
+        - name: GITHUB_HTML_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_html_url
+              name: raptor
+        - name: GITHUB_API_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_api_url
+              name: raptor
+        - name: GITHUB_GRAPHQL_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_graphql_url
+              name: raptor
+        - name: ROLLBAR_ENV
+          valueFrom:
+            configMapKeyRef:
+              key: rollbar_env
+              name: raptor
+        - name: NEW_RELIC_AGENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_agent_enabled
+              name: raptor
+        - name: NEW_RELIC_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_app_name
+              name: raptor
+        - name: DISABLE_PREPARE_DB
+          valueFrom:
+            configMapKeyRef:
+              key: disable_prepare_db
+              name: raptor
+        - name: GITHUB_WEBHOOK_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: github_webhook_enabled
+              name: raptor
+        - name: ZENHUB_WEBHOOK_DOMAIN_V1
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v1
+              name: raptor
+        - name: ZENHUB_WEBHOOK_DOMAIN_V2
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webhook_domain_v2
+              name: raptor
+        - name: LD_OFFLINE
+          valueFrom:
+            configMapKeyRef:
+              key: ld_offline
+              name: raptor
+        - name: IS_ENTERPRISE
+          valueFrom:
+            configMapKeyRef:
+              key: is_enterprise
+              name: raptor
+        - name: SIDEKIQ_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: redis_url
+              name: configuration
+        - name: CACHE_REDIS_URL
+          value: redis://default:$(REDIS_PASSWORD)@cache-raptor-redis-master:6379/0
+        - name: ENTERPRISE_LICENSE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: enterprise_license_token
+              name: configuration
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              key: secret_key_base
+              name: internal
+        - name: LOCKBOX_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: lockbox_master_key
+              name: internal
+        - name: GITHUB_TOKEN_VALUE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: github_token_value_key
+              name: internal
+        - name: GITHUB_WEBHOOKS_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_webhooks_secret
+              name: internal
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: internal
+        - name: LD_SDK_KEY
+          valueFrom:
+            secretKeyRef:
+              key: ld_sdk_key
+              name: raptor
+        - name: ROLLBAR_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: rollbar_access_token
+              name: raptor
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: new_relic_license_key
+              name: raptor
+        - name: TOAD_MONGO_URL
+          valueFrom:
+            secretKeyRef:
+              key: mongo_url
+              name: configuration
+        - name: TOAD_RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq_url
+              name: configuration
+        image: raptor-backend
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /ping/all
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: raptor-api
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping/all
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 4000Mi
+          requests:
+            cpu: 1600m
+            memory: 2000Mi

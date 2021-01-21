@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: kraken-webapp
+  name: kraken-webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: kraken-webapp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: kraken-webapp
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: kraken-webapp
+              namespaces: []
+              topologyKey: kubernetes.io/hostname
+            weight: 2
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: kraken-webapp
+              namespaces: []
+              topologyKey: topology.kubernetes.io/zone
+            weight: 2
+      containers:
+      - image: kraken-webapp
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /version.json
+            port: http
+          periodSeconds: 10
+        name: kraken-webapp
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /version.json
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 750m
+            memory: 400Mi
+          requests:
+            cpu: 250m
+            memory: 200Mi
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html/extension
+          name: kraken-extension
+        - mountPath: /usr/share/nginx/html/dist/config
+          name: kraken-webapp-config
+      - env:
+        - name: WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad
+        - name: ZENHUB_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_staging_server_address
+              name: toad
+        - name: GITHUB_SERVER_ADDRESS
+          value: $(github_hostname)
+        - name: MANIFEST_FIREFOX_UPDATE_URL
+          value: $(WEBAPP_ADDRESS)/zhe-public/ff-ext-signed/update.json
+        image: kraken-extension
+        imagePullPolicy: IfNotPresent
+        name: kraken-extension
+        resources:
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /root/built-final
+          name: kraken-extension
+        - mountPath: /root/config
+          name: kraken-webapp-config
+      serviceAccountName: kraken-automount-sa-token-false-webapp
+      volumes:
+      - name: kraken-extension
+      - configMap:
+          items:
+          - key: webapp-config.js
+            path: config.js
+          name: kraken
+        name: kraken-webapp-config

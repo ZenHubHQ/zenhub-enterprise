@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-zhe
+spec:
+  rules:
+    - host: "$(subdomain_suffix).$(domain_tld)"
+      http:
+        paths:
+          - backend:
+              serviceName: nginx-gateway
+              servicePort: 443
