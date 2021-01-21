@@ -18,8 +18,8 @@ data "aws_iam_policy_document" "zhe_buckets" {
       "s3:ListBucket",
     ]
     resources = [
-      aws_s3_bucket.private_files.arn,
-      aws_s3_bucket.public_images.arn
+      aws_s3_bucket.zhe_files.arn,
+      aws_s3_bucket.zhe_images.arn
     ]
   }
   statement {
@@ -29,8 +29,8 @@ data "aws_iam_policy_document" "zhe_buckets" {
       "s3:*",
     ]
     resources = [
-      "${aws_s3_bucket.private_files.arn}/*",
-      "${aws_s3_bucket.public_images.arn}/*"
+      "${aws_s3_bucket.zhe_files.arn}/*",
+      "${aws_s3_bucket.zhe_images.arn}/*"
     ]
   }
 }

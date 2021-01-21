@@ -6,7 +6,7 @@
 
 Terraform module to provision ZHE backend resources in an existing [`VPC`](https://aws.amazon.com/vpc)
 
-Resources cretead:
+Resources created:
 
 * [Private Subnets](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html)
 * [Security Group](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html)
@@ -19,7 +19,7 @@ Resources cretead:
 * [IAM Policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_access-management.html)
 * [MQ - RabbitMQ](https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/getting-started-rabbitmq.html) \* Future Feature - NOT YET IN TERRAFORM
 
-__Note:__ this module is intended for use with [ZenHub Enterprise][zenhub_enterpsise] Kubernetes in an existing VPC.
+> **NOTE:** This module is intended for use with [ZenHub Enterprise][zenhub_enterpsise] Kubernetes in an existing VPC.
 
 <div align="center">
   <img alt="ZenHub" src="terrafom-aws-zhe-backend.png" width="1000" />
@@ -38,6 +38,12 @@ __Note:__ this module is intended for use with [ZenHub Enterprise][zenhub_enterp
 ---
 
 ## Usage
+
+This modules require the preexisting resources:
+
+* An existing VPC containing:
+  * EKS
+  * S3 VPCEndpoint associated with the nodes subnet
 
 ```hcl
 module "zhe" {
@@ -69,7 +75,7 @@ module "zhe" {
 
 For subnet set calculation, the module uses Terraform interpolation [cidrsubnet](https://www.terraform.io/docs/configuration/functions/cidrsubnet.html).
 
-`cidrsubnet(iprange, newbits, netnum) - Takes an IP address range in CIDR notation (like 10.0.0.0/16) and extends its prefix to include an additional subnet number. For example, cidrsubnet("10.0.0.0/16", 8, 100) returns 10.0.100.0/24 and ("10.0.0.0/16", 8, 101) returns 10.0.101.0/24;`
+`cidrsubnet(iprange, newbits, netnum)` - Takes an IP address range in CIDR notation (like 10.0.0.0/16) and extends its prefix to include an additional subnet number. For example, cidrsubnet("10.0.0.0/16", 8, 100) returns 10.0.100.0/24 and ("10.0.0.0/16", 8, 101) returns 10.0.101.0/24
 
 `newbits` is the number of additional bits with which to extend the prefix. For example, if given a prefix ending in /16 and a newbits value of 4, the resulting subnet address will have length /20.
 
@@ -104,41 +110,41 @@ cidrsubnet(data.aws_vpc.zhe.cidr_block, 8, count.index + var.cidr_netnum)
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| region | AWSregion | `string` | `[]` | YES |
-| vpc_id | VPCidtocreatesubnetsanddatabases | `string` | `[]` | YES |
-| env | Tag to identify zenhub enviroment and resources | `string` | `` | NO |
-| creator | Tag to identiy who created this module's resources | `string` | `Terraform` | NO |
-| bucket_force_destroy | A boolean that indicates all objects (including any locked objects) should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable. | `bool` | `true` | NO |
+| region | AWS region | `string` | `[]` | YES |
+| vpc_id | VPC id to create subnets and databases | `string` | `[]` | YES |
+| env | Tag to identify Zenhub environment and resources | `string` | `` | NO |
+| creator | Tag to identity who created this module's resources | `string` | `Terraform` | NO |
+| bucket_force_destroy | A boolean that indicates all objects (including any locked objects) which should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable. | `bool` | `true` | NO |
 | cidr_netnum | Value to be added to Subnet CIDR | `number` | `100` | NO |
 | db_subnet_count | How many private subnets will be created | `number` | `2` | NO |
 | create_postgresql | Create RDS PostgreSQL resources | `bool` | `true` | NO |
 | postgres_port | PostgreSQL port | `number` | `5432` | NO |
 | postgres_user | PostgreSQL user name | `string` | `zenhub` | NO |
-| postgres_dbname | PostgreSQL Databse Name | `string` | `raptor_production` | NO |
+| postgres_dbname | PostgreSQL Database Name | `string` | `raptor_production` | NO |
 | postgres_engine_version | PostgreSQL engine version | `string` | `11.9` | NO |
 | postgres_vars.instance_class | Variables for PostgreSQL | `object({ instance_class = string })` | `instance_class = "db.t3.small"`| NO |
 | create_redis | Create ElastiCache Redis resources | `bool` | `true` | NO |
 | redis_port | Redis port | `number` | `6379` | NO |
 | redis_engine_version | Redis engine version | `string` | `5.0` | NO |
 | redis_vars.node_type | Variables for Redis | `string` | `cache.t3.small` | NO |
-| create_documentdb | Create DoceumntDB resources | `bool` | `true` | NO |
-| documentdb_user | DoceumntDB user | `string` | `toad` | NO |
+| create_documentdb | Create DocumentDB resources | `bool` | `true` | NO |
+| documentdb_user | DocumentDB user | `string` | `toad` | NO |
 | documentdb_dbname | DocumentDB database name | `string` | `zenhub` | NO |
-| documentdb_engine_version | DoceumntDB engine version | `string` | `3.6` | NO |
-| documentdb_port | DoceumntDB port | `number` | `27017` | NO |
-| documentdb_vars.instance_class | VariablesforMongoDB | `object({instance_class = string instance_count = number })` | `instance_class = "db.t3.medium" instance_count = 1` | NO |
+| documentdb_engine_version | DocumentDB engine version | `string` | `3.6` | NO |
+| documentdb_port | DocumentDB port | `number` | `27017` | NO |
+| documentdb_vars.instance_class | Variables for MongoDB | `object({instance_class = string instance_count = number })` | `instance_class = "db.t3.medium" instance_count = 1` | NO |
 | create_mq | Create MQ RabbitMQ resources | `bool` | `true` | NO |
 | mq_port | RabbitMQ port | `number` | `5671` | NO |
 
-__Note:__ We recommend to set the Variables **`env`** with a `"-"` (dash) eg: `-test` or `-production`
+> **NOTE:** We recommend to set the variables **`env`** with a `"-"` (dash) eg: `-test` or `-production`
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
 | zhe_postgresql_endpoint | PostgreSQL connection endpoint |
-| zhe_mongo_endpoint | mongo connection endpoint |
-| zhe_redis_endpoint | redis connection endpoint |
+| zhe_mongo_endpoint | MongoDB connection endpoint |
+| zhe_redis_endpoint | Redis connection endpoint |
 | zhe_bucket_images_name | images bucket name |
 | zhe_bucket_images_region | bucket images region |
 | zhe_bucket_images_domain_name | bucket images domain name |
@@ -153,12 +159,9 @@ __Note:__ We recommend to set the Variables **`env`** with a `"-"` (dash) eg: `-
 
 ## Authors
 
-Module is maintained by [Zenhub][zenhub] with help from [these awesome contributors](https://github.com/ZenHubHQ/zenhub-enterprise/graphs/contributors).
-
-## License
-
-See [LICENSE][license] for full details.
+Module is maintained by [ZenHub][zenhub] with help from [these awesome contributors](https://github.com/ZenHubHQ/zenhub-enterprise/graphs/contributors).
 
 [zenhub]: https://www.zenhub.com
 [zenhub_enterpsise]: https://www.zenhub.com/enterprise
-[license]: ../LICENSE
+
+## License

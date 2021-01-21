@@ -6,14 +6,14 @@ output "zhe_postgresql_endpoint" {
 }
 
 output "zhe_mongo_endpoint" {
-  description = "mongo connection endpoint"
+  description = "MongoDB connection endpoint"
   sensitive   = true
   value       = var.create_documentdb ? "mongodb://${var.documentdb_user}:${random_password.documentdb_pass[0].result}@${aws_docdb_cluster.zhe[0].endpoint}:${var.documentdb_port}/${var.documentdb_dbname}?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false" : null
 }
 
 # Cache
 output "zhe_redis_endpoint" {
-  description = "redis connection endpoint"
+  description = "Redis connection endpoint"
   sensitive   = true
   value       = var.create_redis ? "redis://${aws_elasticache_cluster.zhe_redis[0].cache_nodes.0.address}:${aws_elasticache_cluster.zhe_redis[0].cache_nodes.0.port}/0" : null
 }
@@ -21,32 +21,32 @@ output "zhe_redis_endpoint" {
 # Buckets
 output "zhe_bucket_images_name" {
   description = "images bucket name"
-  value       = aws_s3_bucket.public_images.id
+  value       = aws_s3_bucket.zhe_images.id
 }
 
 output "zhe_bucket_images_region" {
   description = "bucket images region"
-  value       = aws_s3_bucket.public_images.region
+  value       = aws_s3_bucket.zhe_images.region
 }
 
 output "zhe_bucket_images_domain_name" {
   description = "bucket images domain name"
-  value       = aws_s3_bucket.public_images.bucket_regional_domain_name
+  value       = aws_s3_bucket.zhe_images.bucket_regional_domain_name
 }
 
 output "zhe_bucket_files_name" {
   description = "files bucket name"
-  value       = aws_s3_bucket.private_files.id
+  value       = aws_s3_bucket.zhe_files.id
 }
 
 output "zhe_bucket_files_region" {
   description = "files bucket region"
-  value       = aws_s3_bucket.private_files.region
+  value       = aws_s3_bucket.zhe_files.region
 }
 
 output "zhe_bucket_files_domain_name" {
   description = "files bucket domain name"
-  value       = aws_s3_bucket.private_files.bucket_regional_domain_name
+  value       = aws_s3_bucket.zhe_files.bucket_regional_domain_name
 }
 
 output "zhe_bucket_iam_user" {

@@ -4,19 +4,19 @@ variable "region" {
 }
 
 variable "env" {
-  description = "Tag to identify zhe enviroment type and resources"
+  description = "Tag to identify ZenHub environment type and resources"
   type        = string
   default     = ""
 }
 
 variable "creator" {
-  description = "Tag to identiy who created this module's resources"
+  description = "Tag to identify who created this module's resources"
   type        = string
   default     = "Terraform"
 }
 
 variable "bucket_force_destroy" {
-  description = "A boolean that indicates all objects (including any locked objects) should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable."
+  description = "A boolean that indicates all objects (including any locked objects) that should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable."
   type        = bool
   default     = true
 }
@@ -59,7 +59,7 @@ variable "postgres_user" {
 }
 
 variable "postgres_dbname" {
-  description = "PostgreSQL Databse Name"
+  description = "PostgreSQL Database Name"
   type        = string
   default     = "raptor_production"
 }
@@ -113,13 +113,13 @@ variable "redis_vars" {
 # DocumentDB
 
 variable "create_documentdb" {
-  description = "Create DoceumntDB resources"
+  description = "Create DocumentDB resources"
   type        = bool
   default     = true
 }
 
 variable "documentdb_user" {
-  description = "DoceumntDB user"
+  description = "DocumentDB user"
   type        = string
   default     = "toad"
 }
@@ -131,13 +131,13 @@ variable "documentdb_dbname" {
 }
 
 variable "documentdb_engine_version" {
-  description = "DoceumntDB engine version"
+  description = "DocumentDB engine version"
   type        = string
   default     = "3.6"
 }
 
 variable "documentdb_port" {
-  description = "DoceumntDB port"
+  description = "DocumentDB port"
   type        = number
   default     = 27017
 }
@@ -176,7 +176,7 @@ variable "mq_port" {
 # }
 
 # variable "mq_engine_version" {
-#   description = "RAbbitMQ engine version"
+#   description = "RabbitMQ engine version"
 #   type        = string
 #   default     = "3.8.6"
 # }
