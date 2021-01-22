@@ -5,6 +5,28 @@ metadata:
 spec:
   template:
     spec:
+      initContainers:
+        - name: ssl-generator
+          image: nginx
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_NAME
+              value: "nginx-gw"
+            - name: TLS_DURATION
+              value: "1095"
+          command:
+            [
+              "/bin/bash",
+              "-c",
+              "openssl req -x509 -nodes -days $TLS_DURATION -newkey rsa:2048 -keyout /data/ssl/$TLS_NAME.key -subj '/C=CA/ST=BC/L=Vancouver/O=Zenhub, Inc./CN=*.${NAMESPACE}.svc.cluster.local' -out /data/ssl/$TLS_NAME.crt",
+            ]
+          volumeMounts:
+            - mountPath: /data/ssl/
+              name: gw-crt-volume
       containers:
         - name: nginx-gateway
           imagePullPolicy: IfNotPresent
@@ -18,7 +40,7 @@ spec:
               name: https
               protocol: TCP
           volumeMounts:
-            - mountPath: /etc/nginx/ssl/
+            - mountPath: /data/ssl/
               name: gw-crt-volume
               readOnly: true
           resources:
@@ -39,13 +61,7 @@ spec:
               memory: 200Mi
       volumes:
         - name: gw-crt-volume
-          secret:
-            secretName: nginx-ssl
-            items:
-              - key: tls.key
-                path: nginx-gw.key
-              - key: tls.crt
-                path: nginx-gw.crt
+          emptyDir: {}
 
 ---
 apiVersion: v1

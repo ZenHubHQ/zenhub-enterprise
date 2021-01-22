@@ -5,11 +5,11 @@ kind: Kustomization
 namespace: <a_dedicated_namespace>
 
 resources:
-  - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/base
-  - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/gateway-buckets
+  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/base
+  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/gateway-buckets
   # optional Job to check configuration is setup properly (test databases/caches and storage access)
-  - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/sanitycheck
-  # - github.com/ZenHubHQ/zenhub-enterprise.git//k8s-cluster/options/gateway-local-files # to use in an environment without buckets
+  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/sanitycheck
+  # - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/gateway-local-files # to use in an environment without buckets
   # to use with a cloned repository
   # - base
   # - options/sanitycheck
@@ -31,19 +31,19 @@ commonLabels:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-2.44
+    newTag: enterprise-2.44-beta3
   - name: sanitycheck
     newName: us.gcr.io/zenhub-ops/sanitycheck
-    newTag: master
+    newTag: 3.0.0-beta3
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -149,12 +149,7 @@ secretGenerator:
       # one is used by the Toad services.
       - ghwebhook_secret=<[A-Za-z0-9]{38}>
 
-  # Certificates for SSL/TLS
-  - name: nginx-ssl
-    files:
-      # certificate name must be tls.crt and certificate key must be tls.key
-      - <some_path>/tls.crt
-      - <some_path>/tls.key
+    # Certificates for SSL/TLS
     type: "kubernetes.io/tls"
   # - name: postgres-ca-bundle
   #   behavior: replace
