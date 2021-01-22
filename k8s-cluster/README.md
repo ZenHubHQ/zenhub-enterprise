@@ -157,7 +157,7 @@ docker login -u _json_key -p "$(cat dockerpassword | base64 --decode)" https://u
 your_registry=<your_own_registry_without_trailing_slash>
 tag=enterprise-2.44-beta3
 images="kraken-webapp toad-backend raptor-backend kraken-extension"
-for i in $(echo $images); do docker pull us.gcr.io/zenhub-ops/${i}:${tag} && docker tag us.gcr.io/zenhub-public/${i}:master ${your_registry}/${i}:${tag} && docker push ${your_registry}/${i}:${tag}; done
+for i in $(echo $images); do docker pull us.gcr.io/zenhub-public//${i}:${tag} && docker tag us.gcr.io/zenhub-public/${i}:master ${your_registry}/${i}:${tag} && docker push ${your_registry}/${i}:${tag}; done
 ```
 
 ### 3.2 Resource Scaling

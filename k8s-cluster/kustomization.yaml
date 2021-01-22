@@ -42,7 +42,7 @@ images:
     newName: us.gcr.io/zenhub-public/toad-backend
     newTag: enterprise-2.44-beta3
   - name: sanitycheck
-    newName: us.gcr.io/zenhub-ops/sanitycheck
+    newName: us.gcr.io/zenhub-public/sanitycheck
     newTag: 3.0.0-beta3
   - name: busybox
     newName: docker.io/library/busybox
