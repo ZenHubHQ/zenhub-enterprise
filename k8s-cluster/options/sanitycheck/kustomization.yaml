@@ -3,6 +3,3 @@ kind: Kustomization
 
 resources:
    - sanitycheck_job.yaml
-
-patchesStrategicMerge:
-   - set-docker-pull.yaml

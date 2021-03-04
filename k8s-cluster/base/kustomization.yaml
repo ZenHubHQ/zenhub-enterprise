@@ -8,14 +8,26 @@ resources:
   - kraken
   - raptor
   - toad
+  # - admin-ui
+  - tls
 
 # temporary dirty hack, until https://app.zenhub.com/workspaces/devops-5b9af195dfeccd3433cd71b3/issues/zenhubhq/devops/663 is tackled
 # this should not be in enterprise/base (since ZHE vanilla doesn't need this)
 patchesStrategicMerge:
   - set-toad-buckets-vars.yaml
   - set-db-ca-mounts.yaml
-  - set-docker-pull.yaml
   - set-var-mongo-shortindex.yaml
+  - set-admin-ui-service.yaml
+
+configMapGenerator:
+  - name: kraken
+    behavior: replace
+    files:
+      - webapp-config.js
+  - name: toad
+    behavior: merge
+    literals:
+      - user_image_host=$(subdomain_suffix).$(domain_tld)/images
 
 secretGenerator:
   - name: postgres-ca-bundle

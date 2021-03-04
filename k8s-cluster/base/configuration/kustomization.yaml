@@ -1,26 +1,6 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-# resources:
-#   - configMap.yaml
-#   - secret.yaml
-
-configMapGenerator:
-  - name: configuration
-    literals:
-      - mongodb_short_index=no
-      - local_files=no
-      - bucket_domain="local"
-      - files_bucket_name="local"
-      - bucket_access_key_id="local"
-      - bucket_region="local"
-      - images_bucket_name="local"
-
-secretGenerator:
-  - name: configuration
-    literals:
-      - bucket_secret_access_key="local"
-  - name: internal
+resources:
+  - configMap.yaml
+  - secret.yaml
 
 configurations:
   - var_references.yaml
@@ -41,6 +21,13 @@ vars:
       apiVersion: v1
     fieldref:
       fieldpath: data.subdomain_suffix
+  - name: admin_ui_subdomain
+    objref:
+      kind: ConfigMap
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.admin_ui_subdomain
   - name: github_hostname
     objref:
       kind: ConfigMap
@@ -163,3 +150,10 @@ vars:
       apiVersion: v1
     fieldref:
       fieldpath: data.raptor_admin_password
+  - name: chrome_extension_webstore_url
+    objref:
+      kind: ConfigMap
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.chrome_extension_webstore_url

@@ -8,6 +8,13 @@ MIG_DIR="/tmp/zhe3-migration-files"
 
 # Script Functions -----------------------------
 
+check_sudo(){
+    if [ $EUID -ne 0 ]; then
+        echo "$0 is not running as root. Try using sudo."
+        exit 2
+    fi
+}
+
 check_version(){
 # Must be ZenHub Enterprise 2.44
     echo "Checking for ZHE3 migration compatibility..."
@@ -21,7 +28,7 @@ check_version(){
 }
 
 enable_maintenance(){
-    echo "WARNING: Maintenance mode will be enabled to ensure data integrity. This will cause downtime for users. Do you wish to proceed?"
+    echo "WARNING: Maintenance mode will be enabled to ensure data integrity. This will cause downtime for users. If you are not doing your final ZHE2->ZHE3 migration, you can disable maintenance mode as soon as this script completes. Do you wish to proceed?"
     select yn in "Yes" "No"; do
         case $yn in
             Yes ) zhe-maintenance enable; break;;
@@ -121,13 +128,6 @@ files_backup(){
     echo "Uploaded files backup complete!"
 }
 
-query_mime(){
-    echo "Gathering MIME type information for uploaded files and images..."
-    QUERY='db.getCollection("blobs").find({},{ file_id: 1, file_mime: 1, _id: 0})'
-    mongo zenhub_enterprise --eval "$QUERY" | awk '{if(NR>4)print}' | jq -s -r '.' > $MIG_DIR/file_types.json
-    echo "MIME types collected!"
-}
-
 get_variables(){
     echo "Gathering required environment variables for the migration..."
 
@@ -156,28 +156,31 @@ package_bundle(){
     chown admin: "${HOME}"/"migration-data-${TIMESTAMP}".tar.gz
 
     cd $HOME && echo "Package ${HOME}/migration-data-${TIMESTAMP}.tar.gz complete!"
+    echo ""
     echo "If you are testing the ZHE2->ZHE3 migration process, you may disable maintenance mode (sudo zhe-maintenance disable) to resume service for users."
+    echo ""
     echo "If you are doing your full production ZHE2->ZHE3 migration, keep maintenance mode enabled to protect data integrity during the migration."
+    echo ""
     echo "You can now move ${HOME}/migration-data-${TIMESTAMP}.tar.gz to your workstation or jumpbox and prepare to upload your data."
 }
 
 # Script Execution -----------------------------
 
-# 0. Get timestamp
+# 0. Must run as sudo/root
+check_sudo
+# 1. Get timestamp
 TIMESTAMP=$(date +%Y%m%dT%H%M%S)
-# 1. Check for correct version
+# 2. Check for correct version
 check_version
-# 2. Enable Maintenance Mode
+# 3. Enable Maintenance Mode
 enable_maintenance
-# 3. Wait for worker queue jobs to finish
+# 4. Wait for worker queue jobs to finish
 wait_for_queues
-# 4. Dump DBs (MongoDB and PostgreSQL)
+# 5. Dump DBs (MongoDB and PostgreSQL)
 mongo_backup
 postgres_backup
-# 5. Get all uploaded files
+# 6. Get all uploaded files
 files_backup
-# 6. Get MIME type of all uploaded files (this is for setting Content-Type during upload)
-query_mime
 # 7. Get all relevant environment variables
 get_variables
 # 8. Bundle everything

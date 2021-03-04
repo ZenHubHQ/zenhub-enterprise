@@ -9,5 +9,8 @@ resources:
 - autoscaling_v2beta2_horizontalpodautoscaler_toad-api.yaml
 - autoscaling_v2beta2_horizontalpodautoscaler_toad-websocket.yaml
 - configmaps.yaml
+- persistentvolume.yaml
+- persistentvolumeclaim.yaml
+- role.yaml
 - secret.yaml
 - service.yaml

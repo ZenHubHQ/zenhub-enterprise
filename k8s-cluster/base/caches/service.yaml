@@ -4,7 +4,7 @@ kind: Service
 metadata:
   labels:
     app: raptor-redis
-    chart: raptorCacheRedis-10.6.12
+    chart: raptorCacheRedis-11.2.3
     heritage: Helm
     release: cache
   name: cache-raptor-redis-headless
@@ -25,7 +25,7 @@ kind: Service
 metadata:
   labels:
     app: raptor-redis
-    chart: raptorCacheRedis-10.6.12
+    chart: raptorCacheRedis-11.2.3
     heritage: Helm
     release: cache
   name: cache-raptor-redis-master
@@ -46,7 +46,7 @@ kind: Service
 metadata:
   labels:
     app: toad-redis
-    chart: toadRedis-10.6.12
+    chart: toadRedis-11.2.3
     heritage: Helm
     release: cache
   name: cache-toad-redis-headless
@@ -67,7 +67,7 @@ kind: Service
 metadata:
   labels:
     app: toad-redis
-    chart: toadRedis-10.6.12
+    chart: toadRedis-11.2.3
     heritage: Helm
     release: cache
   name: cache-toad-redis-master

@@ -5,9 +5,6 @@ metadata:
 spec:
   template:
     spec:
-      initContainers:
-        - name: init-toad
-          imagePullPolicy: IfNotPresent
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
 
@@ -19,9 +16,6 @@ metadata:
 spec:
   template:
     spec:
-      initContainers:
-        - name: init-toad
-          imagePullPolicy: IfNotPresent
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
 
@@ -33,9 +27,6 @@ metadata:
 spec:
   template:
     spec:
-      initContainers:
-        - name: init-toad
-          imagePullPolicy: IfNotPresent
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
 
@@ -47,9 +38,6 @@ metadata:
 spec:
   template:
     spec:
-      initContainers:
-        - name: init-toad
-          imagePullPolicy: IfNotPresent
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
 
@@ -61,9 +49,6 @@ metadata:
 spec:
   template:
     spec:
-      initContainers:
-        - name: init-toad
-          imagePullPolicy: IfNotPresent
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
 
@@ -121,13 +106,24 @@ spec:
     spec:
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
-# ---
-# apiVersion: batch/v1
-# kind: Job
-# metadata:
-#   name: sanitycheck
-# spec:
-#   template:
-#     spec:
-#       imagePullSecrets:
-#         - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-ui
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sanitycheck
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials

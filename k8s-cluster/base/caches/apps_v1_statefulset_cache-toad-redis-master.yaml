@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   labels:
     app: toad-redis
-    chart: toadRedis-10.6.12
+    chart: toadRedis-11.2.3
     heritage: Helm
     release: cache
   name: cache-toad-redis-master
@@ -18,12 +18,12 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: 99538a684ef923fd8af5fa4a7d4d963640637dae804bd6d4eed0964ab9255122
-        checksum/health: cf9d20e847d9a555c27cb39269ab1669c382d8dbc922eefe080d1df6672cc4c7
-        checksum/secret: 3af7d72ebdeeb9db6209a1d18882add02dd024712743e21630958df3ed5cfc53
+        checksum/configmap: 7b4bbf31689d5fa99c64497442d2d8845ac93f592898622e5c9dcbd21b734a77
+        checksum/health: 6e024f52954d759908ecbee0c2d2605aaf46c3ffcf58eef1874cd61976b5a275
+        checksum/secret: 2898a71fd904bccbddc93adc9cd4e129df33a8a6d84e6496122bdc1c029c2f85
       labels:
         app: toad-redis
-        chart: toadRedis-10.6.12
+        chart: toadRedis-11.2.3
         release: cache
         role: master
     spec:
@@ -31,31 +31,17 @@ spec:
       - command:
         - /bin/bash
         - -c
-        - |
-          if [[ -n $REDIS_PASSWORD_FILE ]]; then
-            password_aux=`cat ${REDIS_PASSWORD_FILE}`
-            export REDIS_PASSWORD=$password_aux
-          fi
-          if [[ ! -f /opt/bitnami/redis/etc/master.conf ]];then
-            cp /opt/bitnami/redis/mounted-etc/master.conf /opt/bitnami/redis/etc/master.conf
-          fi
-          if [[ ! -f /opt/bitnami/redis/etc/redis.conf ]];then
-            cp /opt/bitnami/redis/mounted-etc/redis.conf /opt/bitnami/redis/etc/redis.conf
-          fi
-          ARGS=("--port" "${REDIS_PORT}")
-          ARGS+=("--requirepass" "${REDIS_PASSWORD}")
-          ARGS+=("--masterauth" "${REDIS_PASSWORD}")
-          ARGS+=("--include" "/opt/bitnami/redis/etc/redis.conf")
-          ARGS+=("--include" "/opt/bitnami/redis/etc/master.conf")
-          /run.sh ${ARGS[@]}
+        - /opt/bitnami/scripts/start-scripts/start-master.sh
         env:
-        - name: REDIS_REPLICATION_MODE
-          value: master
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               key: toad_redis_password
               name: internal
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        - name: REDIS_TLS_ENABLED
+          value: "no"
         - name: REDIS_PORT
           value: "6379"
         image: docker.io/bitnami/redis:5.0
@@ -70,7 +56,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 5
+          timeoutSeconds: 6
         name: toad-redis
         ports:
         - containerPort: 6379
@@ -80,21 +66,21 @@ spec:
             command:
             - sh
             - -c
-            - /health/ping_readiness_local.sh 5
+            - /health/ping_readiness_local.sh 1
           failureThreshold: 5
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 1
-        resources: null
+          timeoutSeconds: 2
         securityContext:
           runAsUser: 1001
         volumeMounts:
+        - mountPath: /opt/bitnami/scripts/start-scripts
+          name: start-scripts
         - mountPath: /health
           name: health
         - mountPath: /data
           name: redis-data
-          subPath: null
         - mountPath: /opt/bitnami/redis/mounted-etc
           name: config
         - mountPath: /opt/bitnami/redis/etc/
@@ -103,6 +89,10 @@ spec:
         fsGroup: 1001
       serviceAccountName: default
       volumes:
+      - configMap:
+          defaultMode: 493
+          name: cache-toad-redis-scripts
+        name: start-scripts
       - configMap:
           defaultMode: 493
           name: cache-toad-redis-health

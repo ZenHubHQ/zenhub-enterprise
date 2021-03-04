@@ -35,6 +35,16 @@ spec:
         - /usr/local/bin/node
         - /zenhub/app/app.js
         env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: toad_redis_password
+              name: internal
+        - name: ENTERPRISE_LICENSE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: enterprise_license_token
+              name: configuration
         - name: GRAPHQL_SCHEMA_CHECK_DURATION_MS
           value: "60000"
         - name: NODE_ENV
@@ -258,16 +268,6 @@ spec:
             secretKeyRef:
               key: rabbitmq_url
               name: configuration
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: toad_redis_password
-              name: internal
-        - name: ENTERPRISE_LICENSE_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: enterprise_license_token
-              name: configuration
         - name: INTERNAL_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
@@ -399,5 +399,6 @@ spec:
         - name: RAPTOR_SERVICE
           value: raptor-api
         image: busybox
+        imagePullPolicy: IfNotPresent
         name: init-toad
       serviceAccountName: toad-automount-sa-token-false-api

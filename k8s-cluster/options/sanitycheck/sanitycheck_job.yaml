@@ -67,6 +67,11 @@ spec:
                 configMapKeyRef:
                   name: configuration
                   key: images_bucket_name
+            - name: LICENSE
+              valueFrom:
+                secretKeyRef:
+                  name: configuration
+                  key: enterprise_license_token
 
             # also check internal redis because Raptor doesn't to a nice job of checking its redis at boot time and leave
             # the health check to do that, which is way worse to troubleshoot

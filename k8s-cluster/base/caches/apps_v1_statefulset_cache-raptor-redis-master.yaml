@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   labels:
     app: raptor-redis
-    chart: raptorCacheRedis-10.6.12
+    chart: raptorCacheRedis-11.2.3
     heritage: Helm
     release: cache
   name: cache-raptor-redis-master
@@ -18,12 +18,12 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: 7f874998e20f8603daf7693f0d483a3a00efaf3260767a9be72d77747aff1abd
-        checksum/health: 133dc3673281babac84734fc871312fab2f88aebbc35cf9cd0e2fc5b5db36211
-        checksum/secret: 18bc366aa5085d23aaa5bb03a05895731c2fb3d1c437fc5453ab6eb6c92ab644
+        checksum/configmap: 46db79426a5bfbba05cfea1d18824aca10bfab784905a6e1bae5c216228380a4
+        checksum/health: c12f2dd6e78b1cce5c0d9d87a61ff58b580f7fc9207ba99b9cf0b4c5e7bce8d2
+        checksum/secret: 5ac488fa201703d94cfe31491c236b9e765704bc1031b29b92687c36a48cbeec
       labels:
         app: raptor-redis
-        chart: raptorCacheRedis-10.6.12
+        chart: raptorCacheRedis-11.2.3
         release: cache
         role: master
     spec:
@@ -31,32 +31,17 @@ spec:
       - command:
         - /bin/bash
         - -c
-        - |
-          if [[ -n $REDIS_PASSWORD_FILE ]]; then
-            password_aux=`cat ${REDIS_PASSWORD_FILE}`
-            export REDIS_PASSWORD=$password_aux
-          fi
-          if [[ ! -f /opt/bitnami/redis/etc/master.conf ]];then
-            cp /opt/bitnami/redis/mounted-etc/master.conf /opt/bitnami/redis/etc/master.conf
-          fi
-          if [[ ! -f /opt/bitnami/redis/etc/redis.conf ]];then
-            cp /opt/bitnami/redis/mounted-etc/redis.conf /opt/bitnami/redis/etc/redis.conf
-          fi
-          ARGS=("--port" "${REDIS_PORT}")
-          ARGS+=("--requirepass" "${REDIS_PASSWORD}")
-          ARGS+=("--masterauth" "${REDIS_PASSWORD}")
-          ARGS+=("--include" "/opt/bitnami/redis/etc/redis.conf")
-          ARGS+=("--include" "/opt/bitnami/redis/etc/master.conf")
-          ARGS+=("--maxmemory-policy allkeys-lfu")
-          /run.sh ${ARGS[@]}
+        - /opt/bitnami/scripts/start-scripts/start-master.sh
         env:
-        - name: REDIS_REPLICATION_MODE
-          value: master
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               key: raptor_redis_password
               name: internal
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        - name: REDIS_TLS_ENABLED
+          value: "no"
         - name: REDIS_PORT
           value: "6379"
         image: docker.io/bitnami/redis:5.0
@@ -71,7 +56,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 5
+          timeoutSeconds: 6
         name: raptor-redis
         ports:
         - containerPort: 6379
@@ -81,21 +66,21 @@ spec:
             command:
             - sh
             - -c
-            - /health/ping_readiness_local.sh 5
+            - /health/ping_readiness_local.sh 1
           failureThreshold: 5
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 1
-        resources: null
+          timeoutSeconds: 2
         securityContext:
           runAsUser: 1001
         volumeMounts:
+        - mountPath: /opt/bitnami/scripts/start-scripts
+          name: start-scripts
         - mountPath: /health
           name: health
         - mountPath: /data
           name: redis-data
-          subPath: null
         - mountPath: /opt/bitnami/redis/mounted-etc
           name: config
         - mountPath: /opt/bitnami/redis/etc/
@@ -104,6 +89,10 @@ spec:
         fsGroup: 1001
       serviceAccountName: default
       volumes:
+      - configMap:
+          defaultMode: 493
+          name: cache-raptor-redis-scripts
+        name: start-scripts
       - configMap:
           defaultMode: 493
           name: cache-raptor-redis-health

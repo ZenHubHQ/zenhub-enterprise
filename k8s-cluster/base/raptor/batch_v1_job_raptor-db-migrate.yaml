@@ -15,6 +15,28 @@ spec:
         - rake
         - db:setup_or_migrate_safely
         env:
+        - name: MIGRATIONS_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: postgres_url
+              name: configuration
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: raptor_redis_password
+              name: internal
+        - name: CACHE_REDIS_URL
+          value: redis://default:$(REDIS_PASSWORD)@cache-raptor-redis-master:6379/0
+        - name: ENTERPRISE_LICENSE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: enterprise_license_token
+              name: configuration
         - name: DATABASE_STATEMENT_TIMEOUT
           value: 120s
         - name: SAFETY_ASSURED
@@ -131,32 +153,21 @@ spec:
             secretKeyRef:
               key: rabbitmq_url
               name: configuration
-        - name: MIGRATIONS_DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              key: postgres_url
-              name: configuration
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              key: postgres_url
-              name: configuration
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: raptor_redis_password
-              name: internal
-        - name: CACHE_REDIS_URL
-          value: redis://default:$(REDIS_PASSWORD)@cache-raptor-redis-master:6379/0
-        - name: ENTERPRISE_LICENSE_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: enterprise_license_token
-              name: configuration
         - name: RAILS_MAX_THREADS
           valueFrom:
             configMapKeyRef:
               key: rails_max_threads
+              name: raptor-migrate
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: CABLE_URL
+          value: $(POD_NAMESPACE)-raptor-cable
+        - name: CABLE_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: cable_redis_url
               name: raptor-migrate
         image: raptor-backend
         imagePullPolicy: IfNotPresent

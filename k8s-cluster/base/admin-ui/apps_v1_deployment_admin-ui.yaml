@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: admin-ui
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: admin-ui
+  name: admin-ui
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: admin-ui
+      app.kubernetes.io/managed-by: kustomize
+      app.kubernetes.io/name: admin-ui
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: admin-ui
+        app.kubernetes.io/managed-by: kustomize
+        app.kubernetes.io/name: admin-ui
+    spec:
+      containers:
+      - env:
+        - name: WEBAPP_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad
+        - name: NEXT_PUBLIC_HOST_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_webapp_address
+              name: toad
+        - name: NEXT_PUBLIC_FIREFOX_EXT_UPLOAD_TYPE_IS_LOCAL
+          valueFrom:
+            configMapKeyRef:
+              key: local_files
+              name: configuration
+        - name: NEXT_PUBLIC_FIREFOX_EXT_UPLOAD_TYPE_IS_S3
+          valueFrom:
+            configMapKeyRef:
+              key: firefox_ext_local_path
+              name: admin-ui
+        - name: FIREFOX_EXT_S3_ID
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_access_key_id
+              name: configuration
+        - name: FIREFOX_EXT_S3_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: bucket_secret_access_key
+              name: configuration
+        - name: FIREFOX_EXT_S3_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: images_bucket_name
+              name: configuration
+        - name: FIREFOX_EXT_S3_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_region
+              name: configuration
+        - name: FIREFOX_EXT_S3_BUCKET_DIR
+          valueFrom:
+            configMapKeyRef:
+              key: firefox_ext_s3_bucket_dir
+              name: admin-ui
+        - name: NEXTAUTH_URL
+          valueFrom:
+            configMapKeyRef:
+              key: nextauth_url
+              name: admin-ui
+        - name: TOAD_URL
+          valueFrom:
+            configMapKeyRef:
+              key: toad_url
+              name: admin-ui
+        - name: RAPTOR_URL
+          valueFrom:
+            configMapKeyRef:
+              key: raptor_url
+              name: admin-ui
+        - name: ZENHUB_CHROME_EXT_WEBSTORE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: chrome_extension_webstore_url
+              name: configuration
+        - name: ZENHUB_FIREFOX_EXT_JSON_URL
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_firefox_ext_json_url
+              name: admin-ui
+        - name: ZENHUB_FIREFOX_EXT_XPI_ROOT_URL
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_firefox_ext_xpi_root_url
+              name: admin-ui
+        - name: NEXT_PUBLIC_UNSIGNED_DIR
+          valueFrom:
+            configMapKeyRef:
+              key: next_public_unsigned_dir
+              name: admin-ui
+        - name: NEXTAUTH_PWD
+          valueFrom:
+            secretKeyRef:
+              key: admin_ui_pass
+              name: configuration
+        - name: INTERNAL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: internal_auth_token
+              name: internal
+        image: kraken-zhe-admin
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /api/healthcheck
+            port: 3000
+        name: admin-ui
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 400Mi
+          requests:
+            cpu: 250m
+            memory: 200Mi

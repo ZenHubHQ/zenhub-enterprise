@@ -28,10 +28,13 @@ data:
       maxFileUpload: 15728640,
       maxFileUploadString: "15 MB",
       repoFetchPageLimit: 12,
-      isUploadFileToLocal: false,
-      isTrackerEnabled: true,
+      isUploadFileToLocal: true,
+      isTrackerEnabled: false,
       verboseLogs: false,
       NO_CHECK_UPDATE_FOR_OPENED_ISSUE_VIEWER: true,
+      ZENHUB_CHROME_EXT_WEBSTORE_URL: "$(chrome_extension_webstore_url)",
+      ZENHUB_FIREFOX_EXT_JSON_URL: "https://$(subdomain_suffix).$(domain_tld)/zhe-public/ff-ext-signed/latest.json",
+      ZENHUB_FIREFOX_EXT_XPI_ROOT_URL: "https://$(subdomain_suffix).$(domain_tld)/zhe-public/ff-ext-signed",
     };
 kind: ConfigMap
 metadata:

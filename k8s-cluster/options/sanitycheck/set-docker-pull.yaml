@@ -1,9 +1,0 @@
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: sanitycheck
-spec:
-  template:
-    spec:
-      imagePullSecrets:
-        - name: zenhub-docker-registry-credentials

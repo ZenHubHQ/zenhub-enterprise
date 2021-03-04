@@ -3,5 +3,8 @@ kind: Kustomization
 resources:
 - apps_v1_deployment_kraken-webapp.yaml
 - configmaps.yaml
+- persistentvolume.yaml
+- persistentvolumeclaim.yaml
+- role.yaml
 - secret.yaml
 - service.yaml

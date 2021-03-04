@@ -1,15 +1,16 @@
 # ZHE2 to ZHE3 Migration for ZenHub for Kubernetes
 
 ## Table of Contents
-- [When am I ready to migrate production?](#when-am-i-ready-to-migrate)
+- [When am I ready to migrate production?](#when-am-i-ready-to-migrate-production)
 - [Migration overview](#migration-overview)
 - [Gather the data from your existing ZHE2 source instance](#gather-the-data-from-your-existing-zhe2-source-instance)
 - [Move the data to your jump box or workstation](#move-the-data-to-your-jump-box-or-workstation)
-- [Upload the data to the DBs and bucket](#upload-the-data-to-the-dbs-and-bucket)
+- [Upload the data to the DBs](#upload-the-data-to-the-dbs)
   - [MongoDB](#mongodb)
   - [PostgreSQL](#postgresql)
   - [Update the references in the MongoDB blob collection](#update-the-references-in-the-mongodb-blob-collection)
-  - [Upload files and images to the object storage bucket](#upload-files-and-images-to-the-object-storage-bucket)
+- [Upload the files and images to the buckets](#upload-the-files-and-images-to-the-buckets)
+
 
 ### When am I ready to migrate production?
 
@@ -54,13 +55,11 @@ tar -xf migration-data-<timestamp>.tar.gz
 You should end up with the following files:
 ```
 .
-├── file_types.json
 ├── mongo.tar.gz
 ├── postgres_raptor_data.dump
 ├── uploads.tar.gz
 └── variables.txt
 ```
-- `file_types.json`: an array MIME types for the uploaded files, used when uploading to the object storage bucket
 - `mongo.tar.gz`: the MongoDB data dump
 - `postgres_raptor_data.dump`: the PostgreSQL data dump
 - `uploads.tar.gz`: all files and images uploaded to GitHub issues through ZenHub
@@ -69,6 +68,8 @@ You should end up with the following files:
 ### Upload the data to the DBs and bucket
 
 For these examples, we will assume that your workstation or jump box has network access to your MongoDB and PostgreSQL databases as well as your object storage bucket.
+
+> ⚠️ **NOTE:** If you do not have direct access to the databases, another method to upload the database data is to run temporary MongoDB and PostgreSQL pods in your K8s namespace and use them as a jump box, as these will also already have the required tools installed.
 
 #### MongoDB
 
@@ -80,7 +81,7 @@ To restore the MongoDB dump we will need to have the MongoDB tools on your works
 brew install mongodb/brew/mongosh
 brew install mongodb/brew/mongodb-database-tools
 ```
-> Note: `mongosh` is the Mongo shell, and `mongodb-database-tools` includes `mongorestore`.
+> ⚠️ **NOTE:** `mongosh` is the Mongo shell, and `mongodb-database-tools` includes `mongorestore`.
 
 2. Download your MongoDB provider's CA certificate. For example, if using Amazon DocumentDB, you can find it [here](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html#connect_programmatically-tls_enabled). This will ensure the MongoDB tools can verify the certificate of your MongoDB server.
 
@@ -91,13 +92,13 @@ Depending on the authentication and authorization system of your MongoDB provide
 ```
 mongo --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --username root --host zenhub-mongo.example.com --port 27017
 ```
->Note: You will be prompted for `--username`'s password.
+> ⚠️ **NOTE:** You will be prompted for `--username`'s password.
 
 ```
 use zenhub
 db.createUser({user: "restorer", pwd: "the-restorer-password", roles: [ "readWrite", "dbAdmin" ]})
 ```
->Note: If you have already deployed ZenHub to your Kubernetes cluster and it has successfully connected to Mongo, the `zenhub` database should exist.
+> ⚠️ **NOTE:** If you have already deployed ZenHub to your Kubernetes cluster and it has successfully connected to Mongo, the `zenhub` database should exist.
 
 4. Expand the Mongo tarball
 
@@ -139,19 +140,73 @@ MongoDB stores the location of each file object uploaded to ZenHub. Since these 
 kubectl -n zhe2migration exec -it toad-api-544dc6576c-f2kp4 -- bash
 ```
 
-2. Set the required env vars (again replace the bucket URLs)
+2. Set the required env vars (again replace the bucket URLs with your own)
 
 ```bash
 export REMOTE_FILES_URL=https://zhe2migration-test.s3.us-east-1.amazonaws.com
 export REMOTE_IMAGES_URL=https://zhe2migration-test-images.s3.us-east-1.amazonaws.com
 ```
 
-3. Run the migration script. This is *technically* not needed for the files to appear correctly, but it ensures that the blob data in MongoDB is correct.
+3. Run the migration script
 
 ```bash
 node /zenhub/app/scripts/zhe/migrateBlobsToRemoteUrls.js
 ```
 
-#### Upload files and images to the object storage bucket
+### Upload files and images to the object storage bucket
+Inside of your migration data bundle is another bundle called `uploads.tar.gz`. This contains the files and images uploaded to GitHub issues through the ZenHub web app. To upload these, we will use a third-party tool that can interact with any bucket that implements the S3 API: [s3cmd](https://s3tools.org/s3cmd).
 
-> Instructions coming soon.
+1. Install s3cmd and libmagic
+
+To install s3cmd, you will need to have Python 2.6 (or newer) installed. For more information on ways to download and install s3cmd, please visit [s3tools.org](https://s3tools.org/download) or [GitHub](https://github.com/s3tools/s3cmd/blob/master/INSTALL.md).
+
+```bash
+pip install s3cmd
+```
+
+The **libmagic** library is essential for s3cmd to detect and upload the correct MIME type for each file to the bucket metadata.
+
+```bash
+brew install libmagic
+```
+
+2. Configure s3cmd
+
+To use s3cmd it needs to be configured with your S3/HMAC credentials. To configure s3cmd, you will need:
+- Access key
+- Secret key
+- Region
+- S3 Endpoint (for non-Amazon buckets that implement the S3 API, this will be their S3 API endpoint) e.g.: `s3.us-east.cloud-object-storage.appdomain.cloud`
+- DNS-style bucket+hostname:port template for accessing a bucket, e.g.: `%(bucket)s.s3.us-east.cloud-object-storage.appdomain.cloud`
+- Encryption password (use any)
+- Path to GPG program [None]
+- Use HTTPS protocol [Yes]
+- HTTP Proxy server name (use if you can't access S3 directly from your workstation/jump box)
+
+```bash
+s3cmd --configure
+```
+Your settings will be stored by default at `$HOME/.s3cfg`. You can test if you can access your buckets with the configured credentials with `s3cmd ls`.
+
+3. Expand `uploads.tar.gz`
+
+```bash
+tar -xf uploads.tar.gz
+```
+The `uploads.tar.gz` tarball will expand into the following structure, with more files and folders under `files` and `images`:
+```
+├── data
+│   └── uploads
+│       ├── files
+│       └── images
+```
+
+4. Sync the local directories to the buckets (replace the s3 paths with your own)
+
+```bash
+s3cmd sync data/uploads/files/* s3://zenhub-files
+s3cmd sync data/uploads/images/* s3://zenhub-images
+```
+> ⚠️ **NOTE:** If you see "`WARNING: Module python-magic is not available. Guessing MIME types based on file extensions`", then you do not have libmagic installed correctly and the MIME types won't be set. You will need to install libmagic, delete all objects, and sync again.
+
+Congrats! 🎉 All of your data should now be migrated and ready to use in ZHE3.
