@@ -31,22 +31,22 @@ commonLabels:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: 3.0.0-beta3
+    newTag: 3.0.0-RC1
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: 3.0.0-beta3
+    newTag: 3.0.0-RC1
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -107,7 +107,7 @@ secretGenerator:
       # [EDIT] License Token
       - enterprise_license_token=<zhe-license-jwt>
       # [EDIT] Admin-UI password
-      - admin_ui_pass=12345!
+      - admin_ui_pass=<some_pass>
 
   - name: internal
     # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer
