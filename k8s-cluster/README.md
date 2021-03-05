@@ -461,7 +461,7 @@ Most of them will not require downtime.
 
 ##### 1. Prepare
 * You need to get the `kustomization.yaml` you configured with all the secrets to take into account
-* Check out the zenhub-enterprise repo at the tag of the target release
+* Check out the `zenhub-enterprise` repo at the tag of the target release
 * Perform a diff to make sure not outstanding changes are waiting to be applied
 ```bash
 kustomize build . | kubectl diff -f-
