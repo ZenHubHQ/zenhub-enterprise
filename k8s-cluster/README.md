@@ -223,7 +223,7 @@ spec:
 
 ### 3.3 Ingress
 
-By default, we don't make any assumptions about the type of Ingress that is used with the cluster. It will be your responsibility to expose ZenHub through your preferred Ingress. The only requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 80 or 443 for the main app, and `admin-ui` service op port 80 or 443 for the Administration Panel.
+By default, we don't make any assumptions about the type of Ingress that is used with the cluster. It will be your responsibility to expose ZenHub through your preferred Ingress. The only requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 80 or 443 for the main app, and `admin-ui` service on port 80 or 443 for the Administration Panel.
 
 The provided manifests exposes ZenHub behind a single ClusterIP service, listening on port 80 and 443. You will need to setup and configure HTTPS through your Ingress (public facing SSL configuration is not within the scope of "ZenHub for Kubernetes").
 
