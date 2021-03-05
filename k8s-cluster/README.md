@@ -559,7 +559,5 @@ ZenHub Enterprise On-Premise 3.0.0 is actively in development and is currently a
 
 - TLS support for MongoDB/DocumentDB
 - Support for downloading and serving ZenHub browser extensions
-- (complete) An administration interface UI for some internal application configuration
-- (complete) Scripts to facilitate migration between 2.x.x and 3.x.x versions of ZenHub Enterprise On-Premise
-- (complete) Support for GitHub Enterprise Server 3.0.0
+- Support for GitHub Enterprise Server 3.0.0
 - Support for IAM role authorization when writing objects to S3 buckets
