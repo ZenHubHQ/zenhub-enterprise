@@ -10,7 +10,7 @@ apiVersion: v1
 data:
   attribution_app_id: ""
   ghwebhook_enabled: "true"
-  ghwebhook_whitelist: "*"
+  ghwebhook_whitelist: '*'
   github_server_address: $(github_hostname)
   is_enterprise: "true"
   mailchimp_key: ""
@@ -43,7 +43,7 @@ data:
   s3_user_images_upload_expiration: "300000"
   slack_app_id: ""
   stripe_public_key: ""
-  user_image_host: $(subdomain_suffix).$(domain_tld)/images
+  user_image_host: ""
   zenhub_env: enterprise
   zenhub_server_address: https://$(subdomain_suffix).$(domain_tld)/api
   zenhub_staging_server_address: https://$(subdomain_suffix).$(domain_tld)/api
@@ -53,3 +53,4 @@ data:
 kind: ConfigMap
 metadata:
   name: toad
+---

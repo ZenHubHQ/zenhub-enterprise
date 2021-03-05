@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-gateway
+  name: admin-ui
 spec:
   template:
     spec:
@@ -26,9 +26,10 @@ spec:
             ]
           volumeMounts:
             - mountPath: /data/ssl/
-              name: gw-crt-volume
+              name: crt-volume
       containers:
-        - name: nginx-gateway
+        - name: nginx-proxy
+          image: nginx
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -39,19 +40,16 @@ spec:
             - containerPort: 443
               name: https
               protocol: TCP
+            - containerPort: 80
+              name: http
+              protocol: TCP
           volumeMounts:
             - mountPath: /data/ssl/
-              name: gw-crt-volume
+              name: crt-volume
               readOnly: true
-          resources:
-            limits:
-              cpu: 500m
-              memory: 400Mi
-            requests:
-              cpu: 250m
-              memory: 200Mi
-        - name: monitor
-          imagePullPolicy: IfNotPresent
+            - name: proxy-conf-volume
+              mountPath: /etc/nginx/templates/default.conf.template
+              subPath: default.conf.template
           resources:
             limits:
               cpu: 250m
@@ -60,14 +58,17 @@ spec:
               cpu: 250m
               memory: 200Mi
       volumes:
-        - name: gw-crt-volume
+        - name: crt-volume
           emptyDir: {}
+        - name: proxy-conf-volume
+          configMap:
+            name: zhe-admin-proxy-conf
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-gateway
+  name: admin-ui
 spec:
   ports:
     - name: https

@@ -7,5 +7,8 @@ resources:
 - autoscaling_v2beta2_horizontalpodautoscaler_raptor-api.yaml
 - batch_v1_job_raptor-db-migrate.yaml
 - configmaps.yaml
+- persistentvolume.yaml
+- persistentvolumeclaim.yaml
+- role.yaml
 - secret.yaml
 - service.yaml

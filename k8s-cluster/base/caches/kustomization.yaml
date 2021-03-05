@@ -4,5 +4,8 @@ resources:
 - apps_v1_statefulset_cache-raptor-redis-master.yaml
 - apps_v1_statefulset_cache-toad-redis-master.yaml
 - configmaps.yaml
+- persistentvolume.yaml
+- persistentvolumeclaim.yaml
+- role.yaml
 - secret.yaml
 - service.yaml

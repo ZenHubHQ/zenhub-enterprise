@@ -59,6 +59,7 @@ spec:
               key: raptoradmin
               name: zhe-gw-vars
         image: nginx
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
             path: /healthcheck
@@ -68,15 +69,37 @@ spec:
         - containerPort: 80
           name: http
           protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 400Mi
+          requests:
+            cpu: 250m
+            memory: 200Mi
         volumeMounts:
         - mountPath: /data/zhe-monitor
           name: monitor
+        - mountPath: /etc/nginx/nginx.conf
+          name: zhe-gw-nginx-conf-volume
+          subPath: nginx.conf
         - mountPath: /etc/nginx/templates/default.conf.template
           name: proxy-conf-volume
           subPath: default.conf.template
         - mountPath: /usr/share/nginx/html/maintenance.html
           name: maitenance-page-volume
           subPath: maintenance.html
+        - mountPath: /etc/nginx/conf.d/include-ssl.conf
+          name: zhe-gw-include-ssl-volume
+          subPath: include-ssl.conf
+        - mountPath: /etc/nginx/templates/include-upstream-bucket.conf.template
+          name: zhe-gw-include-upstream-bucket-volume
+          subPath: include-upstream-bucket.conf.template
+        - mountPath: /etc/nginx/templates/include-location-images.conf.template
+          name: zhe-gw-include-location-images-volume
+          subPath: include-location-images.conf.template
+        - mountPath: /etc/nginx/templates/include-location-ff-extension.conf.template
+          name: zhe-gw-include-location-ff-extension-volume
+          subPath: include-location-ff-extension.conf.template
       - command:
         - ghe-maintenance-monitor.sh
         env:
@@ -90,7 +113,15 @@ spec:
         - name: MAINTENANCE_MODE
           value: ""
         image: nginx
+        imagePullPolicy: IfNotPresent
         name: monitor
+        resources:
+          limits:
+            cpu: 250m
+            memory: 200Mi
+          requests:
+            cpu: 250m
+            memory: 200Mi
         volumeMounts:
         - mountPath: /data/zhe-monitor
           name: monitor
@@ -101,6 +132,9 @@ spec:
       - emptyDir: {}
         name: monitor
       - configMap:
+          name: zhe-gw-nginx-conf
+        name: zhe-gw-nginx-conf-volume
+      - configMap:
           name: zhe-gw-conf
         name: proxy-conf-volume
       - configMap:
@@ -110,3 +144,15 @@ spec:
           defaultMode: 511
           name: zhe-monitor
         name: zhe-monitor-volume
+      - configMap:
+          name: zhe-gw-include-ssl
+        name: zhe-gw-include-ssl-volume
+      - configMap:
+          name: zhe-gw-include-upstream-bucket
+        name: zhe-gw-include-upstream-bucket-volume
+      - configMap:
+          name: zhe-gw-include-location-images
+        name: zhe-gw-include-location-images-volume
+      - configMap:
+          name: zhe-gw-include-location-ff-extension
+        name: zhe-gw-include-location-ff-extension-volume

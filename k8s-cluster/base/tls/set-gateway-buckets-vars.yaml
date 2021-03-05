@@ -18,3 +18,9 @@ spec:
                 configMapKeyRef:
                   key: images_bucket_name
                   name: configuration
+            - name: FIREFOX_EXT_S3_BUCKET_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: admin-ui
+                  key: firefox_ext_s3_bucket_dir
+              # value: ff-extension

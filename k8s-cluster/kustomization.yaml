@@ -4,19 +4,19 @@ kind: Kustomization
 # [EDIT] Specify the Kubernetes namespace into which ZenHub will be deployed.
 namespace: <a_dedicated_namespace>
 
+# [NOTE] You cannot set a `name_suffix` because the URLs would not match
+# existing resources.
+
 resources:
-  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/base
-  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/gateway-buckets
-  # optional Job to check configuration is setup properly (test databases/caches and storage access)
-  - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/sanitycheck
-  # - github.com/ZenHubHQ/zenhub-enterprise/tree/3.0.0-beta.3/k8s-cluster/options/gateway-local-files # to use in an environment without buckets
-  # to use with a cloned repository
-  # - base
-  # - options/sanitycheck
-  # - options/gateway-buckets
-  # # - options/gateway-local-files # to use in an environment without buckets
+  - base
+  - options/sanitycheck
   # Example of ingress
   # - options/ingress
+
+# Optional configurations
+# patchesStrategicMerge:
+# - options/local-files/local-files.yaml #! to use in an test environment without buckets
+# - options/zenhub-registry/zenhub-registry.yaml #! adds imagePullSecrets to pull images from ZenHub's registry
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
@@ -31,19 +31,22 @@ commonLabels:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
+  - name: kraken-zhe-admin
+    newName: us.gcr.io/zenhub-public/kraken-zhe-admin
+    newTag: enterprise-2.44-RC1
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-2.44-beta3
+    newTag: enterprise-2.44-RC1
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: 3.0.0-beta3
+    newTag: 3.0.0-RC1
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -61,32 +64,29 @@ configMapGenerator:
       # [EDIT] Set the subdomain that ZenHub will be served from, or leave as
       # default "zenhub" value.
       - subdomain_suffix=zenhub
-      # [EDIT] Make sure this matches the value defined above in "namePrefix".
-      # This is used to generate various URLs which allow our services to reach
-      # each other. For example, this is how the `toad` service will connect to
-      # the `raptor` service based on the Kubernetes Service name.
-      #
-      # NOTE: You cannot set a `name_suffix` because the URLs would not match
-      # existing resources.
+      # [EDIT] Set the subdomain that ZenHub Admin-UI will be served from, or leave as
+      # default "admin-zenhub" value.
+      - admin_ui_subdomain=admin-zenhub
       #
       # NOTE: Make sure the value does not have a trailing slash.
       - github_hostname=https://<github_enterprise_host>
-      # [EDIT] Specify the OAuth App ID for the ZenHub application. See here
+      # [EDIT] Specify the OAuth App Client ID for the ZenHub application. See here
       # for instructions on how to setup an OAuth app on your GitHub server:
       # https://docs.github.com/en/developers/apps/creating-an-oauth-app
       # The secret value should be passed to `github_app_secret` below (in the
       # "secretGenerator" section)
-      - github_app_id=<github_oauth_app_id>
-      # Local files instead of buckets !! Only for test !!
-      # - local_files=yes
-      # Buckets for object azure_rm_storage
+      - github_app_id=<github_oauth_app_client_id> # GitHub OAuth App Client ID
+      #
+      # S3 API compatible object storage buckets for uploaded files and images
       - bucket_access_key_id=<access_key_id>
-      - bucket_region=<bucket_region>
-      - bucket_domain=<bucket_public_domain>
+      - bucket_region=<bucket_region> # e.g., us-east-1
+      - bucket_domain=<bucket_public_domain> # e.g., s3.us-east-1.amazonaws.com
       - files_bucket_name=<bucket_name>
       - images_bucket_name=<bucket_name>
       # AWS DocumentDB as MongoDB
       # - mongodb_short_index=yes
+      # Chrome extension
+      - chrome_extension_webstore_url=""
 
 secretGenerator:
   - name: configuration
@@ -106,22 +106,25 @@ secretGenerator:
       - bucket_secret_access_key=<some-key>
       # [EDIT] License Token
       - enterprise_license_token=<zhe-license-jwt>
+      # [EDIT] Admin-UI password
+      - admin_ui_pass=<some_pass>
 
   - name: internal
     # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer
-    behavior:
-      merge
+    behavior: merge
+    literals:
       # NOTE:
       # => If you migrating from ZenHub Enterprise version 2, please recover
-      # the values from your existing installation (see our v2 to v3 upgrade
-      # instructions)
-      # => If you are setting up a new Zenhub Enterprise, respect the regexp format
-      # on Linux, you can run the following to generate the secret as follow
-      # for most secret
+      # the values from your existing installation (see our ZHE2 to ZHE3 upgrade
+      # instructions https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration,
+      # you can get these values from variables.txt from zhe3-migration-cluster.sh)
+      # => If you are setting up a new ZenHub Enterprise, respect the regexp format
+      # on Linux, you can run the following to generate the secret as follows:
+      # for most secrets
       # tr -dc A-Za-z0-9 </dev/urandom | head -c ${1-38} ; echo ''
-      # for the one requiring an hex format
+      # for the ones requiring an hex format
       # tr -dc a-f0-9 </dev/urandom | head -c ${1-64} ; echo ''
-    literals:
+      # on MacOS, add LC_CTYPE=C to the beginning of the tr command
       # [EDIT]
       - toad_redis_password=<[A-Za-z0-9]{24}>
       # [EDIT]
@@ -148,10 +151,10 @@ secretGenerator:
       # [EDIT] Should be the same value as `github_webhooks_secret` above. This
       # one is used by the Toad services.
       - ghwebhook_secret=<[A-Za-z0-9]{38}>
-
-    # Certificates for SSL/TLS
-    type: "kubernetes.io/tls"
-  # - name: postgres-ca-bundle
-  #   behavior: replace
-  #   files:
-  #     - <some_path>/<some_pem>
+      #
+      # [EDIT] Certificates for Postgres DB SSL/TLS.
+      # [NOTE] If you use this you must add "?sslmode=require&sslrootcert=/var/ca-bundle/mongo/postgres-ca.pem" to the end of postgres_url
+      # - name: postgres-ca-bundle
+      #   behavior: replace
+      #   files:
+      #     - <some_path>/<some_pem>

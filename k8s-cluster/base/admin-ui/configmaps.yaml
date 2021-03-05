@@ -1,0 +1,18 @@
+apiVersion: v1
+data:
+  firefox_ext_local_path: /tmp/zenhub-firefox
+  firefox_ext_s3_bucket_dir: ff-extension
+  next_public_unsigned_dir: extension
+  nextauth_url: https://$(admin_ui_subdomain).$(domain_tld)
+  raptor_url: http://raptor-api
+  toad_url: http://toad-api
+  zenhub_firefox_ext_json_url: https://$(subdomain_suffix).$(domain_tld)/zhe-public/ff-ext-signed/latest.json
+  zenhub_firefox_ext_xpi_root_url: https://$(subdomain_suffix).$(domain_tld)/zhe-public/ff-ext-signed
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: admin-ui
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: admin-ui
+  name: admin-ui
+---

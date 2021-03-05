@@ -1,0 +1,101 @@
+---
+# raptor-api
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: raptor-api
+spec:
+  maxReplicas: 2
+  minReplicas: 2
+
+---
+#toad-api
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: toad-api
+spec:
+  maxReplicas: 2
+  minReplicas: 2
+
+---
+# toad-websocket
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: toad-websocket
+spec:
+  maxReplicas: 2
+  minReplicas: 2
+
+---
+# nginx-gateway
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-gateway
+spec:
+  replicas: 3
+
+---
+# raptor-sidekiq-worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-sidekiq-worker
+spec:
+  replicas: 2
+
+---
+# kraken-webapp
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kraken-webapp
+spec:
+  replicas: 2
+
+---
+# raptor-admin
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-admin
+spec:
+  replicas: 2
+
+---
+# raptor-admin
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-admin
+spec:
+  replicas: 2
+
+---
+# toad-cron
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-cron
+spec:
+  replicas: 2
+
+---
+# toad-webhook
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-webhook
+spec:
+  replicas: 2
+
+---
+# toad-worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-worker
+spec:
+  replicas: 2

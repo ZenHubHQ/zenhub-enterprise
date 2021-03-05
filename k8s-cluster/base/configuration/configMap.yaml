@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: configuration
 data:
-  mongodb_short_index: "true"
+  mongodb_short_index: "false"
   local_files: "false"
   bucket_domain: ""
   files_bucket_name: ""

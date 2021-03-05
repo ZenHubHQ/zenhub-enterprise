@@ -49,6 +49,13 @@ spec:
             secretKeyRef:
               key: raptor_redis_password
               name: internal
+        - name: CACHE_REDIS_URL
+          value: redis://default:$(REDIS_PASSWORD)@cache-raptor-redis-master:6379/0
+        - name: ENTERPRISE_LICENSE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: enterprise_license_token
+              name: configuration
         - name: RAILS_MAX_THREADS
           valueFrom:
             configMapKeyRef:
@@ -59,6 +66,12 @@ spec:
             configMapKeyRef:
               key: database_statement_timeout
               name: raptor-sidekiq
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: CABLE_URL
+          value: $(POD_NAMESPACE)-raptor-cable
         - name: RUBYOPT
           value: -W0
         - name: RAILS_ENV
@@ -141,13 +154,6 @@ spec:
             secretKeyRef:
               key: redis_url
               name: configuration
-        - name: CACHE_REDIS_URL
-          value: redis://default:$(REDIS_PASSWORD)@cache-raptor-redis-master:6379/0
-        - name: ENTERPRISE_LICENSE_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: enterprise_license_token
-              name: configuration
         - name: SECRET_KEY_BASE
           valueFrom:
             secretKeyRef:
@@ -198,6 +204,11 @@ spec:
             secretKeyRef:
               key: rabbitmq_url
               name: configuration
+        - name: CABLE_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: cable_redis_url
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:
