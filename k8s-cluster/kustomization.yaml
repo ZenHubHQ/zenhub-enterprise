@@ -37,7 +37,7 @@ images:
     newTag: enterprise-2.44-RC1
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: 3.0.0-RC1
+    newTag: enterprise-2.44-RC1
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
     newTag: enterprise-2.44-RC1
@@ -75,7 +75,7 @@ configMapGenerator:
       # https://docs.github.com/en/developers/apps/creating-an-oauth-app
       # The secret value should be passed to `github_app_secret` below (in the
       # "secretGenerator" section)
-      - github_app_client_id=<github_oauth_app_client_id>
+      - github_app_id=<github_oauth_app_client_id> # GitHub OAuth App Client ID
       #
       # S3 API compatible object storage buckets for uploaded files and images
       - bucket_access_key_id=<access_key_id>

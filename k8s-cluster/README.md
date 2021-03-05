@@ -43,7 +43,7 @@ In order to get started with ZenHub, you must have an existing Kubernetes cluste
 
 - Be using Kubernetes version 1.16 or greater
 - Have `kubectl` installed locally with credentials to access the cluster
-- Have [`kustomize`](https://kustomize.io/) installed locally (>= 3.9)
+- Have [`kustomize`](https://kustomize.io/) installed locally (>= 3.9.4)
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
 - Have the capability to pull the Docker images from ZenHub's public Docker registry or have access to a private Docker registry where you can push images (and the cluster should have the ability to pull from that private registry)
 
