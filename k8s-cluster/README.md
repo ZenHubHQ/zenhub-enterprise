@@ -505,7 +505,7 @@ kustomize build . | kubectl apply -f-
 
 #### Application Update
 
-The application update is related the ZenHub application code—the containers ZenHub is running on.
+The application update is related the ZenHub application code — the containers ZenHub is running on.
 
 Quite often we will release a new version for ZenHub Enterprise Application in the form a new Docker tag to pull from our
 public Docker Registry.
