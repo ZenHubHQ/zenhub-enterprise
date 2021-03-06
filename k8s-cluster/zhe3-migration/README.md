@@ -112,6 +112,8 @@ tar -xf mongo.tar.gz
 mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --username restorer --db zenhub ./dump/zenhub_enterprise
 ```
 
+> ⚠️ **NOTE:** If you are using Amazon DocumentDB, add the `--noIndexRestore` option, as DocumentDB requires shorter index names. With this option, the application will rebuild the indexes as needed with the shorter names.
+
 #### PostgreSQL
 
 To restore the PostgreSQL dump we will need to have the PostgreSQL tools on your workstation/jumpbox. Install the latest PostgreSQL version 11 tools.
