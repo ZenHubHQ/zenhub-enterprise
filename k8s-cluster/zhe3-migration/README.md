@@ -9,7 +9,7 @@
   - [MongoDB](#mongodb)
   - [PostgreSQL](#postgresql)
   - [Update the references in the MongoDB blob collection](#update-the-references-in-the-mongodb-blob-collection)
-- [Upload the files and images to the buckets](#upload-the-files-and-images-to-the-buckets)
+- [Upload files and images to the object storage bucket](#upload-files-and-images-to-the-object-storage-bucket)
 
 
 ### When am I ready to migrate production?
@@ -65,7 +65,7 @@ You should end up with the following files:
 - `uploads.tar.gz`: all files and images uploaded to GitHub issues through ZenHub
 - `variables.txt`: a list of environment variables you can use to help fill out fields in your `kustomization.yaml`.
 
-### Upload the data to the DBs and bucket
+### Upload the data to the DBs
 
 For these examples, we will assume that your workstation or jump box has network access to your MongoDB and PostgreSQL databases as well as your object storage bucket.
 
@@ -109,7 +109,7 @@ tar -xf mongo.tar.gz
 5. Restore the Mongo database
 
 ```bash
-mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --username restorer --db zenhub ./dump/zenhub_enterprise
+mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --username restorer --db zenhub ./dump
 ```
 
 > ⚠️ **NOTE:** If you are using Amazon DocumentDB, add the `--noIndexRestore` option, as DocumentDB requires shorter index names. With this option, the application will rebuild the indexes as needed with the shorter names.
