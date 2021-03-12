@@ -109,10 +109,12 @@ tar -xf mongo.tar.gz
 5. Restore the Mongo database
 
 ```bash
-mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --username restorer --db zenhub ./dump
+mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*'  --nsInclude='zenhub_enterprise.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --authenticationDatabase=zenhub --username restorer ./dump
 ```
 
 > ⚠️ **NOTE:** If you are using Amazon DocumentDB, add the `--noIndexRestore` option, as DocumentDB requires shorter index names. With this option, the application will rebuild the indexes as needed with the shorter names.
+> 
+> ⚠️ **NOTE:** Set the value of `authenticationDatabase` to whichever database you created your `restorer` user in from Step 3 above.
 
 #### PostgreSQL
 
