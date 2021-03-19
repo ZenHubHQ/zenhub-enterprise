@@ -169,6 +169,21 @@ spec:
             secretKeyRef:
               key: cable_redis_url
               name: raptor-migrate
+        - name: CABLE_ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              key: cable_allowed_origins
+              name: raptor-migrate
+        - name: ACTION_CABLE_WORKERS_POOL_SIZE
+          valueFrom:
+            configMapKeyRef:
+              key: action_cable_workers_pool_size
+              name: raptor-migrate
+        - name: WEB_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              key: web_concurrency
+              name: raptor-migrate
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         name: raptor-db-migrate

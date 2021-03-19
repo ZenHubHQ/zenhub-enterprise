@@ -9,7 +9,7 @@
   - [MongoDB](#mongodb)
   - [PostgreSQL](#postgresql)
   - [Update the references in the MongoDB blob collection](#update-the-references-in-the-mongodb-blob-collection)
-- [Upload files and images to the object storage bucket](#upload-files-and-images-to-the-object-storage-bucket)
+- [Upload files and images to the object storage buckets](#upload-files-and-images-to-the-object-storage-buckets)
 
 
 ### When am I ready to migrate production?
@@ -106,13 +106,14 @@ db.createUser({user: "restorer", pwd: "the-restorer-password", roles: [ "readWri
 tar -xf mongo.tar.gz
 ```
 
-5. Restore the Mongo database
+5. Restore the Mongo database. The default name for the MongoDB database is `zenhub`, but if you have changed this, please reflect that in your restore command.
 
 ```bash
-mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --username restorer --db zenhub ./dump
+mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --nsInclude='zenhub_enterprise.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --username restorer --authenticationDatabase=zenhub ./dump
 ```
-
 > ⚠️ **NOTE:** If you are using Amazon DocumentDB, add the `--noIndexRestore` option, as DocumentDB requires shorter index names. With this option, the application will rebuild the indexes as needed with the shorter names.
+
+> ⚠️ **NOTE:** Set the value of `authenticationDatabase` to whichever database you created your `restorer` user in from Step 3 above.
 
 #### PostgreSQL
 
@@ -126,10 +127,10 @@ brew install postgresql@11
 
 2. Download your PostgreSQL provider's CA certificate. For example, if you're using Amazon RDS, you can find it [here](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html).
 
-3. Restore the DB
+3. Restore the DB. The default name for the PostgreSQL database is `raptor_production` and the default user is `postgres`, but if you have changed this, please reflect that in your restore command.
 
 ```bash
-pg_restore --clean --no-owner -v -h localhost -p 5432 -d raptor_production -U postgres -W --sslrootcert=<path/to/postgres-ca-cert.pem> --sslmode=verify-full postgres_raptor_data.dump
+pg_restore --clean --no-owner -v -h zenhub.pg.example.com -p 5432 -d raptor_production -U postgres -W --sslrootcert=<path/to/postgres-ca-cert.pem> --sslmode=verify-full postgres_raptor_data.dump
 ```
 
 #### Update the references in the MongoDB blob collection
@@ -155,7 +156,7 @@ export REMOTE_IMAGES_URL=https://zhe2migration-test-images.s3.us-east-1.amazonaw
 node /zenhub/app/scripts/zhe/migrateBlobsToRemoteUrls.js
 ```
 
-### Upload files and images to the object storage bucket
+### Upload files and images to the object storage buckets
 Inside of your migration data bundle is another bundle called `uploads.tar.gz`. This contains the files and images uploaded to GitHub issues through the ZenHub web app. To upload these, we will use a third-party tool that can interact with any bucket that implements the S3 API: [s3cmd](https://s3tools.org/s3cmd).
 
 1. Install s3cmd and libmagic

@@ -1,0 +1,201 @@
+---
+# raptor-api
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-api
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2000Mi
+            limits:
+              cpu: 500m
+              memory: 4000Mi
+
+---
+#toad-api
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-api
+          resources:
+            limits:
+              cpu: 500m
+              memory: 4096Mi
+            requests:
+              cpu: 500m
+              memory: 2048Mi
+
+---
+# toad-websocket
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-websocket
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-websocket
+          resources:
+            limits:
+              cpu: 500m
+              memory: 4096Mi
+            requests:
+              cpu: 500m
+              memory: 2048Mi
+
+---
+# raptor-sidekiq-worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-sidekiq-worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-sidekiq-worker
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2000Mi
+            limits:
+              cpu: 500m
+              memory: 4000Mi
+
+---
+# raptor-admin
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-admin
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-admin
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2000Mi
+            limits:
+              cpu: 500m
+              memory: 4000Mi
+
+---
+# raptor-admin
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-admin
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-admin
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2000Mi
+            limits:
+              cpu: 500m
+              memory: 4000Mi
+
+---
+# toad-cron
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-cron
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-cron
+          resources:
+            limits:
+              cpu: 500m
+              memory: 4096Mi
+            requests:
+              cpu: 500m
+              memory: 2048Mi
+
+---
+# toad-webhook
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-webhook
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-webhook
+          resources:
+            limits:
+              cpu: 500m
+              memory: 4096Mi
+            requests:
+              cpu: 500m
+              memory: 2048Mi
+
+---
+# toad-worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toad-worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-worker
+          resources:
+            limits:
+              cpu: 500m
+              memory: 4096Mi
+            requests:
+              cpu: 500m
+              memory: 2048Mi
+
+---
+# nginx-gateway
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx-gateway
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: http
+          resources:
+            limits:
+              cpu: 250m
+              memory: 250Mi
+            requests:
+              cpu: 150m
+              memory: 100Mi
+        - name: monitor
+          resources:
+            limits:
+              cpu: 150m
+              memory: 150Mi
+            requests:
+              cpu: 150m
+              memory: 100Mi

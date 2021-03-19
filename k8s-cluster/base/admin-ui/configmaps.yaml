@@ -1,9 +1,10 @@
 apiVersion: v1
 data:
-  firefox_ext_local_path: /tmp/zenhub-firefox
+  firefox_ext_local_path: /data/uploads/extensions/firefox
   firefox_ext_s3_bucket_dir: ff-extension
   next_public_unsigned_dir: extension
   nextauth_url: https://$(admin_ui_subdomain).$(domain_tld)
+  node_tls_reject_unauthorized: "0"
   raptor_url: http://raptor-api
   toad_url: http://toad-api
   zenhub_firefox_ext_json_url: https://$(subdomain_suffix).$(domain_tld)/zhe-public/ff-ext-signed/latest.json

@@ -32,7 +32,18 @@ spec:
               topologyKey: topology.kubernetes.io/zone
             weight: 2
       containers:
-      - image: kraken-webapp
+      - env:
+        - name: ZENHUB_FIREFOX_EXT_JSON_URL
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_firefox_ext_json_url
+              name: admin-ui
+        - name: ZENHUB_FIREFOX_EXT_XPI_ROOT_URL
+          valueFrom:
+            configMapKeyRef:
+              key: zenhub_firefox_ext_xpi_root_url
+              name: admin-ui
+        image: kraken-webapp
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -77,6 +88,11 @@ spec:
           value: $(github_hostname)
         - name: MANIFEST_FIREFOX_UPDATE_URL
           value: $(WEBAPP_ADDRESS)/zhe-public/ff-ext-signed/update.json
+        - name: MANIFEST_FIREFOX_ID
+          valueFrom:
+            configMapKeyRef:
+              key: manifest_firefox_id
+              name: configuration
         image: kraken-extension
         imagePullPolicy: IfNotPresent
         name: kraken-extension

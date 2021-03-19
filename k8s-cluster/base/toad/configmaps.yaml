@@ -49,7 +49,7 @@ data:
   zenhub_staging_server_address: https://$(subdomain_suffix).$(domain_tld)/api
   zenhub_staging_webapp_address: https://$(subdomain_suffix).$(domain_tld)
   zenhub_webapp_address: https://$(subdomain_suffix).$(domain_tld)
-  zenhub_webhook_address: https://$(subdomain_suffix).$(domain_tld)/webhook
+  zenhub_webhook_address: https://$(subdomain_suffix).$(domain_tld)
 kind: ConfigMap
 metadata:
   name: toad

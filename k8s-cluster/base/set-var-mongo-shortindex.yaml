@@ -8,11 +8,11 @@ spec:
       containers:
         - name: toad-api
           env:
-            - name: MONGODB_SHORT_INDEX_NAMES
+            - name: MONGO_IS_DOCUMENTDB
               valueFrom:
                 configMapKeyRef:
                   name: configuration
-                  key: mongodb_short_index
+                  key: mongo_is_documentdb
 
 ---
 apiVersion: apps/v1
@@ -25,11 +25,11 @@ spec:
       containers:
         - name: toad-cron
           env:
-            - name: MONGODB_SHORT_INDEX_NAMES
+            - name: MONGO_IS_DOCUMENTDB
               valueFrom:
                 configMapKeyRef:
                   name: configuration
-                  key: mongodb_short_index
+                  key: mongo_is_documentdb
 
 ---
 apiVersion: apps/v1
@@ -42,11 +42,11 @@ spec:
       containers:
         - name: toad-websocket
           env:
-            - name: MONGODB_SHORT_INDEX_NAMES
+            - name: MONGO_IS_DOCUMENTDB
               valueFrom:
                 configMapKeyRef:
                   name: configuration
-                  key: mongodb_short_index
+                  key: mongo_is_documentdb
 
 ---
 apiVersion: apps/v1
@@ -59,11 +59,11 @@ spec:
       containers:
         - name: toad-webhook
           env:
-            - name: MONGODB_SHORT_INDEX_NAMES
+            - name: MONGO_IS_DOCUMENTDB
               valueFrom:
                 configMapKeyRef:
                   name: configuration
-                  key: mongodb_short_index
+                  key: mongo_is_documentdb
 
 ---
 apiVersion: apps/v1
@@ -76,8 +76,8 @@ spec:
       containers:
         - name: toad-worker
           env:
-            - name: MONGODB_SHORT_INDEX_NAMES
+            - name: MONGO_IS_DOCUMENTDB
               valueFrom:
                 configMapKeyRef:
                   name: configuration
-                  key: mongodb_short_index
+                  key: mongo_is_documentdb
