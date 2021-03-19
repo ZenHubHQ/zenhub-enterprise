@@ -149,6 +149,16 @@ spec:
             configMapKeyRef:
               key: is_enterprise
               name: raptor
+        - name: CABLE_ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              key: cable_allowed_origins
+              name: raptor
+        - name: ACTION_CABLE_WORKERS_POOL_SIZE
+          valueFrom:
+            configMapKeyRef:
+              key: action_cable_workers_pool_size
+              name: raptor
         - name: SIDEKIQ_REDIS_URL
           valueFrom:
             secretKeyRef:

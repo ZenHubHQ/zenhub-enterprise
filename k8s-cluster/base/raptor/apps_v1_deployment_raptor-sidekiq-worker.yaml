@@ -72,6 +72,11 @@ spec:
               fieldPath: metadata.namespace
         - name: CABLE_URL
           value: $(POD_NAMESPACE)-raptor-cable
+        - name: WEB_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              key: web_concurrency
+              name: raptor-api
         - name: RUBYOPT
           value: -W0
         - name: RAILS_ENV
@@ -148,6 +153,16 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: is_enterprise
+              name: raptor
+        - name: CABLE_ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              key: cable_allowed_origins
+              name: raptor
+        - name: ACTION_CABLE_WORKERS_POOL_SIZE
+          valueFrom:
+            configMapKeyRef:
+              key: action_cable_workers_pool_size
               name: raptor
         - name: SIDEKIQ_REDIS_URL
           valueFrom:

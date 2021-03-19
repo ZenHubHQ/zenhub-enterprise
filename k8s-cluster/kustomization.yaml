@@ -12,11 +12,13 @@ resources:
   - options/sanitycheck
   # Example of ingress
   # - options/ingress
-
-# Optional configurations
-# patchesStrategicMerge:
-# - options/local-files/local-files.yaml #! to use in an test environment without buckets
-# - options/zenhub-registry/zenhub-registry.yaml #! adds imagePullSecrets to pull images from ZenHub's registry
+  #
+  # Optional configurations
+patchesStrategicMerge:
+  # - options/local-files/local-files.yaml #! To use in an test environment without buckets
+  # - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
+  # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
+  # - options/scaling/deployments-resources.yaml #! Enable to use minimum required resources, or customize them yourself
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
@@ -31,22 +33,22 @@ commonLabels:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-2.44-RC1
+    newTag: enterprise-2.44-RC2
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-2.44-RC1
+    newTag: enterprise-2.44-RC2
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: enterprise-2.44-RC1
+    newTag: enterprise-2.44-RC2
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-2.44-RC1
+    newTag: enterprise-2.44-RC2
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-2.44-RC1
+    newTag: enterprise-2.44-RC2
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: 3.0.0-RC1
+    newTag: 3.0.0-RC2
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -84,9 +86,13 @@ configMapGenerator:
       - files_bucket_name=<bucket_name>
       - images_bucket_name=<bucket_name>
       # AWS DocumentDB as MongoDB
-      # - mongodb_short_index=yes
-      # Chrome extension
-      - chrome_extension_webstore_url=""
+      # - mongo_is_documentdb=true
+      #
+      # [EDIT] Link to your Chome Extension download page. Obtained by configuring your Chrome Extension through the ZenHub Admin User Interface
+      - chrome_extension_webstore_url="" # e.g. https://chrome.google.com/webstore/detail/your-extension-name/id
+      #
+      # [EDIT] Firefox extension UUID used to publish Firefox extensions.
+      - manifest_firefox_id=zenhub@<your_company_domain>
 
 secretGenerator:
   - name: configuration

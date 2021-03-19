@@ -39,7 +39,7 @@ spec:
             configMapKeyRef:
               key: local_files
               name: configuration
-        - name: NEXT_PUBLIC_FIREFOX_EXT_UPLOAD_TYPE_IS_S3
+        - name: FIREFOX_EXT_LOCAL_PATH
           valueFrom:
             configMapKeyRef:
               key: firefox_ext_local_path
@@ -103,6 +103,11 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: next_public_unsigned_dir
+              name: admin-ui
+        - name: NODE_TLS_REJECT_UNAUTHORIZED
+          valueFrom:
+            configMapKeyRef:
+              key: node_tls_reject_unauthorized
               name: admin-ui
         - name: NEXTAUTH_PWD
           valueFrom:

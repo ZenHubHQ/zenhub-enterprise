@@ -19,7 +19,10 @@ metadata:
 ---
 apiVersion: v1
 data:
+  action_cable_workers_pool_size: "2"
+  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld)
   rails_max_threads: "5"
+  web_concurrency: "4"
 kind: ConfigMap
 metadata:
   name: raptor-migrate
@@ -34,6 +37,8 @@ metadata:
 ---
 apiVersion: v1
 data:
+  action_cable_workers_pool_size: "2"
+  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld)
   disable_prepare_db: "1"
   github_api_url: $(github_hostname)/api/v3
   github_graphql_url: $(github_hostname)/api/graphql
@@ -47,8 +52,8 @@ data:
   rails_env: production
   rails_log_to_stdout: "1"
   rollbar_env: ""
-  zenhub_webhook_domain_v1: https://$(subdomain_suffix).$(domain_tld)/webhook
-  zenhub_webhook_domain_v2: https://$(subdomain_suffix).$(domain_tld)/webhook
+  zenhub_webhook_domain_v1: https://$(subdomain_suffix).$(domain_tld)
+  zenhub_webhook_domain_v2: https://$(subdomain_suffix).$(domain_tld)
 kind: ConfigMap
 metadata:
   name: raptor

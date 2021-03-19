@@ -428,7 +428,7 @@ To utilize AWS DocumentDB as MongoDB:
 
 ```yaml
 # AWS DocumentDB as MongoDB
-# - mongodb_short_index=yes
+# - mongo_is_documentdb=true
 ```
 
 - TLS need to be disabled in the parameter group
