@@ -87,12 +87,6 @@ spec:
             configMapKeyRef:
               key: web_concurrency
               name: raptor-admin
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: CABLE_URL
-          value: $(POD_NAMESPACE)-raptor-cable
         - name: RUBYOPT
           value: -W0
         - name: RAILS_ENV
@@ -180,6 +174,12 @@ spec:
             configMapKeyRef:
               key: action_cable_workers_pool_size
               name: raptor
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: CABLE_URL
+          value: $(POD_NAMESPACE)-raptor-cable
         - name: SIDEKIQ_REDIS_URL
           valueFrom:
             secretKeyRef:
@@ -239,6 +239,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: cable_redis_url
+              name: configuration
+        - name: MIXPANEL_PROJECT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_token
               name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent

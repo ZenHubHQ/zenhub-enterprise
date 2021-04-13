@@ -369,8 +369,9 @@ spec:
           httpGet:
             path: /ping
             port: http
-          periodSeconds: 10
-          timeoutSeconds: 5
+          initialDelaySeconds: 5
+          periodSeconds: 15
+          timeoutSeconds: 10
         name: toad-websocket
         ports:
         - containerPort: 3031
