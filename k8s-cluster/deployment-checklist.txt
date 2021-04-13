@@ -1,0 +1,57 @@
+# ZenHub Enterprise 3 Deployment Checklist:
+
+<!-- You can use this template to keep track of your deployment, to help you stay organized. -->
+
+- [ ] Read through the README.md to gain an understanding of the deployment process
+- [ ] Verify you meet the deployment requirements below
+
+## Requirements
+
+#### GitHub Requirements
+- [ ] Configure an OAuth App in GitHub Enterprise Server
+
+#### Kubernetes Requirements
+- [ ] Obtain access to a Kubernetes cluster running K8s v1.16 or greater
+- [ ] Install `kubectl` locally
+- [ ] Install `kustomize` v3.9 or greater locally
+- [ ] Create dedicated namespace in my cluster for ZenHub
+- [ ] Have the capability to pull the Docker images from ZenHub's public Docker registry or have access to a private Docker registry where you can push images (and the cluster should have the ability to pull from that private registry)
+
+#### PostgreSQL Requirement
+- [ ] Deploy a PostgreSQL version 11 database. 
+
+#### MongoDB Requirement
+- [ ] Deploy a MongoDB version 3.6 database.
+
+#### RabbitMQ Requirement
+- [ ] Deploy RabbitMQ. (A few options here are a pod in a cluster, AmazonMQ, CloudAMQP)
+
+#### Redis Requirement
+- [ ] Deploy an instance of Redis. 
+
+#### File and Image Storage Requirement
+- [ ] Deploy an S3 API compatible object storage bucket to store **images** uploaded to ZenHub
+    - [ ] Setup bucket policy  allowing list and get operations from your Kubernetes deployment
+- [ ] Deploy an S3 API compatible object storage bucket to store **files** uploaded to ZenHub
+    - [ ] Setup bucket policy  allowing list and get operations from your Kubernetes deployment
+- [ ] Create an IAM user `access_key` and `access_key_secret` with read and write access to the buckets
+
+## Configuration
+
+- [ ] Set the required variables and configuration in k8s-cluster/kustomization.yaml 
+   - [ ] Choose whether to use our public image registry or your own and configure accordingly
+   - [ ] Adjust cluster scaling and pod resource usage if desired
+   - [ ] Expose ZenHub through your preferred Ingress
+   - [ ] Configure a TLS connection with your Postgres database
+   - [ ] Configure ZenHub to use previously created object storage buckets
+   - [ ] Set connection strings and passwords
+
+## Deployment
+
+- [ ] Deploy your cluster
+- [ ] Verify that the application is working
+- [ ] Publish your ZenHub Enterprise Chrome Extension
+- [ ] Publish your ZenHub Enterprise Firefox Extension
+
+## Are you migrating from ZenHub Enterprise 2?
+- [ ] Check out the [zhe3-migration/README.md](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration)

@@ -113,23 +113,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  maintenance.html: |
-    <!DOCTYPE html>
-    <html>
-
-      <head>
-        <link rel="stylesheet" href="css/bootstrap.min.css">
-        <link rel="stylesheet" href="css/style.css">
-      </head>
-
-      <body>
-        <center><h1>ZenHub Enterprise is currently in Maintenance</h1></center>
-        <center><h2>Please Contact your Administrator if you require assistance</h2></center>
-      </body>
-
-    <center><footer>Got a Question?</footer></center>
-    <center><footer><a href="mailto:enterprise@zenhub.com">Contact us</href></footer></center>
-    </html>
+  maintenance.html: "<!DOCTYPE html>\n<html>\n\n  <head>\n    <title>ZenHub Enterprise Maintenance In Progress</title>\n    <style>\n      html {\n        height: 100%\n      }\n      body {\n        background: rgb(15,14,29);\n        background: linear-gradient(315deg, rgba(15,14,29,1) 0%, rgba(29,28,57,1) 22%, rgba(48,65,150,1) 62%, rgba(68,100,228,1) 100%);\n      }\n      #message {  \n        margin-left: auto;\n        margin-right: auto;\n        margin-top: 15%;\n        width: 600px;\n        padding: 10px;\n      }\n      h1, h3 {\n          color: white;\n          font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div id=\"message\">\n      <h1>ZenHub (or GitHub) is down for maintenance</h1>\n      <h3>Your ZenHub Enterprise administrators are performing scheduled maintenance. If you have any questions, please contact your ZenHub administrator.</h3>\n    </div>\n  </body>\n  \n</html>\n"
 kind: ConfigMap
 metadata:
   labels:

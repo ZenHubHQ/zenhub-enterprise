@@ -14,18 +14,19 @@ resources:
   # - options/ingress
   #
   # Optional configurations
-patchesStrategicMerge:
-  # - options/local-files/local-files.yaml #! To use in an test environment without buckets
+# patchesStrategicMerge:
   # - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
   # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
-  # - options/scaling/deployments-resources.yaml #! Enable to use minimum required resources, or customize them yourself
+  # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
   app.kubernetes.io/part-of: zenhub-enterprise
   app.kubernetes.io/name: zenhub
-  app.kubernetes.io/instance: zhe-vanilla
+  app.kubernetes.io/instance: zhe-for-k8s
   app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
   app.kubernetes.io/version: 3.0.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
@@ -33,22 +34,22 @@ commonLabels:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-2.44-RC2
+    newTag: enterprise-2.44
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-2.44-RC2
+    newTag: enterprise-2.44
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: enterprise-2.44-RC2
+    newTag: enterprise-2.44
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-2.44-RC2
+    newTag: enterprise-2.44
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-2.44-RC2
+    newTag: enterprise-2.44
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: 3.0.0-RC2
+    newTag: 3.0.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -76,7 +77,8 @@ configMapGenerator:
       # for instructions on how to setup an OAuth app on your GitHub server:
       # https://docs.github.com/en/developers/apps/creating-an-oauth-app
       # The secret value should be passed to `github_app_secret` below (in the
-      # "secretGenerator" section)
+      # "secretGenerator" section). Section 2.1 of the README in this folder explains
+      # how to configure the fields of the OAuth App.
       - github_app_id=<github_oauth_app_client_id> # GitHub OAuth App Client ID
       #
       # S3 API compatible object storage buckets for uploaded files and images

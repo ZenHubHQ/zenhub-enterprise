@@ -83,14 +83,12 @@ brew install mongodb/brew/mongodb-database-tools
 ```
 > ⚠️ **NOTE:** `mongosh` is the Mongo shell, and `mongodb-database-tools` includes `mongorestore`.
 
-2. Download your MongoDB provider's CA certificate. For example, if using Amazon DocumentDB, you can find it [here](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html#connect_programmatically-tls_enabled). This will ensure the MongoDB tools can verify the certificate of your MongoDB server.
-
-3. Create a restorer user on the zenhub DB
+2. Create a restorer user on the zenhub DB
 
 Depending on the authentication and authorization system of your MongoDB provider, you may have to adjust these steps. In most systems, you will need to create a database user that has both `readWrite` and `dbAdmin` permissions to successfully restore the database.
 
 ```
-mongo --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --username root --host zenhub-mongo.example.com --port 27017
+mongo --username root --host zenhub-mongo.example.com --port 27017
 ```
 > ⚠️ **NOTE:** You will be prompted for `--username`'s password.
 
@@ -100,16 +98,16 @@ db.createUser({user: "restorer", pwd: "the-restorer-password", roles: [ "readWri
 ```
 > ⚠️ **NOTE:** If you have already deployed ZenHub to your Kubernetes cluster and it has successfully connected to Mongo, the `zenhub` database should exist.
 
-4. Expand the Mongo tarball
+3. Expand the Mongo tarball
 
 ```bash
 tar -xf mongo.tar.gz
 ```
 
-5. Restore the Mongo database. The default name for the MongoDB database is `zenhub`, but if you have changed this, please reflect that in your restore command.
+4. Restore the Mongo database. The default name for the MongoDB database is `zenhub`, but if you have changed this (in your `mongo_url` connection string configured in your `kustomization.yaml` file), please reflect that in your restore command.
 
 ```bash
-mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --nsInclude='zenhub_enterprise.*' --stopOnError --drop --ssl --sslCAFile <path/to/mongo-ca-cert.pem> --host zenhub-mongo.example.com --port 27017 --username restorer --authenticationDatabase=zenhub ./dump
+mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --nsInclude='zenhub_enterprise.*' --stopOnError --drop --host zenhub-mongo.example.com --port 27017 --username restorer --authenticationDatabase=zenhub ./dump
 ```
 > ⚠️ **NOTE:** If you are using Amazon DocumentDB, add the `--noIndexRestore` option, as DocumentDB requires shorter index names. With this option, the application will rebuild the indexes as needed with the shorter names.
 
@@ -127,7 +125,7 @@ brew install postgresql@11
 
 2. Download your PostgreSQL provider's CA certificate. For example, if you're using Amazon RDS, you can find it [here](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html).
 
-3. Restore the DB. The default name for the PostgreSQL database is `raptor_production` and the default user is `postgres`, but if you have changed this, please reflect that in your restore command.
+3. Restore the DB. The default name for the PostgreSQL database is `raptor_production` and the default user is `postgres`, but if you have changed this (in your `postgres_url` connection string configured in your `kustomization.yaml` file), please reflect that in your restore command.
 
 ```bash
 pg_restore --clean --no-owner -v -h zenhub.pg.example.com -p 5432 -d raptor_production -U postgres -W --sslrootcert=<path/to/postgres-ca-cert.pem> --sslmode=verify-full postgres_raptor_data.dump

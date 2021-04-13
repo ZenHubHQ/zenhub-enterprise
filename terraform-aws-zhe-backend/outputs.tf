@@ -18,6 +18,12 @@ output "zhe_redis_endpoint" {
   value       = var.create_redis ? "redis://${aws_elasticache_cluster.zhe_redis[0].cache_nodes.0.address}:${aws_elasticache_cluster.zhe_redis[0].cache_nodes.0.port}/0" : null
 }
 
+output "zhe_rabbitmq_endpoint" {
+  description = "RabbitMQ connection endpoint"
+  sensitive   = true
+  value       = var.create_mq ? "${var.mq_user}:${random_password.rabbitmq_pass[0].result}  /  ${aws_mq_broker.zhe_rabbitmq[0].instances.0.endpoints.0}" : null
+}
+
 # Buckets
 output "zhe_bucket_images_name" {
   description = "images bucket name"

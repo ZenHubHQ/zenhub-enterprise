@@ -1,5 +1,5 @@
 resource "aws_security_group" "zhe_vpc" {
-  name   = "zhe_allow_vpc"
+  name   = "zhe${var.env}_allow_vpc"
   vpc_id = var.vpc_id
 
   tags = {

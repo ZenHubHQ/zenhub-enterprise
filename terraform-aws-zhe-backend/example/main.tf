@@ -18,8 +18,14 @@ module "zhe" {
     instance_count = "1"
   }
 
+  mq_vars = {
+    instance_type   = "mq.t3.micro"
+    deployment_mode = "SINGLE_INSTANCE"
+  }
+
   create_postgresql = true
   create_redis      = true
   create_documentdb = true
+  create_mq         = true
 
 }
