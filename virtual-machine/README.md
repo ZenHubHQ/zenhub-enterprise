@@ -1,5 +1,7 @@
 [Website](https://www.zenhub.com/) • [On-Premise](https://www.zenhub.com/enterprise) • [Releases](https://www.zenhub.com/enterprise/releases/) • [Blog](https://blog.zenhub.com/) • [Chat (Community Support)](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community)
 
+> ⚠️ **NOTE:** ZenHub Enterprise On-Premise as a VM is not currently production-ready, and neither is this documentation. Stay tuned for our 3.1.0 release, which will include full VM support!
+
 **ZenHub Enterprise On-Premise as a VM** is the only self-hosted, vm-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 
 ## Table of Contents
