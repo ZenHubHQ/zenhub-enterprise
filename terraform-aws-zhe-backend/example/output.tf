@@ -3,7 +3,8 @@ output "sensitive_information" {
   value = map(
     "postgres:", module.zhe.zhe_postgresql_endpoint,
     "redis:", module.zhe.zhe_redis_endpoint,
-    "mongo:", module.zhe.zhe_mongo_endpoint
+    "mongo:", module.zhe.zhe_mongo_endpoint,
+    "rabbitmq:", module.zhe.zhe_rabbitmq_endpoint
   )
 }
 

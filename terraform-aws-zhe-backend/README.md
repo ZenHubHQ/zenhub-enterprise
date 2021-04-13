@@ -17,7 +17,7 @@ Resources created:
 * [DocumentDB](https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html)
 * [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_identity-management.html#intro-identity-users)
 * [IAM Policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_access-management.html)
-* [MQ - RabbitMQ](https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/getting-started-rabbitmq.html) \* Future Feature - NOT YET IN TERRAFORM
+* [MQ - RabbitMQ](https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/getting-started-rabbitmq.html)
 
 > **NOTE:** This module is intended for use with [ZenHub Enterprise][zenhub_enterpsise] Kubernetes in an existing VPC.
 
@@ -64,6 +64,11 @@ module "zhe" {
     instance_class = "db.t3.medium"
     instance_count = "1"
   }
+
+  mq_vars = {
+    instance_type   = "mq.t3.micro"
+    deployment_mode = "SINGLE_INSTANCE"
+  }
 }
 ```
 
@@ -96,7 +101,7 @@ cidrsubnet(data.aws_vpc.zhe.cidr_block, 8, count.index + var.cidr_netnum)
 
 | Name | Version |
 |------|---------|
-| terraform | >= 0.13.5 |
+| terraform | >= 0.14 |
 | aws | >= 3.18 |
 
 ## Providers
@@ -135,6 +140,10 @@ cidrsubnet(data.aws_vpc.zhe.cidr_block, 8, count.index + var.cidr_netnum)
 | documentdb_vars.instance_class | Variables for MongoDB | `object({instance_class = string instance_count = number })` | `instance_class = "db.t3.medium" instance_count = 1` | NO |
 | create_mq | Create MQ RabbitMQ resources | `bool` | `true` | NO |
 | mq_port | RabbitMQ port | `number` | `5671` | NO |
+| mq_user | RabbitMQ user | `string` | `toad` | NO |
+| mq_engine_version | RabbitMQ engine version | `string` | `3.8.11` | NO |
+| mq_vars.instance_type | RabbitMQ Instance type | `string` | `mq.t3.micro` | NO |
+| mq_vars.deployment_mode | RabbitMQ Deployment mode | `string` | `SINGLE_INSTANCE` | NO |
 
 > **NOTE:** We recommend to set the variables **`env`** with a `"-"` (dash) eg: `-test` or `-production`
 
@@ -145,6 +154,7 @@ cidrsubnet(data.aws_vpc.zhe.cidr_block, 8, count.index + var.cidr_netnum)
 | zhe_postgresql_endpoint | PostgreSQL connection endpoint |
 | zhe_mongo_endpoint | MongoDB connection endpoint |
 | zhe_redis_endpoint | Redis connection endpoint |
+| zhe_rabbitmq_endpoint | RabbitMQ connection endpoint |
 | zhe_bucket_images_name | images bucket name |
 | zhe_bucket_images_region | bucket images region |
 | zhe_bucket_images_domain_name | bucket images domain name |

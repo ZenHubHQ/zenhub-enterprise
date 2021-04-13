@@ -168,30 +168,29 @@ variable "mq_port" {
   default     = 5671
 }
 
-# FIXME - waiting terraform provider update
-# variable "mq_name" {
-#   description = "MQ cluster name"
-#   type        = string
-#   default     = "zhe-toad-rabbitmq"
-# }
+variable "mq_user" {
+  description = "RabbitMQ user"
+  type        = string
+  default     = "toad"
+}
 
-# variable "mq_engine_version" {
-#   description = "RabbitMQ engine version"
-#   type        = string
-#   default     = "3.8.6"
-# }
+variable "mq_engine_version" {
+  description = "RabbitMQ engine version"
+  type        = string
+  default     = "3.8.11"
+}
 
-# variable "mq_vars" {
-#   description = "Variables for Redis"
-#   type = object({
-#     instance_type   = string
-#     deployment_mode = string
-#   })
-#   default = {
-#     instance_type   = "mq.t3.micro"
-#     deployment_mode = "SINGLE_INSTANCE"
-#   }
-# }
+variable "mq_vars" {
+  description = "Variables for Redis"
+  type = object({
+    instance_type   = string
+    deployment_mode = string
+  })
+  default = {
+    instance_type   = "mq.t3.micro"
+    deployment_mode = "SINGLE_INSTANCE"
+  }
+}
 
 
 # DB connection TLS
