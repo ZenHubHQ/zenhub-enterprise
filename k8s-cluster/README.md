@@ -1,3 +1,7 @@
+<div align="center">
+  <img alt="ZenHub" src="logo-k8s.png" width="500" />
+</div>
+
 [Website](https://www.zenhub.com/) • [On-Premise](https://www.zenhub.com/enterprise) • [Releases](https://www.zenhub.com/enterprise/releases/) • [Blog](https://blog.zenhub.com/) • [Chat (Community Support)](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community)
 
 **ZenHub Enterprise On-Premise for Kubernetes** is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
@@ -13,6 +17,7 @@
   - [2.5 RabbitMQ](#25-rabbitmq)
   - [2.6 Redis](#26-redis)
   - [2.7 File and Image Storage](#27-file-and-image-storage)
+  - [2.8 ZenHub Enterprise On-Premise License](#28-zenhub-enterprise-on-premise-license)
 - [3. Configuration](#3-configuration)
   - [3.1 Docker Registry](#31-docker-registry)
     - [3.1.1 Using your private registry](#311-using-your-private-registry)
@@ -119,6 +124,11 @@ To access and write these objects ZenHub also requires CLI/API credentials (`acc
 IAM credentials are used by ZenHub to write (`put`) objects and to create temporary pre-signed links.
 
 To read (`get`) images and allow users to see uploaded images embedded in the issue page, the cluster nodes or network need to have proper access. Take a look at our [Terraform](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/terraform-aws-zhe-backend/buckets.tf) for an example bucket policy.
+
+
+### 2.8 ZenHub Enterprise On-Premise License
+
+ZenHub Enterprise On-Premise requires a license to run. This license is an encoded string that is entered as the `enterprise_license_token` secret in the main `kustomization.yaml` file. Please contact your Customer Success Manager to receive your token. For new customers, please visit https://www.zenhub.com/enterprise to get in touch with us.
 
 ## 3. Configuration
 

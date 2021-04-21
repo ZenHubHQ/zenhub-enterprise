@@ -1,6 +1,8 @@
-[Website](https://www.zenhub.com/) • [On-Premise](https://www.zenhub.com/enterprise) • [Releases](https://www.zenhub.com/enterprise/releases/) • [Blog](https://blog.zenhub.com/) • [Chat (Community Support)](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community)
+<div align="center">
+  <img alt="ZenHub" src="logo-vm.png" width="500" />
+</div>
 
-> ⚠️ **NOTE:** ZenHub Enterprise On-Premise as a VM is not currently production-ready, and neither is this documentation. Stay tuned for our 3.1.0 release, which will include full VM support!
+[Website](https://www.zenhub.com/) • [On-Premise](https://www.zenhub.com/enterprise) • [Releases](https://www.zenhub.com/enterprise/releases/) • [Blog](https://blog.zenhub.com/) • [Chat (Community Support)](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community)
 
 **ZenHub Enterprise On-Premise as a VM** is the only self-hosted, vm-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 
@@ -8,10 +10,31 @@
 
 - [1. Getting Started](#1-getting-started)
 - [2. Requirements](#2-requirements)
+  - [2.1 GitHub Enterprise Server](#21-github-enterprise-server)
+  - [2.2 ZenHub Enterprise On-Premise License](#22-zenhub-enterprise-on-premise-license)
 - [3. Configuration](#3-configuration)
+  - [3.1 Deploy the VM](#31-deploy-the-vm)
+    - [3.1.1 Platforms](#311-platforms)
+    - [3.1.2 Ports](#312-ports)
+  - [3.2 Configure Access and Network (VMware Only)](#32-configure-access-and-network-vmware-only)
+    - [3.2.1 Admin Password](#321-admin-password)
+    - [3.2.2 Adding an SSH Key](#322-adding-an-ssh-key)
+    - [3.2.3 Configure a Static IP](#323-configure-a-static-ip)
+  - [3.3 ZenHub Configuration](#33-zenhub-configuration)
+    - [3.3.1 Required Values](#331-required-values)
+    - [3.3.2 Optional Values](#332-optional-values)
+  - [3.4 SSL/TLS Ingress Certificate](#34-ssltls-ingress-certificate)
+  - [3.5 zhe-config](#35-zhe-config)
+  - [3.6 Start Zenhub](#36-start-zenhub)
 - [4. Backup/Restore](#4-backuprestore-a-snapshot)
+  - [4.1 Backup](#41-backup)
+  - [4.2 Restore](#42-restore)
 - [5. Upgrades](#5-upgrades)
+  - [5.1 Application Updates](#51-application-updates)
+  - [5.2 OS (Ubuntu) Updates](#52-os-(ubuntu)-updates)
 - [6. Logs](#6-logs)
+  - [6.1 Sending Logs to an External Log Aggregator](#61-sending-logs-to-an-external-log-aggregator)
+  - [6.2 Reverting to the Default Log Configuration](#62-reverting-to-the-default-log-configuration)
 - [7. Support](#7-support)
 
 ## 1. Getting Started
@@ -22,64 +45,86 @@ Thank you for your interest in ZenHub!
 
 ## 2. Requirements
 
-Requirements for **ZenHub as a VM** are coming soon.
+### 2.1 GitHub Enterprise Server
+
+ZenHub Enterprise for Kubernetes requires a persistent connection to your own deployment of a recent version of [GitHub Enterprise Server](https://github.com/enterprise). You can find specific version compatibility information in the [release notes](https://github.com/zenhubhq/zenhub-enterprise/releases).
+
+You will need to [set up an OAuth App](https://docs.github.com/en/developers/apps/creating-an-oauth-app) for ZenHub in your GitHub Enterprise Server. We recommend setting up the OAuth App under your primary GitHub Organization.
+
+**Application name**: ZenHub Enterprise
+
+**Homepage URL**: `https://<subdomain_suffix>.<domain_tld>`
+
+**Application description**:
+
+> ZenHub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
+
+**Authorization callback URL**: `https:<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
+
+> ⚠️ **NOTE:** The `/api` path is a new addition to the ZHE3 infrastructure. If you are migrating to ZHE3 from ZHE2, you will need to add this to the Authorization callback URL in your existing OAuth App, as well as any scripts you've created that utilize the ZenHub API.
+
+### 2.2 ZenHub Enterprise On-Premise License
+
+ZenHub Enterprise On-Premise requires a license to run. This license is an encoded string that is entered as the `enterprise_license_token` secret in the main configuration file. Please contact your Customer Success Manager to receive your token. For new customers, please visit https://www.zenhub.com/enterprise to get in touch with us.
 
 ## 3. Configuration
 
-A configuration tool `zhe-config` is included with the images
+### 3.1 Deploy the VM
+
+#### 3.1.1 Platforms
+
+To deploy the VM, you need the machine image for your hypervisor of choice. Currently, two platforms are supported: **AWS EC2** and **VMware**. However, we will likely expand the list of compatible platforms in the future and accommodate requests for compatibility with other platforms in the meantime on a case by case basis.
+
+To get access to the machine image, simply request it from us at enterprise@zenhub.com. Depending on which platform you will be deploying it to, we may need additional information provided in the email:
+
+- **AWS**: Include your AWS Account ID and the target AWS Region for your deployment. Our team will share the latest AMI with your AWS account in that region.
+- **VMware**: Indicate your desire to use VMware and we will send you a pre-signed URL to download the OVA.
+
+#### 3.1.2 Ports
+
+Below, we've summarized the list of ports and firewall rules that the ZenHub Enterprise VM will need to function in your network.
+
+| Type   | Protocol | Port Range | Source                                       |
+| ------ | -------- | ---------- | -------------------------------------------- |
+| HTTP   | TCP      | 80         | 0.0.0.0/0 or Office IP Range                 |
+| HTTPS  | TCP      | 443        | 0.0.0.0/0 or Office IP Range                 |
+| Custom | TCP      | 8443       | IP(s) to access admin-ui ( only for VMware ) |
+| SSH    | TCP      | 22         | Admin IP range or bastion host               |
+| HTTP   | TCP      | 80         | IP of GitHub Enterprise                      |
+| HTTPS  | TCP      | 443        | IP of GitHub Enterprise                      |
+
+You do not need to set this up inside the VM—this is strictly for any virtual or physical firewalls you have when deploying the VM, such as AWS Security Groups.
+
+### 3.2 Configure Access and Network (VMware Only)
+
+#### 3.2.1 Admin Password
+
+The default initial username and password are **both** `zenhub`
+
+> A strong password will be required after the first login.
+
+#### 3.2.2 Adding an SSH Key
+
+One option is to use the provided configuration tool and provide the key:
 
 ```bash
-zhe-config --help
-
-  ZHENHUB CONFIGURATION TOOL
-
-    Usage: zhe-config --config-file file
-
-    Run ZenHub configuration tool
-
-    --config-file FILE_PATH   Specify configuration file path
-
-  Optional arguments:
-
-    --config-example          Show Configuration file example
-    --help                    Show this help message
-    --vmware-sshkey           Add ssh key to VMware instances manually
-    --vmware-staticip         Configure static IP for VMware instance manually
-    --vmware-dhcp             Configure DHCP for VMware instance manually
-
-  More Details about ZenHub Configuration can be found at:
-
-  `https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine`
-```
-
-### 3.1 Setup Access and Network ( VMware Only )
-
-#### 3.1.1 Admin password
-
-- A strong password will be required after first login
-- Initial credentials:
-
-  User: `zenhub`
-  Pass: `zenhub`
-
-#### 3.1.2 SSH key
-
-- Use the provided configuration tool and provide the key:
-
-```bash
-zhe-config --vmware-sshkey
+zhe-config --sshkey
 SSH RSA Public KEY (ssh-rsa AbC123xYz...):
 ```
 
-or
-
-- Import a key from another computer/workstation
+Another way is to import a key from another computer/workstation
 
 ```bash
 ssh-copy-id -i <path_to_key> zenhub@<ZenHub_VM_IP>
 ```
 
-#### 3.1.3 Setup Static IP
+> ⚠️ **NOTE:** Some errors while using `ssh-copy-id` maybe be caused by a default `IdentityFile` configuration for all hosts in the computer/workstation ssh config file. The flag `-f` can be added to the command to fix the issue.
+
+```bash
+ssh-copy-id -f -i <path_to_key> zenhub@<ZenHub_VM_IP>
+```
+
+#### 3.2.3 Configure a Static IP
 
 By default the image provided uses DHCP. If a static IP is required, use the provided configuration tool and provide the required information:
 
@@ -93,17 +138,9 @@ To revert the instance to use DHCP run:
 zhe-config --vmware-dhcp
 ```
 
-### 3.2 ZenHub Configuration
+### 3.3 ZenHub Configuration and Startup
 
-- Access the VM and create a `YAML` configuration file
-
-- Run the configuration tool:
-
-```bash
-zhe-config --config-file <configuration_file_full_path>
-```
-
-Configuration file:
+Access the VM and create a `YAML` configuration file using the below example. Details about what values to set can be found in section 3.3.1 below the example.
 
 ```yaml
 ---
@@ -111,8 +148,9 @@ Configuration file:
 zenhub_configuration:
   DOMAIN_TLD:
   SUBDOMAIN_SUFFIX:
-  GITHUB_HOSTNAME:
+  GITHUB_HOSTNAME: https://
   GITHUB_APP_ID:
+  GITHUB_APP_SECRET:
   ENTERPRISE_LICENSE_TOKEN:
   ADMIN_UI_PASS:
   CHROME_EXTENSION_WEBSTORE_URL:
@@ -136,27 +174,25 @@ zenhub_configuration:
 #   dns: "xxx.xxx.xxx.xxx, yyy.yyy.yyy.yyy"
 ```
 
-### 3.2.1 Required Values
+### 3.3.1 Required Values
 
 - `DOMAIN_TLD` : Set your top-level domain where ZenHub will be served from. This is used to tell the ZenHub webapp how to
   reach the ZenHub APIs.
 - `SUBDOMAIN_SUFFIX` : Set the subdomain that ZenHub will be served from, or leave as default "zenhub" value.
-- `GITHUB_HOSTNAME` : Make sure the value does not have a trailing slash.
+- `GITHUB_HOSTNAME` : Make sure the value includes `https://` and does not have a trailing slash.
 - `GITHUB_APP_ID` : Specify the OAuth App ID for the ZenHub application. See here for instructions on how to setup an OAuth
   app on your GitHub server: https://docs.github.com/en/developers/apps/creating-an-oauth-app
 - `GITHUB_APP_SECRET` : The OAuth secret value should be passed to `github_app_secret`
 - `ENTERPRISE_LICENSE_TOKEN` : The ZenHub license (JWT) you should have received by email from the ZenHub team. If you do not have a license, reach out to enterprise@zenhub.com.
 - `MANIFEST_FIREFOX_ID` : The UUID used by the FireFox add-on store to uniquely identify your FireFox extension. Ex. zenhub@your-company-domain.com
 
-### 3.2.2 Optional Values
+### 3.3.2 Optional Values
 
 - `ssl_self_signed` : To deploy ZenHub with a self-signed SSL certificate
 - `ssh_keys` : SSH key(s) to be included as authorized_keys
 - `ip` : Configure the VM to use static IP ( Only for VMware )
 
-> Your ZenHub Enterprise application will then configure itself and start up.
-
-### 3.3 SSL/TLS INgress certificate
+### 3.4 SSL/TLS Ingress Certificate
 
 A SSL/TLS certificate need to be provided.
 
@@ -168,20 +204,62 @@ Copy the certificate and key pair to the following path:
 
 A self signed certificate can be generated enabling the `ssl_self_signed` option in configuration file
 
-## 4. Backup/Restore a snapshot
+### 3.5 `zhe-config`
+
+A configuration tool `zhe-config` has been included to help with various administration tasks.
+
+```bash
+zhe-config --help
+
+  ZENHUB CONFIGURATION TOOL
+
+    Usage: zhe-config --config-file file
+
+    Run ZenHub configuration tool
+
+    --config-file FILE_PATH   Specify configuration file path
+
+  Optional arguments:
+
+    --backup                        Create backup of databases and files
+    --config-example                Show Configuration file example
+    --help                          Show this help message
+    --maintenance   enable|disable  Enable or disable maintenance mode
+    --restore       BACKUP_NAME     Restore backup
+    --support-bundle                Generate support bundle
+    --sshkey                        Add ssh key manually
+    --vmware-staticip               Configure static IP for VMware instance manually
+    --vmware-dhcp                   Configure DHCP for VMware instance manually
+
+  More Details about ZenHub Configuration can be found at:
+
+  `https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine`
+```
+
+### 3.6 Start ZenHub
+
+Run the configuration tool:
+
+```bash
+zhe-config --config-file <configuration_file_full_path>
+```
+
+> Your ZenHub Enterprise application will then configure itself and start up.
+
+## 4. Backup/Restore a Snapshot
 
 Snapshots concern databases and files/images.
 
 ### 4.1 Backup
 
-Backups use the database engine backup capability, are not intrusive, and can be run
-at any time by running the following from the VM:
+Backups use the database engine backup capability, are not intrusive, and can be run at any time by running the following from the VM:
 
 ```bash
-bash ${ZENHUB_HOME}/zhe-manage/80backup.sh <snapshot_name>
+zhe-config --backup
 ```
 
-- The script will silently erase any existing snapshots found under `/srv/snapshots`
+- A snapshot of zenhub will be created in `/opt/snapshots/<yyyy-mm-dd>`
+- The script will silently erase any existing snapshots found under the same date in `/opt/snapshots`
 - No rotation is set up by default—please monitor your snapshots usage
 
 ### 4.2 Restore
@@ -196,27 +274,20 @@ Restores require the existing databases to be dumped and started fresh. The deta
 6. Restart ZenHub containers
 
 ```bash
-bash ${ZENHUB_HOME}/zhe-manage/80backup.sh <snapshot_name>
+zhe-config --restore <snapshot_name>
 ```
 
 - Before dumping the running databases, the snapshot to be restored will be tested for existence, but not for integrity
-- You can configure which 'step' to run in case of issues requiring manual intervention (set as env var)
-  - `RESTORE_ACTION=SHUTDOWN_AND_WIPEOUT_DATA` steps 1 to 3
-  - `RESTORE_ACTION=RESTORE_SNAPSHOT` steps 4 and 5
-  - `RESTORE_ACTION=RESTART_ZENHUB` step 6
-  - Each step can re-run without issue. Of course, RESTORE_SNAPSHOT has to run after a successful SHUTDOWN_AND_WIPEOUT_DATA and it doesn't make much sense to RESTART_ZENHUB if RESTORE_SNAPSHOT has not completed.
-    RESTART_ZENHUB is RESTORE_SNAPSHOT has not complete
-  - Use 'YES=true' to bypass the manual confirmation
 
 ## 5. Upgrades
 
-### Application
+### 5.1 Application Updates
 
 Update Docker images and Kubernetes manifests for the ZenHub application.
 
-- download the latest Zenhub application update bundle from our CDN [TODO add link]
-- get the bundle in the VM (`scp` or any other mean)
-- unpack and run the update script:
+- Download the latest Zenhub application update bundle from our CDN [TODO add link]
+- Get the bundle in the VM (`scp` or any other mean)
+- Unpack and run the update script:
 
 ```bash
 working_dir=/tmp/application_upgrade
@@ -228,58 +299,9 @@ cd ${working_dir} && chmod +x zhe-manage/**/*.sh && ./zhe-manage/update/main.sh
 rm -rf ${working_dir}/*
 ```
 
-### Cluster (K3s)
+### 5.2 OS (Ubuntu) Updates
 
-Cluster upgrade is only related to K3s and its dependencies to manage the cluster (not Ubuntu nor the ZenHub application)
-
-A Cluster upgrade will restart the server (Kubernetes master) which will kill incoming connections for a couple seconds
-(we measured it to be less than 30 seconds).
-
-Setting the Nginx Gateway in Maintenance Mode will prevent your users from seeing a broken dashboard
-
-```bash
-# set maintenance mode
-kubectl -n zenhub set env deployment nginx-gateway -c monitor MAINTENANCE_MODE="TRUE"
-# reset maintenance mode
-kubectl -n zenhub set env deployment nginx-gateway -c monitor MAINTENANCE_MODE="FALSE"
-```
-
-#### Online
-
-If your ZHE VM has internet access:
-
-- ssh into your VM
-- run
-
-```bash
-kubectl -n zenhub set env deployment nginx-gateway -c monitor MAINTENANCE_MODE="TRUE"
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.20.0+k3s2 sh -
-kubectl version
-kubectl -n zenhub set env deployment nginx-gateway -c monitor MAINTENANCE_MODE="FALSE"
-```
-
-#### Offline
-
-- download the latest cluster upgrade bundle from our CDN [TODO add link]
-- get the bundle in the VM (`scp` or any other mean)
-- unpack and run the upgrade script:
-
-```bash
-working_dir=/tmp/cluster_upgrade
-archive_name=zhe_cluster_upgrade_v1.19.3.tar.gz
-
-kubectl -n zenhub set env deployment nginx-gateway -c monitor MAINTENANCE_MODE="TRUE"
-rm -rf ${working_dir}/* || true && mkdir -p ${working_dir}
-tar -xzvf ${archive_name} -C ${working_dir}
-cd ${working_dir} && ./cluster_upgrade.sh
-rm -rf ${working_dir}/*
-kubectl -n zenhub set env deployment nginx-gateway -c monitor MAINTENANCE_MODE="FALSE"
-```
-
-### OS (Ubuntu)
-
-The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is managed by
-a systemd service (`k3s`) with its own upgrade mechanism (see below).
+The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is managed by a systemd service (`k3s`) with its own upgrade mechanism (see below).
 
 All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
 
@@ -290,36 +312,28 @@ Debian utility `unattended-upgrades` is enabled and setup to automatically apply
 ZenHub Logs are available `/var/log/zenhub/<type>.<service_name>.log`, archived daily as
 `/var/log/zenhub/<type>.<service_name>.log.tar.gz.<date>` and rotated weekly.
 
-`<type>` is either `database` or `application`, `service_name` refers to a different component of ZenHub Enterprise
+`<type>` is either `database` or `application`. `service_name` refers to a different component of ZenHub Enterprise
 (in short, a different container).
 
-### Sending logs to an external log aggregator
+### 6.1 Sending Logs to an External Log Aggregator
 
-Internally, [Fluentd](https://www.fluentd.org/) is used to collect logs, you can adapt the configuration to send logs to
-an external log aggregator of your choice.
+Internally, [Fluentd](https://www.fluentd.org/) is used to collect logs, you can adapt the configuration to send logs to an external log aggregator of your choice.
 
-Fluentd offers a wide range of [output plugins](https://www.fluentd.org/plugins/all#input-output) like AWS Cloudwatch, GCP
-Stack Driver, New Relic, Logz.io...
+Fluentd offers a wide range of [output plugins](https://www.fluentd.org/plugins/all#input-output) like AWS Cloudwatch, GCP Stack Driver, New Relic, Logz.io, and more.
 
-Once you found the plugin for your need, you will have to
+Once you found the plugin for your need, follow the steps below to configure ZenHub to forward logs.
 
-1. enhance the Fluentd configuration we provide
-2. build a dedicated image with the plugin installed
-3. update the the Fluentd DaemonSet to use your configuration
-4. restart the DaemonSet
+#### 6.1.1 Enhance the Fluentd Configuration
 
-5. enhance the Fluentd configuration
+- Copy the Fluentd configuration `cp ${ZENHUB_HOME}/kustomizations/fluentd/fluentd.conf ${ZENHUB_HOME}/configuration/custom-fluentd.conf`
+- Add the `<match application.*>` and/or `<match database.*>` which correspond to the chosen plugin.
+- There is an example for [Google Cloud Stack Driver](https://cloud.google.com/logging/docs/agent/configuration) you can use as a reference.
 
-- copy the Fluentd configuration `cp ${ZENHUB_HOME}/kustomizations/fluentd/fluentd.conf ${ZENHUB_HOME}/configuration/custom-fluentd.conf`
-- add the `<match application.*>` and/or `<match database.*>` which correspond to the chosen plugin
-- there is a simple example for Gcloud Stack Driver you can bet inspiration from
+#### 6.1.2 Build a Dedicated Image with the Plugin Installed
 
-2. build the dedicated image
-
-- get the sample Dockerfile from `${ZENHUB_HOME}/kustomizations/fluentd/Dockerfile` and add your plugin
-- the provided sample Dockerfile installs the Stack Driver plugins with `sudo gem install fluent-plugin-google-cloud`, update
-  it to reflect your plugin installation process
-- build the image and load it onto the VM, you can do with the following code snippet
+- Get the sample Dockerfile from `${ZENHUB_HOME}/kustomizations/fluentd/Dockerfile` and add your plugin.
+- The provided sample Dockerfile installs the Stack Driver plugins with `sudo gem install fluent-plugin-google-cloud`, update it to reflect your plugin installation process.
+- Build the image and load it onto the VM, you can do with the following code snippet:
 
 ```bash
 # from a context with the Dockerfile and a Docker daemon available
@@ -330,14 +344,18 @@ scp customfluentd.tar zenhub@your-zhe-instance:/opt/zenhub/cluster-images/custom
 ctr images import /opt/zenhub/cluster-images/customfluentd.tar
 ```
 
-3. update the Fluentd DaemonSet
+#### 6.1.3 Update the Fluentd DaemonSet
+
+Run the following commands:
 
 ```bash
 cd ${ZENHUB_HOME}/kustomizations/fluentd
 kustomize edit set image fluentd=custom/fluentd:your-plugin
 ```
 
-- edit `kustomizations/fluentd/fluentd-daemonset.yaml`
+- Edit `kustomizations/fluentd/fluentd-daemonset.yaml`, updating the configMapGenerator to use your custom configuration file instead of the original. See the example below:
+
+**Original**
 
 ```yaml
 configMapGenerator:
@@ -346,7 +364,7 @@ configMapGenerator:
       - fluentd.conf
 ```
 
-to be
+**Updated**
 
 ```yaml
 configMapGenerator:
@@ -355,7 +373,9 @@ configMapGenerator:
       - ../../configuration/custom-fluentd.conf
 ```
 
-4. restart and check
+#### 6.1.4 Restart the Fluentd DaemonSet
+
+Run the following commands:
 
 ```bash
 # restart
@@ -364,25 +384,25 @@ kubectl -n kube-system rollout restart daemonset/fluentd
 kubectl -n kube-system logs -f -l "app.kubernetes.io/name=fluentd-logging" --tail=1000 -f
 ```
 
-- login in the app, generate some changes and you should see them appears on your external log aggregator
+- Login in the app, generate some changes and you should see them appear in your external log aggregator.
 
-Disclaimer: At the moment, the ZenHub upgrade process override `${ZENHUB_HOME}/kustomizations/fluentd`, you will have to
-repeat step 3. after a ZenHub upgrade if you are running the `prepare-cluster.sh` script or wish to restart Fluentd.
+> Disclaimer: At the moment, the ZenHub upgrade process overrides `${ZENHUB_HOME}/kustomizations/fluentd`. You will have to repeat section 6.1.3 after a ZenHub upgrade if you are running the `prepare-cluster.sh` script or wish to restart Fluentd.
 
-5. reset the Fluentd setup
+### 6.2 Reverting to the Default Log Configuration
 
-- either
-  - 'revert' step 3. (set fluendconf to be `fluentd.conf` and `kustomize edit set image fluentd=docker.io/fluent/fluentd:v1.6-debian-1`)
-  - or
-  - get and apply a ZenHub Enterprise upgrade package (it will override `${ZENHUB_HOME}/kustomizations/fluentd`)
-- perform step 4.
+If you wish to remove your log aggregator setup and revert to our default out-of-box configuration, perform the following:
+
+1. Undo the changes made in section 6.1.3
+   - Set fluentdconf to be `fluentd.conf`
+   - Run `kustomize edit set image fluentd=docker.io/fluent/fluentd:v1.6-debian-1`
+2. Perform the steps in section 6.1.4
 
 ## 7. Support
 
 To help our teams to troubleshoot issues you might have, a support bundle can be generated then sent to use by email with
 
 ```bash
-./${ZENHUB_HOME}/zhe-manage/90support_bundle.sh
+zhe-config --support-bundle
 ```
 
-It will generate an archive to be found under `${ZENHUB_HOME}/support-bundle`, to be set to 'enterprise@zenhub.com'
+It will generate an archive to be found under `/opt/zenhub/support-bundle`, to be sent to 'enterprise@zenhub.com'
