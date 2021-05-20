@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="ZenHub" src="logo.png" width="200" />
+  <img alt="ZenHub" src="logo.png" width="500" />
 </div>
 
 [Website](https://www.zenhub.com/) • [On-Premise](https://www.zenhub.com/enterprise) • [Releases](https://www.zenhub.com/enterprise/releases/) • [Blog](https://blog.zenhub.com/) • [Chat (Community Support)](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community)
@@ -8,10 +8,10 @@
 
 ## Table of Contents
 
-- [1. About ZenHub Enterprise On-Premise](#1-zenhub-on-premise-variants)
+- [1. About ZenHub Enterprise On-Premise](#1-about-zenhub-enterprise-on-premise)
   - [1.1 What is ZenHub Enterprise On-Premise 3 (ZHE3)?](#11-what-is-zenhub-enterprise-on-premise-3-zhe3)
   - [1.2 Why is ZHE3 important?](#12-why-is-zhe3-important)
-  - [1.3 How do we set up ZHE3?](#12-how-do-we-set-up-zhe3)
+  - [1.3 How do we set up ZHE3?](#13-how-do-we-set-up-zhe3)
   - [1.4 How do we migrate from ZHE2 to ZHE3?](#14-how-do-we-migrate-from-zhe2-to-zhe3)
 - [2. Terms of Use](#2-terms-of-use)
 - [3. Architecture](#3-architecture)
@@ -80,6 +80,7 @@ Please note the following:
 - ZenHub requires the use of one instances of **Redis**. We recommend this instance is managed externally (internal for ZenHub as a VM) as it requires data persistence.
 - ZenHub requires the use of a message broker via **RabbitMQ**.
 - ZenHub services will require a persistent connection to your GitHub Enterprise Server.
+- ZenHub Enterprise On-Premise *cannot* be used with GitHub.com. For use with [GitHub.com](https://github.com), please visit [ZenHub.com](https://zenhub.com).
 
 > ⚠️ **NOTE:** In total ZenHub makes use of 3 Redis instance. Two of those instances are managed by the application itself and do not require any external management. For one of them we strongly recommend having it managed externally. In the future we hope to simplify the architecture so that only 1 instance instead of Redis is used across the entire application.
 

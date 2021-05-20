@@ -3,26 +3,31 @@
 ## Table of Contents
 - [When am I ready to migrate production?](#when-am-i-ready-to-migrate-production)
 - [Migration overview](#migration-overview)
-- [Gather the data from your existing ZHE2 source instance](#gather-the-data-from-your-existing-zhe2-source-instance)
-- [Move the data to your jump box or workstation](#move-the-data-to-your-jump-box-or-workstation)
-- [Upload the data to the DBs](#upload-the-data-to-the-dbs)
-  - [MongoDB](#mongodb)
-  - [PostgreSQL](#postgresql)
+- [Testing the migration](#testing-the-migration)
+  - [Choose a subdomain for the test](#choose-a-subdomain-for-the-test)
+  - [Configure a temporary OAuth app](#configure-a-temporary-oauth-app)
+  - [(Re)Deploy your application](#redeploy-your-application)
+  - [Follow the Migration steps](#follow-the-migration-steps)
+  - [Return to production config](#return-to-production-config)
+- [Migration steps](#migration-steps)
+  - [Gather the data from your existing ZHE2 source instance](#gather-the-data-from-your-existing-zhe2-source-instance)
+  - [Move the data to your jump box or workstation](#move-the-data-to-your-jump-box-or-workstation)
+  - [Upload the data to the DBs](#upload-the-data-to-the-dbs)
+    - [MongoDB](#mongodb)
+    - [PostgreSQL](#postgresql)
   - [Update the references in the MongoDB blob collection](#update-the-references-in-the-mongodb-blob-collection)
-- [Upload files and images to the object storage buckets](#upload-files-and-images-to-the-object-storage-buckets)
+  - [Upload files and images to the object storage buckets](#upload-files-and-images-to-the-object-storage-buckets)
 
 
-### When am I ready to migrate production?
+## When am I ready to migrate production?
 
 By its nature, the migration of ZenHub to the new ZHE3 infrastructure is a complex process. For this reason, it is important to validate the migration as much as possible before migrating your production ZenHub deployment to minimize downtime for users and decrease the probability of issues occurring.
 
 Before planning a production migration, we recommend that customers have achieved the following milestones:
 - Have successfully deployed ZenHub to a "production landing zone" environment ✅
-- Have successfully performed at least one full data migration to your "production landing zone" environment ✅
+- Have successfully performed at least one [test migration](#testing-the-migration) to your "production landing zone" environment ✅
 
-In this case, the landing zone will be the Kubernetes cluster and namespace, external databases etc. with all of your production settings, but without doing the final step of cutting over your ZenHub DNS record to the new deployment.
-
-### Migration overview
+## Migration overview
 
 The migration of your ZenHub data has 3 major steps.
 
@@ -30,17 +35,48 @@ The migration of your ZenHub data has 3 major steps.
 2. **Move** the data to a jump box or workstation with network access to your new MongoDB, PostgreSQL, and bucket targets.
 3. **Upload** the data to each target.
 
-The steps below will outline how to make secure connections with the MongoDB and PostgreSQL databases, as well as the object storage bucket to migrate your data. Our examples demonstrate the migration process using a Macbook workstation. You might use a jumpbox or a different OS on your workstation, but the steps will be similar. Please reach out to ZenHub Support if you have any problems with the migration. These steps will assume that TLS has been enabled on your database servers already, as is likely the case if you use a database-as-a-service provider.
+The steps below will outline how to make connections with the MongoDB and PostgreSQL databases, as well as the object storage bucket to migrate your data. Our examples demonstrate the migration process using a Macbook workstation. You might use a jumpbox or a different OS on your workstation, but the steps will be similar. Please reach out to ZenHub Support if you have any problems with the migration. These steps will assume that TLS has been enabled on your Postgres database already (TLS for MongoDB isn't supported yet), as is likely the case if you use a database-as-a-service provider.
 
+## Testing the migration
+
+To test the migration, we need to deploy ZHE3 without disturbing ZHE2. This is achieved by running the migration using a new GitHub OAuth App with a different domain configured. Then, when we've confirmed the migration was successful, we change the configuration to use the production OAuth and domain name.
+
+### Choose a subdomain for the test
+1. Select a test subdomain name for your migration. It could be zenhub-test.yourcompany.com, for example.
+2. Configure this domain in your DNS manager to point to your Kubernetes ingress for ZenHub Enterprise.
+3. Edit `subdomain_suffix` and `admin_ui_subdomain` in your `kustomization.yaml` to reflect your chosen test domain.
+### Configure a temporary OAuth app
+1. Follow the instructions [here](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster#21-github-enterprise-server) to set up a new, temporary OAuth app. This will allow your application to authenticate to GitHub without disrupting the ZHE2 application.
+2. Ensure you use your new subdomain in the Authorization callback URL.
+3. Edit `github_app_id` and `github_app_secret` in your `kustomization.yaml` to reflect your temporary OAuth app.
+
+### (Re)Deploy your application
+```bash
+kustomize build . | kubectl apply -f -
+```
+### Follow the Migration steps
+Now that the DNS and OAuth app have been configured, you can proceed to the [Migration steps](#migration-steps) to complete the migration.
+
+### Return to production config
+Once you have successfully completed the test, return the values in your `kustomization.yaml` to your production configuration:
+- `github_app_id`
+- `github_app_secret`
+- `subdomain_suffix`
+- `admin_ui_subdomain`
+
+You are now ready to migrate production. Schedule a maintenance window with your team and follow the [Migration steps](#migration-steps) to complete the migration.
+
+## Migration steps
 ### Gather the data from your existing ZHE2 source instance
 
 1. SSH to your existing ZHE2 source instance.
-2. Download the `zhe3-migration-cluster.sh` script from this folder to your existing ZHE2 instance.
-3. Run the script (note: this will dump the databases which may impact performance for the duration).
+2. Download the `zhe3-migration-dump.sh` script from this folder to your existing ZHE2 instance.
+3. Run the script (note: this will place the instance into maintenance mode for the duration, blocking user access to the application).
 
 ```bash
-sudo ./zhe3-migration-cluster.sh
+sudo ./zhe3-migration-dump.sh
 ```
+>⚠️ **NOTE:** If you are testing the migration, you can disable maintenance mode after the script completes to resume service for users. Otherwise, if you are doing a production migration, leave maintenance mode enabled to prevent data loss during the migration.
 
 ### Move the data to your jump box or workstation
 
@@ -131,7 +167,7 @@ brew install postgresql@11
 pg_restore --clean --no-owner -v -h zenhub.pg.example.com -p 5432 -d raptor_production -U postgres -W --sslrootcert=<path/to/postgres-ca-cert.pem> --sslmode=verify-full postgres_raptor_data.dump
 ```
 
-#### Update the references in the MongoDB blob collection
+### Update the references in the MongoDB blob collection
 
 MongoDB stores the location of each file object uploaded to ZenHub. Since these have moved to your new bucket, we need to update these references in the database.
 

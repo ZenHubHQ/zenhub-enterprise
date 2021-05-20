@@ -10,8 +10,9 @@
 
 - [1. Getting Started](#1-getting-started)
 - [2. Requirements](#2-requirements)
-  - [2.1 GitHub Enterprise Server](#21-github-enterprise-server)
-  - [2.2 ZenHub Enterprise On-Premise License](#22-zenhub-enterprise-on-premise-license)
+  - [2.1 Systems Administration Skills](#21-systems-administration-skills)
+  - [2.2 GitHub Enterprise Server](#22-github-enterprise-server)
+  - [2.3 ZenHub Enterprise On-Premise License](#23-zenhub-enterprise-on-premise-license)
 - [3. Configuration](#3-configuration)
   - [3.1 Deploy the VM](#31-deploy-the-vm)
     - [3.1.1 Platforms](#311-platforms)
@@ -19,8 +20,9 @@
   - [3.2 Configure Access and Network (VMware Only)](#32-configure-access-and-network-vmware-only)
     - [3.2.1 Admin Password](#321-admin-password)
     - [3.2.2 Adding an SSH Key](#322-adding-an-ssh-key)
-    - [3.2.3 Configure a Static IP](#323-configure-a-static-ip)
-  - [3.3 ZenHub Configuration](#33-zenhub-configuration)
+    - [3.2.3 SSH Known Issues](#323-ssh-known-issues)
+    - [3.2.4 Configure a Static IP](#324-configure-a-static-ip)
+  - [3.3 ZenHub Configuration and Startup](#33-zenhub-configuration-and-startup)
     - [3.3.1 Required Values](#331-required-values)
     - [3.3.2 Optional Values](#332-optional-values)
   - [3.4 SSL/TLS Ingress Certificate](#34-ssltls-ingress-certificate)
@@ -31,7 +33,8 @@
   - [4.2 Restore](#42-restore)
 - [5. Upgrades](#5-upgrades)
   - [5.1 Application Updates](#51-application-updates)
-  - [5.2 OS (Ubuntu) Updates](#52-os-(ubuntu)-updates)
+  - [5.2 OS (Ubuntu) Updates](#52-os-ubuntu-updates)
+  - [5.3 Migration from ZHE2 to ZHE3](#53-migration-from-zhe2-to-zhe3)
 - [6. Logs](#6-logs)
   - [6.1 Sending Logs to an External Log Aggregator](#61-sending-logs-to-an-external-log-aggregator)
   - [6.2 Reverting to the Default Log Configuration](#62-reverting-to-the-default-log-configuration)
@@ -45,9 +48,13 @@ Thank you for your interest in ZenHub!
 
 ## 2. Requirements
 
-### 2.1 GitHub Enterprise Server
+### 2.1 Systems Administration Skills
 
-ZenHub Enterprise for Kubernetes requires a persistent connection to your own deployment of a recent version of [GitHub Enterprise Server](https://github.com/enterprise). You can find specific version compatibility information in the [release notes](https://github.com/zenhubhq/zenhub-enterprise/releases).
+Basic systems administration skills are required for set-up. Those deploying the VM should be comfortable with deploying a virtual machine to their chosen hypervisor, making an SSH connection, and using a Linux command-line and text editor.
+
+### 2.2 GitHub Enterprise Server
+
+ZenHub Enterprise for VM requires a persistent connection to your own deployment of a recent version of [GitHub Enterprise Server](https://github.com/enterprise). You can find specific version compatibility information in the [release notes](https://github.com/zenhubhq/zenhub-enterprise/releases).
 
 You will need to [set up an OAuth App](https://docs.github.com/en/developers/apps/creating-an-oauth-app) for ZenHub in your GitHub Enterprise Server. We recommend setting up the OAuth App under your primary GitHub Organization.
 
@@ -63,7 +70,7 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 > ⚠️ **NOTE:** The `/api` path is a new addition to the ZHE3 infrastructure. If you are migrating to ZHE3 from ZHE2, you will need to add this to the Authorization callback URL in your existing OAuth App, as well as any scripts you've created that utilize the ZenHub API.
 
-### 2.2 ZenHub Enterprise On-Premise License
+### 2.3 ZenHub Enterprise On-Premise License
 
 ZenHub Enterprise On-Premise requires a license to run. This license is an encoded string that is entered as the `enterprise_license_token` secret in the main configuration file. Please contact your Customer Success Manager to receive your token. For new customers, please visit https://www.zenhub.com/enterprise to get in touch with us.
 
@@ -77,21 +84,23 @@ To deploy the VM, you need the machine image for your hypervisor of choice. Curr
 
 To get access to the machine image, simply request it from us at enterprise@zenhub.com. Depending on which platform you will be deploying it to, we may need additional information provided in the email:
 
-- **AWS**: Include your AWS Account ID and the target AWS Region for your deployment. Our team will share the latest AMI with your AWS account in that region.
-- **VMware**: Indicate your desire to use VMware and we will send you a pre-signed URL to download the OVA.
+For **AWS**, include your **AWS Account ID** and the target **AWS Region** for your deployment. Our team will share the latest AMI with your AWS account in that region.
+> ⚠️ **NOTE:** On AWS, provide an SSH key pair when deploying. AWS will create a `ubuntu` user for that key, so you can access the VM using `ssh -i <your-key> ubuntu@<zenhub-hostname>`
+
+For **VMware**, indicate your desire to use VMware and we will send you a pre-signed URL to download the OVA.
 
 #### 3.1.2 Ports
 
 Below, we've summarized the list of ports and firewall rules that the ZenHub Enterprise VM will need to function in your network.
 
-| Type   | Protocol | Port Range | Source                                       |
-| ------ | -------- | ---------- | -------------------------------------------- |
-| HTTP   | TCP      | 80         | 0.0.0.0/0 or Office IP Range                 |
-| HTTPS  | TCP      | 443        | 0.0.0.0/0 or Office IP Range                 |
-| Custom | TCP      | 8443       | IP(s) to access admin-ui ( only for VMware ) |
-| SSH    | TCP      | 22         | Admin IP range or bastion host               |
-| HTTP   | TCP      | 80         | IP of GitHub Enterprise                      |
-| HTTPS  | TCP      | 443        | IP of GitHub Enterprise                      |
+| Type   | Protocol | Port Range | Source                         |
+| ------ | -------- | ---------- | ------------------------------ |
+| HTTP   | TCP      | 80         | 0.0.0.0/0 or Office IP Range   |
+| HTTPS  | TCP      | 443        | 0.0.0.0/0 or Office IP Range   |
+| Custom | TCP      | 8443       | IP(s) to access admin-ui       |
+| SSH    | TCP      | 22         | Admin IP range or bastion host |
+| HTTP   | TCP      | 80         | IP of GitHub Enterprise        |
+| HTTPS  | TCP      | 443        | IP of GitHub Enterprise        |
 
 You do not need to set this up inside the VM—this is strictly for any virtual or physical firewalls you have when deploying the VM, such as AWS Security Groups.
 
@@ -118,25 +127,40 @@ Another way is to import a key from another computer/workstation
 ssh-copy-id -i <path_to_key> zenhub@<ZenHub_VM_IP>
 ```
 
-> ⚠️ **NOTE:** Some errors while using `ssh-copy-id` maybe be caused by a default `IdentityFile` configuration for all hosts in the computer/workstation ssh config file. The flag `-f` can be added to the command to fix the issue.
+#### 3.2.3 SSH Known Issues
+
+- Too many authentication failures
+- /usr/bin/ssh-copy-id: ERROR:
+
+Some errors while using `ssh-copy-id` or connecting using password can be be caused by multiple ssh keys loaded in the computer/workstation ssh agent. The flags `PreferredAuthentications=password` and `PubkeyAuthentication=no` can be added to the command to fix the issue.
 
 ```bash
-ssh-copy-id -f -i <path_to_key> zenhub@<ZenHub_VM_IP>
+ssh-copy-id -o PreferredAuthentications=password -o PubkeyAuthentication=no -i <path_to_key> zenhub@<ZenHub_VM_IP>
 ```
 
-#### 3.2.3 Configure a Static IP
+#### 3.2.4 Configure a Static IP
 
-By default the image provided uses DHCP. If a static IP is required, use the provided configuration tool and provide the required information:
+By default, ZenHub Enterprise 3 uses the dynamic host configuration protocol (DHCP) for DNS settings when DHCP leases provide nameservers.
+
+> Your nameservers must resolve your ZenHub Enterprise instance's hostname. 
+
+If a static IP is required, use the provided configuration tool and provide the required information:
 
 ```bash
 zhe-config --vmware-staticip
 ```
 
-To revert the instance to use DHCP run:
+> ⚠️ **NOTE:** The IP address must be entered in CIDR notation. Example: `192.168.1.15/24`
+
+To revert the instance to use DHCP, run:
 
 ```bash
 zhe-config --vmware-dhcp
 ```
+
+After running these commands, you will either need to reboot your instance, or run `sudo netplan apply`
+
+> ⚠️ **NOTE:** If you are remotely connected to your instance (with SSH for example) and you change your instance's IP via the method above, you will be ejected from your connected session. 
 
 ### 3.3 ZenHub Configuration and Startup
 
@@ -155,6 +179,14 @@ zenhub_configuration:
   ADMIN_UI_PASS:
   CHROME_EXTENSION_WEBSTORE_URL:
   MANIFEST_FIREFOX_ID:
+  # CRYPTO_PASS:
+  # SECRET_KEY_BASE:
+  # RAPTOR_ADMIN_PASSWORD:
+  # LOCKBOX_MASTER_KEY:
+  # GITHUB_TOKEN_VALUE_KEY:
+  # GITHUB_WEBHOOKS_SECRET:
+  # GHWEBHOOK_PASS:
+  # GHWEBHOOK_SECRET:
 ## Optional configurations
 
 # ssl_self_signed: true
@@ -172,6 +204,12 @@ zenhub_configuration:
 #   address: "xxx.xxx.xxx.xxx/xx"
 #   gateway: "xxx.xxx.xxx.xxx"
 #   dns: "xxx.xxx.xxx.xxx, yyy.yyy.yyy.yyy"
+
+## To set custom NTP servers
+# chrony:
+#   primary: 0.ubuntu.pool.ntp.org
+#   secondary:
+
 ```
 
 ### 3.3.1 Required Values
@@ -184,13 +222,24 @@ zenhub_configuration:
   app on your GitHub server: https://docs.github.com/en/developers/apps/creating-an-oauth-app
 - `GITHUB_APP_SECRET` : The OAuth secret value should be passed to `github_app_secret`
 - `ENTERPRISE_LICENSE_TOKEN` : The ZenHub license (JWT) you should have received by email from the ZenHub team. If you do not have a license, reach out to enterprise@zenhub.com.
-- `MANIFEST_FIREFOX_ID` : The UUID used by the FireFox add-on store to uniquely identify your FireFox extension. Ex. zenhub@your-company-domain.com
+- `MANIFEST_FIREFOX_ID` : The UUID used by the FireFox add-on store to uniquely identify your FireFox extension. Ex. zenhub-enterprise@your-company-domain.com
+> ⚠️ **NOTE:** Always use the same `MANIFEST_FIREFOX_ID`. This enables your users to receive an automatic update rather than reinstalling the extension. You can find this value in the [Mozilla Add-On Developer Hub](https://addons.mozilla.org/developers/) by clicking Edit Product Page and scrolling down to UUID on your existing extension.
+
+If you are migrating from a ZHE2 VM, you must use the values from your existing VM for the variables below. The values will be in the `variables.txt` file in your `migration-dump-<timestamp>.tar.gz` bundle produced by the [zhe3-migration-dump.sh](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/k8s-cluster/zhe3-migration/zhe3-migration-dump.sh) script. If you are not migrating, you can leave these commented out and they will be autogenerated.
+
+- `CRYPTO_PASS`:
+- `SECRET_KEY_BASE`: A random string used to seed the encryption of sensitive data in the Raptor database.
+- `GITHUB_TOKEN_VALUE_KEY`: Private key used to encrypt GitHub token retrieved and cached in the database.
+- `GHWEBHOOK_PASS`: Encrypt repository ID. Part of the GitHub webhook callback URL.
+- `GHWEBHOOK_SECRET`: Secret for authenticating GitHub webhooks from Toad. This is set in your GitHub Enterprise instance.
+- `GITHUB_WEBHOOKS_SECRET`: Should be the same value as `ghwebhook_secret` above. This one is used by the Raptor services.
 
 ### 3.3.2 Optional Values
 
-- `ssl_self_signed` : To deploy ZenHub with a self-signed SSL certificate
-- `ssh_keys` : SSH key(s) to be included as authorized_keys
-- `ip` : Configure the VM to use static IP ( Only for VMware )
+- `ssl_self_signed`: To deploy ZenHub with a self-signed SSL certificate
+- `ssh_keys`: SSH key(s) to be included as authorized_keys
+- `ip`: Configure the VM to use static IP (Only for VMware)
+- `chrony`: Configure the VM to use custom NTP servers for your environment
 
 ### 3.4 SSL/TLS Ingress Certificate
 
@@ -209,36 +258,40 @@ A self signed certificate can be generated enabling the `ssl_self_signed` option
 A configuration tool `zhe-config` has been included to help with various administration tasks.
 
 ```bash
-zhe-config --help
+*********************************
+*** ZenHub Configuration Tool ***
+*********************************
 
-  ZENHUB CONFIGURATION TOOL
+A tool for configuring, deploying, and managing your ZenHub Enterprise appliance.
 
-    Usage: zhe-config --config-file file
+Usage:
+  zhe-config [Options]
 
-    Run ZenHub configuration tool
+Examples:
+  zhe-config --config-file /your/path/config.yaml
+  zhe-config --restore 2021-04-28T04-15
 
-    --config-file FILE_PATH   Specify configuration file path
+Options:
+  --backup                        Create a backup of databases and files
+  --chrony-ntp                    Set custom NTP servers in chrony
+  --config-example                Show a configuration file example
+  --config-file   FILE_PATH       Deploy ZenHub from a configuration file
+  --help                          Show this help message
+  --maintenance   enable|disable  Enable or disable maintenance mode
+  --restore       BACKUP_NAME     Restore from a backup in /opt/snapshots
+  --support-bundle                Generate a support bundle
+  --sshkey                        Add an SSH key manually
+  --vmware-staticip               Configure a static IP for VMware instance
+  --vmware-dhcp                   Configure DHCP for VMware instance
+  --zhe2-migrate  BUNDLE_NAME     Migrate ZHE2 data to this ZHE3 instance
 
-  Optional arguments:
-
-    --backup                        Create backup of databases and files
-    --config-example                Show Configuration file example
-    --help                          Show this help message
-    --maintenance   enable|disable  Enable or disable maintenance mode
-    --restore       BACKUP_NAME     Restore backup
-    --support-bundle                Generate support bundle
-    --sshkey                        Add ssh key manually
-    --vmware-staticip               Configure static IP for VMware instance manually
-    --vmware-dhcp                   Configure DHCP for VMware instance manually
-
-  More Details about ZenHub Configuration can be found at:
-
-  `https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine`
+More details about ZenHub configuration can be found at:
+https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine
 ```
 
 ### 3.6 Start ZenHub
 
-Run the configuration tool:
+Run the configuration tool with your completed configuration file:
 
 ```bash
 zhe-config --config-file <configuration_file_full_path>
@@ -258,7 +311,7 @@ Backups use the database engine backup capability, are not intrusive, and can be
 zhe-config --backup
 ```
 
-- A snapshot of zenhub will be created in `/opt/snapshots/<yyyy-mm-dd>`
+- A snapshot of zenhub will be created in `/opt/snapshots/<yyyy-mm-ddThh-mm>`
 - The script will silently erase any existing snapshots found under the same date in `/opt/snapshots`
 - No rotation is set up by default—please monitor your snapshots usage
 
@@ -301,11 +354,15 @@ rm -rf ${working_dir}/*
 
 ### 5.2 OS (Ubuntu) Updates
 
-The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is managed by a systemd service (`k3s`) with its own upgrade mechanism (see below).
+The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is managed by a systemd service (`k3s`) with its own upgrade mechanism.
 
 All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
 
 Debian utility `unattended-upgrades` is enabled and setup to automatically apply _security updates_ (only) once per day.
+
+### 5.3 Migration from ZHE2 to ZHE3
+
+Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
 
 ## 6. Logs
 
@@ -405,4 +462,4 @@ To help our teams to troubleshoot issues you might have, a support bundle can be
 zhe-config --support-bundle
 ```
 
-It will generate an archive to be found under `/opt/zenhub/support-bundle`, to be sent to 'enterprise@zenhub.com'
+It will generate an archive to be found under `${ZENHUB_HOME}/support-bundle`. Please send this to **enterprise@zenhub.com**
