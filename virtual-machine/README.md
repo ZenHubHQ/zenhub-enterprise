@@ -27,7 +27,7 @@
     - [3.3.2 Optional Values](#332-optional-values)
   - [3.4 SSL/TLS Ingress Certificate](#34-ssltls-ingress-certificate)
   - [3.5 zhe-config](#35-zhe-config)
-  - [3.6 Start Zenhub](#36-start-zenhub)
+  - [3.6 Start ZenHub](#36-start-zenhub)
 - [4. Backup/Restore](#4-backuprestore-a-snapshot)
   - [4.1 Backup](#41-backup)
   - [4.2 Restore](#42-restore)
@@ -142,7 +142,7 @@ ssh-copy-id -o PreferredAuthentications=password -o PubkeyAuthentication=no -i <
 
 By default, ZenHub Enterprise 3 uses the dynamic host configuration protocol (DHCP) for DNS settings when DHCP leases provide nameservers.
 
-> Your nameservers must resolve your ZenHub Enterprise instance's hostname. 
+> Your nameservers must resolve your ZenHub Enterprise instance's hostname.
 
 If a static IP is required, use the provided configuration tool and provide the required information:
 
@@ -160,7 +160,7 @@ zhe-config --vmware-dhcp
 
 After running these commands, you will either need to reboot your instance, or run `sudo netplan apply`
 
-> ⚠️ **NOTE:** If you are remotely connected to your instance (with SSH for example) and you change your instance's IP via the method above, you will be ejected from your connected session. 
+> ⚠️ **NOTE:** If you are remotely connected to your instance (with SSH for example) and you change your instance's IP via the method above, you will be ejected from your connected session.
 
 ### 3.3 ZenHub Configuration and Startup
 
@@ -338,8 +338,8 @@ zhe-config --restore <snapshot_name>
 
 Update Docker images and Kubernetes manifests for the ZenHub application.
 
-- Download the latest Zenhub application update bundle from our CDN [TODO add link]
-- Get the bundle in the VM (`scp` or any other mean)
+- Download the latest ZenHub application update bundle from the link provided in the release email (or [contact our team](mailto:support@zenhub.com))
+- Get the bundle in the VM (use `scp` or your choice of tool)
 - Unpack and run the update script:
 
 ```bash
