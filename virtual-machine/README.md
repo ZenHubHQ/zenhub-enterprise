@@ -338,7 +338,7 @@ zhe-config --restore <snapshot_name>
 
 Update Docker images and Kubernetes manifests for the ZenHub application.
 
-- Download the latest ZenHub application update bundle from the link provided in the release email (or [contact our team](mailto:support@zenhub.com))
+- Download the latest ZenHub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com))
 - Get the bundle in the VM (use `scp` or your choice of tool)
 - Unpack and run the update script:
 
