@@ -32,7 +32,7 @@ Please reach out to ZenHub Support if you have any problems with the migration.
 ### Gather the data from your existing ZHE2 source instance
 
 1. SSH to your existing ZHE2 source instance.
-2. Download the `zhe3-migration-dump.sh` script from [here](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/k8s-cluster/zhe3-migration/zhe3-migration-cluster.sh) to your _existing_ ZHE2 instance. 
+2. Download the `zhe3-migration-dump.sh` script from [here](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/k8s-cluster/zhe3-migration/zhe3-migration-dump.sh) to your _existing_ ZHE2 instance. 
 3. Run the script (note: this will dump the databases which may impact performance for the duration).
 
 ```bash
