@@ -10,14 +10,15 @@
 
 - [1. Getting Started](#1-getting-started)
 - [2. Requirements](#2-requirements)
-  - [2.1 GitHub Enterprise Server](#21-github-enterprise-server)
-  - [2.2 Kubernetes](#22-kubernetes)
-  - [2.3 PostgreSQL](#23-postgresql)
-  - [2.4 MongoDB](#24-mongodb)
-  - [2.5 RabbitMQ](#25-rabbitmq)
-  - [2.6 Redis](#26-redis)
-  - [2.7 File and Image Storage](#27-file-and-image-storage)
-  - [2.8 ZenHub Enterprise On-Premise License](#28-zenhub-enterprise-on-premise-license)
+  - [2.1 Systems Administration Skills](#21-systems-administration-skills)
+  - [2.2 GitHub Enterprise Server](#22-github-enterprise-server)
+  - [2.3 Kubernetes](#23-kubernetes)
+  - [2.4 PostgreSQL](#24-postgresql)
+  - [2.5 MongoDB](#25-mongodb)
+  - [2.6 RabbitMQ](#26-rabbitmq)
+  - [2.7 Redis](#27-redis)
+  - [2.8 File and Image Storage](#28-file-and-image-storage)
+  - [2.9 ZenHub Enterprise On-Premise License](#29-zenhub-enterprise-on-premise-license)
 - [3. Configuration](#3-configuration)
   - [3.1 Docker Registry](#31-docker-registry)
     - [3.1.1 Using your private registry](#311-using-your-private-registry)
@@ -53,7 +54,15 @@ Thank you for your interest in ZenHub!
 
 ## 2. Requirements
 
-### 2.1 GitHub Enterprise Server
+### 2.1 Systems Administration Skills
+
+Systems administration skills are required for set-up. Those deploying ZenHub Enterprise for Kubernetes should be comfortable with:
+- The basics of deploying and configuring cloud services, specifically those mentioned below
+- Using `kubectl` to execute operations on a Kubernetes cluster
+- Kubernetes ingress and SSL/TLS
+- Container registry concepts
+
+### 2.2 GitHub Enterprise Server
 
 ZenHub Enterprise for Kubernetes requires a persistent connection to your own deployment of a recent version of [GitHub Enterprise Server](https://github.com/enterprise). You can find specific version compatibility information in the [release notes](https://github.com/zenhubhq/zenhub-enterprise/releases).
 
@@ -70,7 +79,7 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 > ⚠️ **NOTE:** The `/api` path is a new addition to the ZHE3 infrastructure. If you are migrating to ZHE3 from ZHE2, you will need to add this to the Authorization callback URL in your existing OAuth App, as well as any scripts you've created that utilize the ZenHub API.
 
-### 2.2 Kubernetes
+### 2.3 Kubernetes
 
 In order to get started with ZenHub, you must have an existing Kubernetes cluster set up. You should:
 
@@ -80,29 +89,29 @@ In order to get started with ZenHub, you must have an existing Kubernetes cluste
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
 - Have the capability to pull Docker images from ZenHub's public Docker registry or have access to a private Docker registry where you can push images (and your cluster should have the ability to pull from that private registry).
 
-### 2.3 PostgreSQL
+### 2.4 PostgreSQL
 
 ZenHub will require a connection to a PostgreSQL 11 database. We recommend the latest 11.x version. At the moment ZenHub does **not** support PostgreSQL 12.0 or greater.
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
 
-### 2.4 MongoDB
+### 2.5 MongoDB
 
 ZenHub will require a connection to a MongoDB database. MongoDB version 3.6 is required. At the moment, ZenHub does **not** support MongoDB version 4.0 or greater.
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
 
-### 2.5 RabbitMQ
+### 2.6 RabbitMQ
 
 ZenHub will require a connection to RabbitMQ. We recommend the latest 3.x version.
 
-### 2.6 Redis
+### 2.7 Redis
 
 ZenHub makes use of 1 externally managed Redis instance. This Redis instance is used by our `raptor-sidekiq-worker` service requires data persistence. We recommend the latest 5.x version.
 
 > There are two additional Redis instances that will run inside the cluster via our configuration. You do not need to manage these.
 
-### 2.7 File and Image Storage
+### 2.8 File and Image Storage
 
 ZenHub requires two S3-API compatible object storage buckets. One to store files (PDFs, Word documents, etc...) and another to store images and videos which are attached to issues through ZenHub's web app (files and images attached to issues using the ZenHub extension are stored by GitHub).
 
@@ -126,7 +135,7 @@ IAM credentials are used by ZenHub to write (`put`) objects and to create tempor
 To read (`get`) images and allow users to see uploaded images embedded in the issue page, the cluster nodes or network need to have proper access. Take a look at our [Terraform](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/terraform-aws-zhe-backend/buckets.tf) for an example bucket policy.
 
 
-### 2.8 ZenHub Enterprise On-Premise License
+### 2.9 ZenHub Enterprise On-Premise License
 
 ZenHub Enterprise On-Premise requires a license to run. This license is an encoded string that is entered as the `enterprise_license_token` secret in the main `kustomization.yaml` file. Please contact your Customer Success Manager to receive your token. For new customers, please visit https://www.zenhub.com/enterprise to get in touch with us.
 
@@ -464,7 +473,7 @@ See section [6.1](#61-publishing-the-chrome-and-firefox-extensions) for instruct
 
 ### 5.1 Migration from ZHE2 to ZHE3
 
-Please see the [zhe2-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe2-migration) folder for guidance on migrating from ZHE2 to ZHE3.
+Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
 
 ### 5.2 From ZHE3 to ZHE3.x
 

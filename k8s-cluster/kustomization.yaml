@@ -94,20 +94,22 @@ configMapGenerator:
       - chrome_extension_webstore_url="" # e.g. https://chrome.google.com/webstore/detail/your-extension-name/id
       #
       # [EDIT] Firefox extension UUID used to publish Firefox extensions.
-      - manifest_firefox_id=zenhub@<your_company_domain>
+      # NOTE: Always use the same UUID to allow for automatic extension updates for your users
+      #       You can find the UUID at the bottom of your extension's product page https://addons.mozilla.org/developers/
+      - manifest_firefox_id=zenhub-enterprise@<your_company_domain>
 
 secretGenerator:
   - name: configuration
     behavior: merge
     literals:
       # [EDIT] The full standard full credentials URI for PostgreSQL
-      - postgres_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/<postgres_schema>
+      - postgres_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/raptor_production
       # [EDIT] The full standard full credentials URI for MongoDB
       - mongo_url=mongodb://<mongo_username>:<mongo_password>@<mongo_hostname>:<mongo_port>/zenhub
       # [EDIT] The full standard full credentials URI for Redis
       - redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/0
       # [EDIT] The full standard full credentials URI for RabbitMQ
-      - rabbitmq_url=amqp://<rabbitmq_username>:<rabbitmq_password>@<rabbitmq_hostname>:<rabbitmq_port>
+      - rabbitmq_url=amqps://<rabbitmq_username>:<rabbitmq_password>@<rabbitmq_hostname>:<rabbitmq_port>
       # [EDIT] The secret for the GitHub OAuth app. See github_app_id above.
       - github_app_secret=<github_oauth_app_secret>
       # [EDIT] Bucket secret access key
@@ -151,14 +153,17 @@ secretGenerator:
       # [EDIT] Private key used to encrypt GitHub token retrieved and cached in
       # the database.
       - github_token_value_key=<[a-f0-9]{64}>
-      # [EDIT] Secret for authenticating GitHub webhooks from Raptor. This is
-      # set in your GitHub Enterprise instance.
-      - github_webhooks_secret=<[A-Za-z0-9]{38}>
-      # [EDIT] Encrypt repository ID. Part of the GitHub webhook callback URL.
-      - ghwebhook_pass=<[A-Za-z0-9]{38}>
-      # [EDIT] Should be the same value as `github_webhooks_secret` above. This
-      # one is used by the Toad services.
+      # [EDIT] Secret for authenticating GitHub webhooks from Toad. This is set in your
+      # GitHub Enterprise instance. If migrating from ZHE2, use your existing value! Check variables.txt:
+      # https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance
       - ghwebhook_secret=<[A-Za-z0-9]{38}>
+      # [EDIT] Encrypt repository ID. Part of the GitHub webhook callback URL.
+      # If migrating from ZHE2, use your existing value! Check variables.txt:
+      # https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance
+      - ghwebhook_pass=<[A-Za-z0-9]{38}>
+      # [EDIT] Should be the same value as `ghwebhook_secret` above. This
+      # one is used by the Raptor services.
+      - github_webhooks_secret=<[A-Za-z0-9]{38}>
       #
       # [EDIT] Certificates for Postgres DB SSL/TLS.
       # [NOTE] If you use this you must add "?sslmode=require&sslrootcert=/var/ca-bundle/mongo/postgres-ca.pem" to the end of postgres_url

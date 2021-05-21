@@ -1,6 +1,7 @@
 window.config = {
   "ZENHUB_SERVER_ADDRESS": "https://$(subdomain_suffix).$(domain_tld)/api",
   "ZENHUB_WEBAPP_ADDRESS": "https://$(subdomain_suffix).$(domain_tld)",
+  "CABLE_URL": "wss://$(subdomain_suffix).$(domain_tld)/cable/",
   "hostURL": "https://$(subdomain_suffix).$(domain_tld)/api",
   "loginURL": "https://$(subdomain_suffix).$(domain_tld)/api/auth/github",
   "dashboardURL": "https://$(subdomain_suffix).$(domain_tld)/dashboard",
