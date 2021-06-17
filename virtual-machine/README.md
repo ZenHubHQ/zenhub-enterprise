@@ -16,29 +16,47 @@
 - [3. Configuration](#3-configuration)
   - [3.1 Deploy the VM](#31-deploy-the-vm)
     - [3.1.1 Platforms](#311-platforms)
-    - [3.1.2 Ports](#312-ports)
+    - [3.1.2 Hardware Sizes](#312-hardware-sizes)
+    - [3.1.3 Ports](#313-ports)
   - [3.2 Configure Access and Network (VMware Only)](#32-configure-access-and-network-vmware-only)
     - [3.2.1 Admin Password](#321-admin-password)
     - [3.2.2 Adding an SSH Key](#322-adding-an-ssh-key)
     - [3.2.3 SSH Known Issues](#323-ssh-known-issues)
     - [3.2.4 Configure a Static IP](#324-configure-a-static-ip)
-  - [3.3 ZenHub Configuration and Startup](#33-zenhub-configuration-and-startup)
+  - [3.3 Configure ZenHub](#33-configure-zenhub)
     - [3.3.1 Required Values](#331-required-values)
     - [3.3.2 Optional Values](#332-optional-values)
   - [3.4 SSL/TLS Ingress Certificate](#34-ssltls-ingress-certificate)
-  - [3.5 zhe-config](#35-zhe-config)
-  - [3.6 Start ZenHub](#36-start-zenhub)
-- [4. Backup/Restore](#4-backuprestore-a-snapshot)
-  - [4.1 Backup](#41-backup)
-  - [4.2 Restore](#42-restore)
+- [4. Application Deployment](#4-application-deployment)
+  - [4.1 Run the Configuration Tool](#41-run-the-configuration-tool)
+  - [4.2 Sanity Check](#42-sanity-check)
+  - [4.3 Application Check](#43-application-check)
+  - [4.4 Publish the Chrome and Firefox Extensions](#44-publish-the-chrome-and-firefox-extensions)
 - [5. Upgrades](#5-upgrades)
   - [5.1 Application Updates](#51-application-updates)
+    - [5.1.1 Update](#511-update)
+    - [5.1.2 Rollback](#512-rollback)
   - [5.2 OS (Ubuntu) Updates](#52-os-ubuntu-updates)
-  - [5.3 Migration from ZHE2 to ZHE3](#53-migration-from-zhe2-to-zhe3)
-- [6. Logs](#6-logs)
-  - [6.1 Sending Logs to an External Log Aggregator](#61-sending-logs-to-an-external-log-aggregator)
-  - [6.2 Reverting to the Default Log Configuration](#62-reverting-to-the-default-log-configuration)
-- [7. Support](#7-support)
+  - [5.3 Migration from ZHE 2.44 to ZHE3](#53-migration-from-zhe-244-to-zhe3)
+- [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
+  - [6.1 Tasks in the Admin UI](#61-tasks-in-the-admin-ui)
+    - [6.1.1 Publishing the Chrome and Firefox Extensions](#611-publishing-the-chrome-and-firefox-extensions)
+    - [6.1.2 Setting the first ZenHub Admin (License Governance)](#612-setting-the-first-zenhub-admin-license-governance)
+    - [6.1.3 Usage Report](#613-usage-report)
+  - [6.2 Maintenance Mode](#62-maintenance-mode)
+  - [6.3 Backup/Restore](#63-backuprestore)
+    - [6.3.1 Backup](#631-backup)
+    - [6.3.2 Restore](#632-restore)
+  - [6.4 Support Bundle](#64-support-bundle)
+  - [6.5 VM Size Changes](#65-vm-size-changes)
+- [7. `zhe-config` Specification](#7-zhe-config-specification)
+- [8. Logs](#8-logs)
+  - [8.1 Sending Logs to an External Log Aggregator](#81-sending-logs-to-an-external-log-aggregator)
+    - [8.1.1 Enhance the Fluentd Configuration](#811-enhance-the-fluentd-configuration)
+    - [8.1.2 Build a Dedicated Image with the Plugin Installed](#812-build-a-dedicated-image-with-the-plugin-installed)
+    - [8.1.3 Update the Fluentd DaemonSet](#813-update-the-fluentd-daemonset)
+    - [8.1.4 Restart the Fluentd DaemonSet](#814-restart-the-fluentd-daemonset)
+  - [8.2 Reverting to the Default Log Configuration](#82-reverting-to-the-default-log-configuration)
 
 ## 1. Getting Started
 
@@ -66,7 +84,7 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 > ZenHub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 
-**Authorization callback URL**: `https:<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
+**Authorization callback URL**: `https://<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
 
 > ⚠️ **NOTE:** The `/api` path is a new addition to the ZHE3 infrastructure. If you are migrating to ZHE3 from ZHE2, you will need to add this to the Authorization callback URL in your existing OAuth App, as well as any scripts you've created that utilize the ZenHub API.
 
@@ -89,7 +107,22 @@ For **AWS**, include your **AWS Account ID** and the target **AWS Region** for y
 
 For **VMware**, indicate your desire to use VMware and we will send you a pre-signed URL to download the OVA.
 
-#### 3.1.2 Ports
+#### 3.1.2 Hardware Sizes
+
+When deploying ZenHub on your VM, ZenHub will check the available hardware resources and scale itself accordingly in order to give your users the most performant ZenHub experience. Out of the box, ZenHub for VM supports the following hardware configurations.
+
+> ⚠️ **NOTE:** User count is an approximation and your use may vary depending on the usage of ZenHub per user.
+
+| Number of Users      | vCPUs    | Memory     | Disk          |
+| -------------------- | -------- | ---------- | ------------- |
+| 10-100               | 4        | 16GB       | 80GB+ (SSD)   |
+| 100-1000             | 8        | 32GB       | 250GB+ (SSD)  |
+| 1000-5000            | 16       | 64GB       | 500GB+ (SSD)  |
+| 5000+                |[Contact us](enterprise@zenhub.com)| | |
+
+> ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to ZenHub, as well as how many backups you are storing on the VM. At 90% disk utilization, pods in the internal K3s cluster will begin getting evicted. At 95% disk utilization, container images will start being removed from containerd. As a result, it is essential to remain below 90% disk utilization at all times. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
+
+#### 3.1.3 Ports
 
 Below, we've summarized the list of ports and firewall rules that the ZenHub Enterprise VM will need to function in your network.
 
@@ -162,9 +195,9 @@ After running these commands, you will either need to reboot your instance, or r
 
 > ⚠️ **NOTE:** If you are remotely connected to your instance (with SSH for example) and you change your instance's IP via the method above, you will be ejected from your connected session.
 
-### 3.3 ZenHub Configuration and Startup
+### 3.3 Configure ZenHub
 
-Access the VM and create a `YAML` configuration file using the below example. Details about what values to set can be found in section 3.3.1 below the example.
+Access the VM and create a `YAML` configuration file using the below example. Details about what values to set can be found in [section 3.3.1](#331-required-values) below the example.
 
 ```yaml
 ---
@@ -178,7 +211,8 @@ zenhub_configuration:
   ENTERPRISE_LICENSE_TOKEN:
   ADMIN_UI_PASS:
   CHROME_EXTENSION_WEBSTORE_URL:
-  MANIFEST_FIREFOX_ID:
+  MANIFEST_FIREFOX_ID: zenhub-enterprise@<your-company-domain.com>
+  # The remaining required values MUST be set if and only if you are migrating from ZHE 2.44
   # CRYPTO_PASS:
   # SECRET_KEY_BASE:
   # RAPTOR_ADMIN_PASSWORD:
@@ -220,14 +254,17 @@ zenhub_configuration:
 - `GITHUB_HOSTNAME` : Make sure the value includes `https://` and does not have a trailing slash.
 - `GITHUB_APP_ID` : Specify the OAuth App ID for the ZenHub application. See here for instructions on how to setup an OAuth
   app on your GitHub server: https://docs.github.com/en/developers/apps/creating-an-oauth-app
-- `GITHUB_APP_SECRET` : The OAuth secret value should be passed to `github_app_secret`
+- `GITHUB_APP_SECRET` : The OAuth secret value that corresponds with the above OAuth App ID.
 - `ENTERPRISE_LICENSE_TOKEN` : The ZenHub license (JWT) you should have received by email from the ZenHub team. If you do not have a license, reach out to enterprise@zenhub.com.
+- `ADMIN_UI_PASS` : The password to the ZenHub Admin UI, which runs on port 8443 and is used to execute a number of administrative tasks such as publishing extensions, usage reporting, creating a ZenHub Admin for license administration.
+- `CHROME_EXTENSION_WEBSTORE_URL` : The URL of your published Chrome extension. If you have not published a ZenHub extension before, this will be blank for your first configuration. After publishing the extension, set this variable and re-run your configuration to activate the Chrome extension installation link on ZenHub's landing page.
 - `MANIFEST_FIREFOX_ID` : The UUID used by the FireFox add-on store to uniquely identify your FireFox extension. Ex. zenhub-enterprise@your-company-domain.com
+
 > ⚠️ **NOTE:** Always use the same `MANIFEST_FIREFOX_ID`. This enables your users to receive an automatic update rather than reinstalling the extension. You can find this value in the [Mozilla Add-On Developer Hub](https://addons.mozilla.org/developers/) by clicking Edit Product Page and scrolling down to UUID on your existing extension.
 
-If you are migrating from a ZHE2 VM, you must use the values from your existing VM for the variables below. The values will be in the `variables.txt` file in your `migration-dump-<timestamp>.tar.gz` bundle produced by the [zhe3-migration-dump.sh](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/k8s-cluster/zhe3-migration/zhe3-migration-dump.sh) script. If you are not migrating, you can leave these commented out and they will be autogenerated.
+**If you are migrating from a ZHE2 VM**, you must use the values from your existing VM for the variables below. To obtain them, run the `zhe3-migration-dump.sh` script on your ZHE2 VM, as specified in [these steps](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance) from the migration guide. Once complete, you will have a `migration-dump-<timestamp>.tar.gz` bundle that contains a file called `variables.txt` with the values you need to complete this configuration file. **If you are not migrating**, you can leave the following config variables commented out and they will be autogenerated for you.
 
-- `CRYPTO_PASS`:
+- `CRYPTO_PASS`: A random string used to encrypt sensitive data in the ZenHub backend.
 - `SECRET_KEY_BASE`: A random string used to seed the encryption of sensitive data in the Raptor database.
 - `GITHUB_TOKEN_VALUE_KEY`: Private key used to encrypt GitHub token retrieved and cached in the database.
 - `GHWEBHOOK_PASS`: Encrypt repository ID. Part of the GitHub webhook callback URL.
@@ -243,54 +280,19 @@ If you are migrating from a ZHE2 VM, you must use the values from your existing 
 
 ### 3.4 SSL/TLS Ingress Certificate
 
-A SSL/TLS certificate need to be provided.
+A SSL/TLS certificate needs to be provided.
 
 Copy the certificate and key pair to the following path:
 
-`${ZENHUB_HOME}/ssl/tls.key` - certificate private key
+`${ZENHUB_HOME}/configuration/ssl/tls.key` - certificate private key
 
-`${ZENHUB_HOME}/ssl/tls.crt` - certificate
+`${ZENHUB_HOME}/configuration/ssl/tls.crt` - certificate
 
-A self signed certificate can be generated enabling the `ssl_self_signed` option in configuration file
+A self signed certificate can be generated by enabling the `ssl_self_signed` option in configuration file.
 
-### 3.5 `zhe-config`
+## 4. Application Deployment
 
-A configuration tool `zhe-config` has been included to help with various administration tasks.
-
-```bash
-*********************************
-*** ZenHub Configuration Tool ***
-*********************************
-
-A tool for configuring, deploying, and managing your ZenHub Enterprise appliance.
-
-Usage:
-  zhe-config [Options]
-
-Examples:
-  zhe-config --config-file /your/path/config.yaml
-  zhe-config --restore 2021-04-28T04-15
-
-Options:
-  --backup                        Create a backup of databases and files
-  --chrony-ntp                    Set custom NTP servers in chrony
-  --config-example                Show a configuration file example
-  --config-file   FILE_PATH       Deploy ZenHub from a configuration file
-  --help                          Show this help message
-  --maintenance   enable|disable  Enable or disable maintenance mode
-  --restore       BACKUP_NAME     Restore from a backup in /opt/snapshots
-  --support-bundle                Generate a support bundle
-  --sshkey                        Add an SSH key manually
-  --vmware-staticip               Configure a static IP for VMware instance
-  --vmware-dhcp                   Configure DHCP for VMware instance
-  --zhe2-migrate  BUNDLE_NAME     Migrate ZHE2 data to this ZHE3 instance
-
-More details about ZenHub configuration can be found at:
-https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine
-```
-
-### 3.6 Start ZenHub
-
+### 4.1 Run the Configuration Tool
 Run the configuration tool with your completed configuration file:
 
 ```bash
@@ -299,11 +301,137 @@ zhe-config --config-file <configuration_file_full_path>
 
 > Your ZenHub Enterprise application will then configure itself and start up.
 
-## 4. Backup/Restore a Snapshot
+### 4.2 Sanity Check
 
-Snapshots concern databases and files/images.
+We have included a `sanitycheck` utility which scans the cluster and helps diagnose common problems that can occur when deploying a large number of services.
 
-### 4.1 Backup
+To review the results of the check, view the logs of the `sanitycheck` Kubernetes Job:
+```bash
+sudo kubectl -n zenhub get pods
+sudo kubectl -n zenhub logs <sanitycheck-pod-name>
+```
+
+The sanity check will:
+
+- Ensure a connection can be established to MongoDB, PostgreSQL, RabbitMQ and Redis.
+  - Hostname resolves
+  - Port is open
+  - Credentials exist to open database/cache connection
+- Ensure a connection can be established to the GitHub Enterprise server.
+  - Hostname resolves
+  - Port is open
+- Ensure a connection can be established to the file storage.
+  * Hostname resolves
+  * PutObject, GetObject and ListBucket operations perform without error
+- Ensure you have a valid `enterprise_license_token`
+
+The `sanitycheck` script will execute every 10 seconds until all the checks have passed. If the Job status is "Complete", all the checks were successful.
+
+Before moving on to check the application, it can also be beneficial to check the status of the pods again to ensure they all have the status of `Running` or `Completed`:
+```bash
+sudo kubectl -n zenhub get pods
+```
+
+### 4.3 Application Check
+
+To verify that your deployment was successful, you should be able to visit the ZenHub application, log into the web app, load/create a Workspace, and see a board with issues.
+
+Additionally, a good test is to open ZenHub in two separate browser tabs. In tab #1, move an issue on the board from one pipeline to another. Check tab #2 to verify that the issue moved.
+
+### 4.4 Publish the Chrome and Firefox Extensions
+See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for instructions to publish the extensions.
+
+## 5. Upgrades
+### 5.1 Application Updates
+#### 5.1.1 Update
+Update Docker images, Kubernetes manifests, and install system-wide updates for the ZenHub application.
+
+> Before updating, perform a data backup `zhe-config --backup`
+
+1. Download the latest ZenHub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com)):
+```bash
+curl -o zhe_upgrade.run <link-to-upgrade-bundle>
+```
+2. If not already directly downloaded to the VM, move the bundle into the VM (use `scp` or your choice of tool).
+3. Run the upgrade script:
+
+```bash
+bash zhe_upgrade.run
+```
+4. Answer the update prompts. If you would like to install available OS updates, answer 'y' to `Proceed with OS and system wide updates?`
+5. Wait for ZenHub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with ZenHub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step. 
+6. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
+
+#### 5.1.2 Rollback
+If you have any problems with ZenHub after installing an update, you can quickly rollback to your most recent application version using the automated application backup taken at the start of your upgrade. 
+
+> ⚠️ **NOTE:** If you have already published the extensions after updating, rolling back the application may break your extensions. 
+
+1. Locate your desired backup found within `/opt/zenhub/upgrade_backup/`
+2. Run the following command from the same directory as your latest upgrade bundle:
+```bash
+bash zhe_upgrade.run rollback /opt/zenhub/upgrade_backup/<your-backup-name>.tar.gz
+```
+
+
+### 5.2 OS (Ubuntu) Updates
+
+The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is managed by a systemd service (`k3s`) with its own upgrade mechanism.
+
+All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
+
+Debian utility `unattended-upgrades` is enabled and setup to automatically apply _security updates_ (only) once per day.
+
+### 5.3 Migration from ZHE 2.44 to ZHE3
+
+Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
+
+## 6. Maintenance and Operational Tasks
+### 6.1 Tasks in the Admin UI
+ZenHub Enterprise comes with an Admin UI that is used for a number of administrative tasks best suited to a visual user interface. On ZenHub Enterprise for VMs, this Admin UI runs on port 8443 of the application URL: `https://<subdomain_suffix>`.`<domain_tld>:8443`. This application is separate from the main ZenHub application, and since it runs on port 8443 you may use network access controls to expose this application to your system administrators only.
+
+#### 6.1.1 Publishing the Chrome and Firefox Extensions
+There are two methods to interact with the ZenHub UI:
+- The ZenHub web app
+- The ZenHub browser extensions for Chrome and Firefox, which allows users access to the power of ZenHub from within the UI of GitHub Enterprise
+
+To use the extensions with GitHub Enterprise, you must publish your own versions of them. The first time you publish the extensions, you will need to set up a Chrome Developer account and a Mozilla Developer account before creating a new extension in each platform. When application updates are applied, you will publish updates to the *existing* extension on each platform.
+
+For detailed instructions, please visit the ZenHub Enterprise Admin UI (`https://<subdomain_suffix>`.`<domain_tld>:8443`).
+
+> ⚠️ **NOTE:** After the Chrome extension is published, you will need to get the URL of the published extension and put it into your configuration file as `CHROME_EXTENSION_WEBSTORE_URL`. With this value entered, re-run your configuration. This will ensure the link to download the Chrome extension on the application landing page is active.
+
+#### 6.1.2 Setting the first ZenHub Admin (License Governance)
+ZenHub provides a method of license governance that is enforced across the entire set of GitHub Enterprise users. By default, any user of the connected GitHub Enterprise Server can access, install, and use ZenHub Enterprise On-Premise. If you would like to control access to ZenHub, you will need to promote one or more users to be ZenHub Admins.
+
+ZenHub Admins can be created from the Admin UI (`https://<subdomain_suffix>`.`<domain_tld>:8443/settings`). This mechanism exists to ensure only a privileged user can create the first ZenHub Admin. Existing ZenHub Admins can also promote existing ZenHub users to Admin from within the ZenHub web app.
+
+For more information on License Governance, please view [this article](https://help.zenhub.com/support/solutions/articles/43000559760-license-governance-in-zenhub-enterprise) in our Help Center.
+
+#### 6.1.3 Usage Report
+Since ZenHub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your ZenHub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<subdomain_suffix>.<domain_tld>:8443/usage` and sent to enterprise@zenhub.com.
+
+### 6.2 Maintenance Mode
+When operating a ZHE3 deployment, you may face situations in which you would like to prevent users from accessing the application (such as restoring a database backup). For this purpose, we have included a **maintenance mode** in the `zhe-config` script.
+
+Maintenance mode can be enabled in two ways:
+1. *Automatically*, when ZenHub detects that GitHub is in maintenance mode. ZenHub checks GitHub for this status every 30 seconds.
+2. *Manually*, when a system administrator determines it necessary to gracefully block user access to the application.
+
+Enable maintenance mode:
+```bash
+zhe-config --maintenance enable
+```
+Disable maintenance mode:
+```bash
+zhe-config --maintenance disable
+```
+
+### 6.3 Backup/Restore
+
+ZenHub snapshots contain database data and files/images uploaded to the ZenHub web app by users.
+
+#### 6.3.1 Backup
 
 Backups use the database engine backup capability, are not intrusive, and can be run at any time by running the following from the VM:
 
@@ -313,9 +441,9 @@ zhe-config --backup
 
 - A snapshot of zenhub will be created in `/opt/snapshots/<yyyy-mm-ddThh-mm>`
 - The script will silently erase any existing snapshots found under the same date in `/opt/snapshots`
-- No rotation is set up by default—please monitor your snapshots usage
+- No rotation is set up by default—please monitor your snapshot's usage
 
-### 4.2 Restore
+#### 6.3.2 Restore
 
 Restores require the existing databases to be dumped and started fresh. The detailed process is as follows:
 
@@ -332,39 +460,69 @@ zhe-config --restore <snapshot_name>
 
 - Before dumping the running databases, the snapshot to be restored will be tested for existence, but not for integrity
 
-## 5. Upgrades
+### 6.4 Support Bundle
 
-### 5.1 Application Updates
-
-Update Docker images and Kubernetes manifests for the ZenHub application.
-
-- Download the latest ZenHub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com))
-- Get the bundle in the VM (use `scp` or your choice of tool)
-- Unpack and run the update script:
+To help our teams to troubleshoot issues you might have, a support bundle including logs and configuration can be generated with:
 
 ```bash
-working_dir=/tmp/application_upgrade
-archive_name=zenhub_application_bundle.3.0.0.tar.gz
-
-rm -rf ${working_dir}/* || true && mkdir -p ${working_dir}
-tar -xzvf ${archive_name} -C ${working_dir}
-cd ${working_dir} && chmod +x zhe-manage/**/*.sh && ./zhe-manage/update/main.sh
-rm -rf ${working_dir}/*
+zhe-config --support-bundle
 ```
 
-### 5.2 OS (Ubuntu) Updates
+It will generate an archive to be found under `${ZENHUB_HOME}/support-bundle`. Please send this to **enterprise@zenhub.com**
 
-The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is managed by a systemd service (`k3s`) with its own upgrade mechanism.
+### 6.5 VM Size Changes
 
-All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
+If you have changed the size of your VM running ZenHub Enterprise, you can use the `zhe-config` tool to scale the application to fit the new hardware size. Here is the general re-size process to follow:
 
-Debian utility `unattended-upgrades` is enabled and setup to automatically apply _security updates_ (only) once per day.
+1. SSH onto your ZenHub VM and put ZenHub into maintenance mode
+```bash
+zhe-config --maintenance enable
+```
+2. Re-size your VM according to your hosting provider's instructions
+3. SSH onto your ZenHub VM and scale ZenHub
+```bash
+zhe-config --reload
+```
 
-### 5.3 Migration from ZHE2 to ZHE3
+## 7. `zhe-config` Specification
 
-Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
+The configuration tool `zhe-config` has been included to help with various administration tasks, as you have likely already seen throughout the documentation. This is a full list of the options available for the `zhe-config` tool.
 
-## 6. Logs
+```bash
+*********************************
+*** ZenHub Configuration Tool ***
+*********************************
+
+A tool for configuring, deploying, and managing your ZenHub Enterprise appliance.
+
+Usage:
+  zhe-config [Options]
+
+Examples:
+  zhe-config --config-file /your/path/config.yaml
+  zhe-config --restore 2021-04-28T04-15
+
+ Options:
+ --backup                        Create a backup of databases and files
+  --chrony-ntp                    Set custom NTP servers in chrony
+  --config-example                Show a configuration file example
+  --config-file   FILE_PATH       Deploy ZenHub from a configuration file
+  --help                          Show this help message
+  --images-import                 Re import container images
+  --maintenance   enable|disable  Enable or disable maintenance mode
+  --reload                        Redeploys ZenHub using last configuration
+                                  and scale application based on hardware resources available
+  --restore       BACKUP_NAME     Restore from a backup in /opt/snapshots
+  --support-bundle                Generate a support bundle
+  --sshkey                        Add an SSH key manually
+  --vmware-staticip               Configure a static IP for VMware instance
+  --vmware-dhcp                   Configure DHCP for VMware instance
+  --zhe2-migrate  BUNDLE_NAME     Migrate ZHE2 data to this ZHE3 instance
+
+More details about ZenHub configuration can be found at:
+https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine
+```
+## 8. Logs
 
 ZenHub Logs are available `/var/log/zenhub/<type>.<service_name>.log`, archived daily as
 `/var/log/zenhub/<type>.<service_name>.log.tar.gz.<date>` and rotated weekly.
@@ -372,21 +530,21 @@ ZenHub Logs are available `/var/log/zenhub/<type>.<service_name>.log`, archived 
 `<type>` is either `database` or `application`. `service_name` refers to a different component of ZenHub Enterprise
 (in short, a different container).
 
-### 6.1 Sending Logs to an External Log Aggregator
+### 8.1 Sending Logs to an External Log Aggregator
 
-Internally, [Fluentd](https://www.fluentd.org/) is used to collect logs, you can adapt the configuration to send logs to an external log aggregator of your choice.
+Internally, [Fluentd](https://www.fluentd.org/) is used to collect logs, and you can adapt the configuration to send logs to an external log aggregator of your choice.
 
 Fluentd offers a wide range of [output plugins](https://www.fluentd.org/plugins/all#input-output) like AWS Cloudwatch, GCP Stack Driver, New Relic, Logz.io, and more.
 
 Once you found the plugin for your need, follow the steps below to configure ZenHub to forward logs.
 
-#### 6.1.1 Enhance the Fluentd Configuration
+#### 8.1.1 Enhance the Fluentd Configuration
 
 - Copy the Fluentd configuration `cp ${ZENHUB_HOME}/kustomizations/fluentd/fluentd.conf ${ZENHUB_HOME}/configuration/custom-fluentd.conf`
 - Add the `<match application.*>` and/or `<match database.*>` which correspond to the chosen plugin.
 - There is an example for [Google Cloud Stack Driver](https://cloud.google.com/logging/docs/agent/configuration) you can use as a reference.
 
-#### 6.1.2 Build a Dedicated Image with the Plugin Installed
+#### 8.1.2 Build a Dedicated Image with the Plugin Installed
 
 - Get the sample Dockerfile from `${ZENHUB_HOME}/kustomizations/fluentd/Dockerfile` and add your plugin.
 - The provided sample Dockerfile installs the Stack Driver plugins with `sudo gem install fluent-plugin-google-cloud`, update it to reflect your plugin installation process.
@@ -401,7 +559,7 @@ scp customfluentd.tar zenhub@your-zhe-instance:/opt/zenhub/cluster-images/custom
 ctr images import /opt/zenhub/cluster-images/customfluentd.tar
 ```
 
-#### 6.1.3 Update the Fluentd DaemonSet
+#### 8.1.3 Update the Fluentd DaemonSet
 
 Run the following commands:
 
@@ -430,7 +588,7 @@ configMapGenerator:
       - ../../configuration/custom-fluentd.conf
 ```
 
-#### 6.1.4 Restart the Fluentd DaemonSet
+#### 8.1.4 Restart the Fluentd DaemonSet
 
 Run the following commands:
 
@@ -445,7 +603,7 @@ kubectl -n kube-system logs -f -l "app.kubernetes.io/name=fluentd-logging" --tai
 
 > Disclaimer: At the moment, the ZenHub upgrade process overrides `${ZENHUB_HOME}/kustomizations/fluentd`. You will have to repeat section 6.1.3 after a ZenHub upgrade if you are running the `prepare-cluster.sh` script or wish to restart Fluentd.
 
-### 6.2 Reverting to the Default Log Configuration
+### 8.2 Reverting to the Default Log Configuration
 
 If you wish to remove your log aggregator setup and revert to our default out-of-box configuration, perform the following:
 
@@ -453,13 +611,3 @@ If you wish to remove your log aggregator setup and revert to our default out-of
    - Set fluentdconf to be `fluentd.conf`
    - Run `kustomize edit set image fluentd=docker.io/fluent/fluentd:v1.6-debian-1`
 2. Perform the steps in section 6.1.4
-
-## 7. Support
-
-To help our teams to troubleshoot issues you might have, a support bundle can be generated then sent to use by email with
-
-```bash
-zhe-config --support-bundle
-```
-
-It will generate an archive to be found under `${ZENHUB_HOME}/support-bundle`. Please send this to **enterprise@zenhub.com**
