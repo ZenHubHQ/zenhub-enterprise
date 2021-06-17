@@ -21,6 +21,8 @@ In this case, the landing zone will be the ZHE3 virtual machine. To test the mig
 
 ### Migration overview
 
+> ⚠️ **NOTE:** Before migrating data, you must have ZenHub Enterprise 3 already setup and operational. Checkout the [ZHE3 for VM deployment documentation](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/virtual-machine/README.md) for detailed steps on how to get ZenHub Enterprise 3 up and running. 
+
 The migration of your ZenHub data has 3 major steps.
 
 1. **Gather** the data from your existing ZHE2 source instance.
