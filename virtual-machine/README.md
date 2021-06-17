@@ -34,6 +34,8 @@
   - [4.4 Publish the Chrome and Firefox Extensions](#44-publish-the-chrome-and-firefox-extensions)
 - [5. Upgrades](#5-upgrades)
   - [5.1 Application Updates](#51-application-updates)
+    - [5.1.1 Update](#511-update)
+    - [5.1.2 Rollback](#512-rollback)
   - [5.2 OS (Ubuntu) Updates](#52-os-ubuntu-updates)
   - [5.3 Migration from ZHE 2.44 to ZHE3](#53-migration-from-zhe-244-to-zhe3)
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
@@ -341,7 +343,7 @@ See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for instr
 
 ## 5. Upgrades
 ### 5.1 Application Updates
-
+#### 5.1.1 Update
 Update Docker images, Kubernetes manifests, and install system-wide updates for the ZenHub application.
 
 > Before updating, perform a data backup `zhe-config --backup`
@@ -357,7 +359,20 @@ curl -o zhe_upgrade.run <link-to-upgrade-bundle>
 bash zhe_upgrade.run
 ```
 4. Answer the update prompts. If you would like to install available OS updates, answer 'y' to `Proceed with OS and system wide updates?`
-5. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
+5. Wait for ZenHub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with ZenHub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step. 
+6. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
+
+#### 5.1.2 Rollback
+If you have any problems with ZenHub after installing an update, you can quickly rollback to your most recent application version using the automated application backup taken at the start of your upgrade. 
+
+> ⚠️ **NOTE:** If you have already published the extensions after updating, rolling back the application may break your extensions. 
+
+1. Locate your desired backup found within `/opt/zenhub/upgrade_backup/`
+2. Run the following command from the same directory as your latest upgrade bundle:
+```bash
+bash zhe_upgrade.run rollback /opt/zenhub/upgrade_backup/<your-backup-name>.tar.gz
+```
+
 
 ### 5.2 OS (Ubuntu) Updates
 
