@@ -18,7 +18,7 @@ resource "aws_elasticache_cluster" "zhe_redis" {
 
 resource "aws_elasticache_parameter_group" "zhe_redis" {
   count  = var.create_redis ? 1 : 0
-  name   = "ZenHub"
+  name   = "ZenHub${var.env}"
   family = "redis${var.redis_engine_version}"
 
   parameter {
