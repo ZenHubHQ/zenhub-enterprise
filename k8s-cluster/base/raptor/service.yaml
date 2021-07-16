@@ -19,6 +19,14 @@ automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
   labels:
+    app.kubernetes.io/component: raptor-cable
+  name: raptor-automount-sa-token-false-cable
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
     app.kubernetes.io/component: raptor-sidekiq-worker
   name: raptor-automount-sa-token-false-sidekiq-worker
 ---
@@ -53,5 +61,21 @@ spec:
     targetPort: http
   selector:
     app.kubernetes.io/component: raptor-api
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-cable
+  name: raptor-cable
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: raptor-cable
   type: ClusterIP
 ---

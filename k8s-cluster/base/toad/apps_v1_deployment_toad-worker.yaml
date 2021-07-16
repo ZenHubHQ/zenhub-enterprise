@@ -125,7 +125,7 @@ spec:
               name: toad
         - name: MAILGUN_KEY
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: mailgun_key
               name: toad
         - name: MIXPANEL_KEY
@@ -135,7 +135,7 @@ spec:
               name: toad
         - name: MAILCHIMP_KEY
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               key: mailchimp_key
               name: toad
         - name: MAILCHIMP_LIST

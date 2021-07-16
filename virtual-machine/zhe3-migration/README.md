@@ -1,5 +1,7 @@
 # ZHE2 to ZHE3 Migration for Virtual Machine
 
+> ⚠️ **NOTE:** This page is only applicable to users of the previous-generation ZenHub Enterprise 2.x. **Migrations from 2.x are only supported on ZenHub Enterprise 3.1.x**.
+
 ## Table of Contents
 - [When am I ready to migrate production?](#when-am-i-ready-to-migrate-production)
 - [Migration overview](#migration-overview)
@@ -21,20 +23,20 @@ In this case, the landing zone will be the ZHE3 virtual machine. To test the mig
 
 ### Migration overview
 
-> ⚠️ **NOTE:** Before migrating data, you must have ZenHub Enterprise 3 already setup and operational. Checkout the [ZHE3 for VM deployment documentation](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/virtual-machine/README.md) for detailed steps on how to get ZenHub Enterprise 3 up and running. 
+> ⚠️ **NOTE:** Before migrating data, you must have ZenHub Enterprise 3 already setup and operational. Checkout the [ZHE3 for VM deployment documentation](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/virtual-machine/README.md) for detailed steps on how to get ZenHub Enterprise 3 up and running.
 
 The migration of your ZenHub data has 3 major steps.
 
 1. **Gather** the data from your existing ZHE2 source instance.
 2. **Move** the data to your new virtual machine.
-3. **Restore** the data to your new virtual machine. 
+3. **Restore** the data to your new virtual machine.
 
 Please reach out to ZenHub Support if you have any problems with the migration.
 
 ### Gather the data from your existing ZHE2 source instance
 
 1. SSH to your existing ZHE2 source instance.
-2. Download the `zhe3-migration-dump.sh` script from [here](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/k8s-cluster/zhe3-migration/zhe3-migration-dump.sh) to your _existing_ ZHE2 instance. 
+2. Download the `zhe3-migration-dump.sh` script from [here](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/k8s-cluster/zhe3-migration/zhe3-migration-dump.sh) to your _existing_ ZHE2 instance.
 3. Run the script (note: this will dump the databases which may impact performance for the duration).
 
 ```bash
@@ -49,7 +51,7 @@ sudo ./zhe3-migration-dump.sh
 sudo mkdir /opt/import
 ```
 
-3. Using `scp` or your chosen tool, move your `migration-data-<timestamp>.tar.gz` bundle to the directory `/opt/import` on the new VM that has ZenHub Enterprise already configured and running. 
+3. Using `scp` or your chosen tool, move your `migration-data-<timestamp>.tar.gz` bundle to the directory `/opt/import` on the new VM that has ZenHub Enterprise already configured and running.
 > The resulting path to the data being migrated will be `/opt/import/migration-data-<timestamp>.tar.gz`
 
 ### Restore the data

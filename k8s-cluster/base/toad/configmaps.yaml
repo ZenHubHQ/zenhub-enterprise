@@ -13,9 +13,7 @@ data:
   ghwebhook_whitelist: '*'
   github_server_address: $(github_hostname)
   is_enterprise: "true"
-  mailchimp_key: ""
   mailchimp_list: ""
-  mailgun_key: ""
   mixpanel_key: ""
   new_relic_enabled: "false"
   newrelic_app_name: ""

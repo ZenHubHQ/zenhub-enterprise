@@ -2,49 +2,70 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app: toad-redis
-    chart: toadRedis-11.2.3
-    heritage: Helm
-    release: cache
+    app.kubernetes.io/component: master
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: toad-redis
+    helm.sh/chart: toadRedis-14.6.2
   name: cache-toad-redis-master
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: toad-redis
-      release: cache
-      role: master
+      app.kubernetes.io/component: master
+      app.kubernetes.io/instance: cache
+      app.kubernetes.io/name: toad-redis
   serviceName: cache-toad-redis-headless
   template:
     metadata:
       annotations:
-        checksum/configmap: 7b4bbf31689d5fa99c64497442d2d8845ac93f592898622e5c9dcbd21b734a77
-        checksum/health: 6e024f52954d759908ecbee0c2d2605aaf46c3ffcf58eef1874cd61976b5a275
-        checksum/secret: 2898a71fd904bccbddc93adc9cd4e129df33a8a6d84e6496122bdc1c029c2f85
+        checksum/configmap: c1e6f409a87b266d74f0817ed73516bf2b2bdc40146772fee1455d9e5363cd07
+        checksum/health: a1c52788569fa970aa278ce4807a28cc89f81135156ea2879185b70e2f5def38
+        checksum/scripts: 838a4296198204891fcb7ae6bba6da5497ba05dc8b7e79592cff2cce156e7ec8
+        checksum/secret: 19db902854d2b5659c65548f221fca0bfa83fa1a571661fddc983dddd8084610
       labels:
-        app: toad-redis
-        chart: toadRedis-11.2.3
-        release: cache
-        role: master
+        app.kubernetes.io/component: master
+        app.kubernetes.io/instance: cache
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: toad-redis
+        helm.sh/chart: toadRedis-14.6.2
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: master
+                  app.kubernetes.io/instance: cache
+                  app.kubernetes.io/name: toad-redis
+              namespaces:
+              - default
+              topologyKey: kubernetes.io/hostname
+            weight: 1
       containers:
-      - command:
-        - /bin/bash
+      - args:
         - -c
         - /opt/bitnami/scripts/start-scripts/start-master.sh
+        command:
+        - /bin/bash
         env:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               key: toad_redis_password
               name: internal
+        - name: BITNAMI_DEBUG
+          value: "false"
         - name: REDIS_REPLICATION_MODE
           value: master
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "no"
         - name: REDIS_TLS_ENABLED
           value: "no"
         - name: REDIS_PORT
           value: "6379"
-        image: docker.io/bitnami/redis:5.0
+        image: docker.io/bitnami/redis:6.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -57,7 +78,7 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 6
-        name: toad-redis
+        name: redis
         ports:
         - containerPort: 6379
           name: redis
@@ -72,6 +93,9 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 2
+        resources:
+          limits: {}
+          requests: {}
         securityContext:
           runAsUser: 1001
         volumeMounts:
@@ -85,9 +109,12 @@ spec:
           name: config
         - mountPath: /opt/bitnami/redis/etc/
           name: redis-tmp-conf
+        - mountPath: /tmp
+          name: tmp
       securityContext:
         fsGroup: 1001
-      serviceAccountName: default
+      serviceAccountName: cache-toad-redis
+      terminationGracePeriodSeconds: 30
       volumes:
       - configMap:
           defaultMode: 493
@@ -98,12 +125,15 @@ spec:
           name: cache-toad-redis-health
         name: health
       - configMap:
-          name: cache-toad-redis
+          name: cache-toad-redis-configuration
         name: config
       - emptyDir: {}
-        name: redis-data
-      - emptyDir: {}
         name: redis-tmp-conf
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: redis-data
   updateStrategy:
+    rollingUpdate: {}
     type: RollingUpdate
   volumeClaimTemplates: []

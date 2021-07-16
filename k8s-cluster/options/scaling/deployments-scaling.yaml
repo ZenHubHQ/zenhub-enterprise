@@ -35,7 +35,7 @@ kind: Deployment
 metadata:
   name: nginx-gateway
 spec:
-  replicas: 3
+  replicas: 2
 
 ---
 # raptor-sidekiq-worker
@@ -72,6 +72,15 @@ metadata:
   name: raptor-admin
 spec:
   replicas: 2
+
+---
+# raptor-cable
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-cable
+spec:
+  replicas: 1
 
 ---
 # toad-cron

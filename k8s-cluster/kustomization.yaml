@@ -15,14 +15,14 @@ resources:
   #
   # Optional configurations
 # patchesStrategicMerge:
-  # - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
-  # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
-  # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
+# - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
+# - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
+# - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
   app.kubernetes.io/part-of: zenhub-enterprise
-  app.kubernetes.io/name: zenhub
+  app.kubernetes.io/application: zenhub
   app.kubernetes.io/instance: zhe-for-k8s
   app.kubernetes.io/managed-by: kustomize
 
@@ -34,22 +34,22 @@ commonAnnotations:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-2.44
+    newTag: zhe-3.2.0
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-2.44
+    newTag: zhe-3.2.0
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: enterprise-2.44
+    newTag: zhe-3.2.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-2.44
+    newTag: zhe-3.2.0
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-2.44
+    newTag: zhe-3.2.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: 3.0.0
+    newTag: zhe-3.2.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -77,7 +77,7 @@ configMapGenerator:
       # for instructions on how to setup an OAuth app on your GitHub server:
       # https://docs.github.com/en/developers/apps/creating-an-oauth-app
       # The secret value should be passed to `github_app_secret` below (in the
-      # "secretGenerator" section). Section 2.1 of the README in this folder explains
+      # "secretGenerator" section). Section 2.2 of the README in this folder explains
       # how to configure the fields of the OAuth App.
       - github_app_id=<github_oauth_app_client_id> # GitHub OAuth App Client ID
       #
@@ -108,7 +108,9 @@ secretGenerator:
       - mongo_url=mongodb://<mongo_username>:<mongo_password>@<mongo_hostname>:<mongo_port>/zenhub
       # [EDIT] The full standard full credentials URI for Redis
       - redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/0
-      # [EDIT] The full standard full credentials URI for RabbitMQ
+      # [EDIT] The full standard full credentials URI for Redis
+      - cable_redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/1
+      # [EDIT] The standard full credentials URI for RabbitMQ. Remove the 's' from amqps if not using TLS on RabbitMQ. Refer to https://www.rabbitmq.com/uri-spec.html for the proper syntax if using Virtual Hosts (vhosts).
       - rabbitmq_url=amqps://<rabbitmq_username>:<rabbitmq_password>@<rabbitmq_hostname>:<rabbitmq_port>
       # [EDIT] The secret for the GitHub OAuth app. See github_app_id above.
       - github_app_secret=<github_oauth_app_secret>
@@ -118,6 +120,12 @@ secretGenerator:
       - enterprise_license_token=<zhe-license-jwt>
       # [EDIT] Admin-UI password
       - admin_ui_pass=<some_pass>
+  # [EDIT] Certificates for Postgres DB SSL/TLS.
+  # [NOTE] If you use this you must add "?sslmode=require&sslrootcert=/var/ca-bundle/mongo/postgres-ca.pem" to the end of postgres_url
+  # - name: postgres-ca-bundle
+  #   behavior: replace
+  #   files:
+  #     - <some_path>/<some_pem>
 
   - name: internal
     # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer
@@ -164,10 +172,3 @@ secretGenerator:
       # [EDIT] Should be the same value as `ghwebhook_secret` above. This
       # one is used by the Raptor services.
       - github_webhooks_secret=<[A-Za-z0-9]{38}>
-      #
-      # [EDIT] Certificates for Postgres DB SSL/TLS.
-      # [NOTE] If you use this you must add "?sslmode=require&sslrootcert=/var/ca-bundle/mongo/postgres-ca.pem" to the end of postgres_url
-      # - name: postgres-ca-bundle
-      #   behavior: replace
-      #   files:
-      #     - <some_path>/<some_pem>

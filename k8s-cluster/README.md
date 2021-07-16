@@ -66,16 +66,17 @@ Systems administration skills are required for set-up. Those deploying ZenHub En
 
 ZenHub Enterprise for Kubernetes requires a persistent connection to your own deployment of a recent version of [GitHub Enterprise Server](https://github.com/enterprise). You can find specific version compatibility information in the [release notes](https://github.com/zenhubhq/zenhub-enterprise/releases).
 
-You will need to [set up an OAuth App](https://docs.github.com/en/developers/apps/creating-an-oauth-app) for ZenHub in your GitHub Enterprise Server. We recommend setting up the OAuth App under your primary GitHub Organization.
+You will need to [set up an OAuth App](https://docs.github.com/en/developers/apps/creating-an-oauth-app) for ZenHub in your GitHub Enterprise Server. We recommend setting up the OAuth App under your primary GitHub Organization:
 
-**Application name**: ZenHub Enterprise
-
-**Homepage URL**: `https://<subdomain_suffix>.<domain_tld>`
-
-**Application description**:
-> ZenHub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
-
-**Authorization callback URL**: `https:<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
+>**Application name**: ZenHub Enterprise
+>
+>**Homepage URL**: `https://<subdomain_suffix>.<domain_tld>`
+>
+>**Application description**:
+>
+>> ZenHub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
+>
+>**Authorization callback URL**: `https://<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
 
 > ⚠️ **NOTE:** The `/api` path is a new addition to the ZHE3 infrastructure. If you are migrating to ZHE3 from ZHE2, you will need to add this to the Authorization callback URL in your existing OAuth App, as well as any scripts you've created that utilize the ZenHub API.
 
@@ -95,11 +96,15 @@ ZenHub will require a connection to a PostgreSQL 11 database. We recommend the l
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
 
+> ⚠️ **NOTE:** The user provided to ZenHub in the `postgres_url` connection string must be a `superuser` on the database. This is required to install Postgres extensions required for the ZenHub database architecture.
+
 ### 2.5 MongoDB
 
-ZenHub will require a connection to a MongoDB database. MongoDB version 3.6 is required. At the moment, ZenHub does **not** support MongoDB version 4.0 or greater.
+ZenHub will require a connection to a MongoDB database. We recommend using the latest 4.x version. It is also recommended to avoid MongoDB version 4.4.5 which was released with a [critical issue](https://docs.mongodb.com/manual/release-notes/4.4/#4.4.5---apr-8--2021).
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
+
+> ⚠️ **NOTE:** If you are running MongoDB version 3.x and plan to upgrade to MongoDB version 4.x, please reach out to us for some specific steps that need to be taken for the upgrade.
 
 ### 2.6 RabbitMQ
 
@@ -215,7 +220,7 @@ In order to pull images you will need to authenticate.
 
 The secret `zenhub-docker-registry-credentials` created by running the above command is required for ZenHub deployments.
 
-Finally, uncomment the following line in your `kustomization.yaml`:
+Finally, uncomment the following lines in your `kustomization.yaml`:
 
 ```yaml
 # patchesStrategicMerge:
@@ -293,23 +298,32 @@ spec:
 An example of the Ingress definition:
 
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
-  name: zenhub-ingress
+metadata:
+  name: ingress-zhe
 spec:
   rules:
-  - host: zenhub.yourcompany.com
-    http:
-      paths:
-      - backend:
-          serviceName: nginx-gateway
-          servicePort: 443
-  - host: admin-zenhub.yourcompany.com
-    http:
-      paths:
-      - backend:
-          serviceName: admin-ui
-          servicePort: 443
+    - host: "zenhub.yourcompany.com"
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: nginx-gateway
+                port:
+                  number: 443
+    - host: "admin-zenhub.yourcompany.com"
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: admin-ui
+                port:
+                  number: 443
 ```
 
 > ⚠️ **NOTE:** These examples don't make any assumptions about your cluster. They might not work exactly as shown as they could be missing some annotations to interoperate with your existing Ingress definition.
@@ -489,7 +503,7 @@ Infrastructure upgrades are related the Kubernetes resources themselves.
 From time to time, we will release a new version of ZenHub Enterprise infrastructure via a GitHub Release on the [ZenHubHQ/zenhub-enterprise](https://github.com/ZenHubHQ/zenhub-enterprise)
 repository. Along with new manifests, a [release note](https://github.com/ZenHubHQ/zenhub-enterprise/releases) will be included to detail extra steps or concerns for the given release. Most releases will not require downtime.
 
-> This doesn't update the application code—see below for [application updates](#522-application-updates).
+> This doesn't update the application code. See below for [application updates](#522-application-updates).
 
 ##### 1. Prepare
 * You need to get the `kustomization.yaml` you configured with all the secrets to take into account
@@ -508,9 +522,7 @@ kustomize build . | kubectl diff -f-
 * First delete the `raptor-db-migrate` and `sanitycheck` jobs so they may be recreated without errors:
 > Make sure the status of the jobs are `Complete` and not `Running`
 ```bash
-kubectl -n <your_dedicated_namespace> delete job/raptor-db-migrate
-
-kubectl -n <your_dedicated_namespace> delete job/sanitycheck
+kubectl -n <your_dedicated_namespace> delete job/raptor-db-migrate job/sanitycheck
 ```
 
 - Then perform a diff to check what the upgrade will do
@@ -571,10 +583,10 @@ images:
     newName: us.gcr.io/zenhub-public/sanitycheck
     newTag: <version>
 ```
-* Next, modify the version to match the `<version>` of the release
+* Next, modify the version to match the `<version>` of the release. Example:
 ```txt
 commonAnnotations:
-  app.kubernetes.io/version: 3.0.0
+  app.kubernetes.io/version: 3.2.0
 ```
 * Save the file and continue to the next step of the upgrade below.
 
@@ -582,10 +594,9 @@ commonAnnotations:
 * First delete the `raptor-db-migrate` and `sanitycheck` jobs so they may be recreated without errors:
 > Make sure the status is `Complete` and not `Running`
 ```bash
-kubectl -n <your_dedicated_namespace> delete job/raptor-db-migrate
-
-kubectl -n <your_dedicated_namespace> delete job/sanitycheck
+kubectl -n <your_dedicated_namespace> delete job/raptor-db-migrate delete job/sanitycheck
 ```
+
 * Then perform a diff to check what the upgrade will do:
 ```bash
 kustomize build . | kubectl diff -f-
@@ -611,6 +622,8 @@ To use the extensions with GitHub Enterprise, you must publish your own versions
 
 For detailed instructions, please visit the ZenHub Enterprise Admin UI (`https://<admin_ui_subdomain>`.`<domain_tld>`).
 
+> ⚠️ **NOTE:** After the Chrome extension is published, you will need to get the URL of the published extension and put it into your configuration file as `CHROME_EXTENSION_WEBSTORE_URL`. With this value entered, re-run your configuration. This will ensure the link to download the Chrome extension on the application landing page is active.
+
 ### 6.2 Setting the first ZenHub Admin (License Governance)
 ZenHub provides a method of license governance that is enforced across the entire set of GitHub Enterprise users. By default, any user of the connected GitHub Enterprise Server can access, install, and use ZenHub Enterprise On-Premise. If you would like to control access to ZenHub, you will need to promote one or more users to be ZenHub Admins.
 
@@ -635,7 +648,7 @@ kubectl -n <namespace> set env deployment nginx-gateway -c monitor MAINTENANCE_M
 ```
 
 ### 6.4 Usage Report
-Since ZenHub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your ZenHub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<admin_ui_subdomain.<domain_tld>/usage` and sent to enterprise@zenhub.com.
+Since ZenHub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your ZenHub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<admin_ui_subdomain>.<domain_tld>/usage` and sent to enterprise@zenhub.com.
 
 ## 7. Roadmap
 
