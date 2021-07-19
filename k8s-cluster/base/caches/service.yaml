@@ -1,85 +1,113 @@
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: raptor-redis
+    helm.sh/chart: raptorCacheRedis-14.6.2
+  name: cache-raptor-redis
+  namespace: default
+---
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: toad-redis
+    helm.sh/chart: toadRedis-14.6.2
+  name: cache-toad-redis
+  namespace: default
+---
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: raptor-redis
-    chart: raptorCacheRedis-11.2.3
-    heritage: Helm
-    release: cache
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: raptor-redis
+    helm.sh/chart: raptorCacheRedis-14.6.2
   name: cache-raptor-redis-headless
   namespace: default
 spec:
   clusterIP: None
   ports:
-  - name: redis
+  - name: tcp-redis
     port: 6379
     targetPort: redis
   selector:
-    app: raptor-redis
-    release: cache
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/name: raptor-redis
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: raptor-redis
-    chart: raptorCacheRedis-11.2.3
-    heritage: Helm
-    release: cache
+    app.kubernetes.io/component: master
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: raptor-redis
+    helm.sh/chart: raptorCacheRedis-14.6.2
   name: cache-raptor-redis-master
   namespace: default
 spec:
   ports:
-  - name: redis
+  - name: tcp-redis
+    nodePort: null
     port: 6379
     targetPort: redis
   selector:
-    app: raptor-redis
-    release: cache
-    role: master
+    app.kubernetes.io/component: master
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/name: raptor-redis
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: toad-redis
-    chart: toadRedis-11.2.3
-    heritage: Helm
-    release: cache
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: toad-redis
+    helm.sh/chart: toadRedis-14.6.2
   name: cache-toad-redis-headless
   namespace: default
 spec:
   clusterIP: None
   ports:
-  - name: redis
+  - name: tcp-redis
     port: 6379
     targetPort: redis
   selector:
-    app: toad-redis
-    release: cache
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/name: toad-redis
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: toad-redis
-    chart: toadRedis-11.2.3
-    heritage: Helm
-    release: cache
+    app.kubernetes.io/component: master
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: toad-redis
+    helm.sh/chart: toadRedis-14.6.2
   name: cache-toad-redis-master
   namespace: default
 spec:
   ports:
-  - name: redis
+  - name: tcp-redis
+    nodePort: null
     port: 6379
     targetPort: redis
   selector:
-    app: toad-redis
-    release: cache
-    role: master
+    app.kubernetes.io/component: master
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/name: toad-redis
   type: ClusterIP
 ---

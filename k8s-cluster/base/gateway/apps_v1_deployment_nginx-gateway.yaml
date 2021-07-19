@@ -53,6 +53,11 @@ spec:
             configMapKeyRef:
               key: webhook
               name: zhe-gw-vars
+        - name: ACTIONCABLE
+          valueFrom:
+            configMapKeyRef:
+              key: action-cable
+              name: zhe-gw-vars
         - name: RAPTORADMIN
           valueFrom:
             configMapKeyRef:

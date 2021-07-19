@@ -56,6 +56,8 @@ spec:
             secretKeyRef:
               key: enterprise_license_token
               name: configuration
+        - name: CABLE_URL
+          value: raptor-cable
         - name: RAILS_MAX_THREADS
           valueFrom:
             configMapKeyRef:
@@ -157,8 +159,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: CABLE_URL
-          value: $(POD_NAMESPACE)-raptor-cable
         - name: SIDEKIQ_REDIS_URL
           valueFrom:
             secretKeyRef:
@@ -223,6 +223,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: mixpanel_token
+              name: raptor
+        - name: PRODUCT_BOARD_KEY
+          valueFrom:
+            secretKeyRef:
+              key: product_board_key
               name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent

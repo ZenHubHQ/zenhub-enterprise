@@ -94,6 +94,25 @@ spec:
               memory: 4G
 
 ---
+# raptor-cable
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-cable
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-cable
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1G
+            limits:
+              cpu: 1000m
+              memory: 4G
+
+---
 # toad-cron
 apiVersion: apps/v1
 kind: Deployment

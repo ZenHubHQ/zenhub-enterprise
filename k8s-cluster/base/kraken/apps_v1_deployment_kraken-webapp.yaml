@@ -97,9 +97,12 @@ spec:
         imagePullPolicy: IfNotPresent
         name: kraken-extension
         resources:
+          limits:
+            cpu: 250m
+            memory: 200M
           requests:
             cpu: 10m
-            memory: 50Mi
+            memory: 50M
         volumeMounts:
         - mountPath: /root/built-final
           name: kraken-extension

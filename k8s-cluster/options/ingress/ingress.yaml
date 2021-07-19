@@ -7,6 +7,20 @@ spec:
     - host: "$(subdomain_suffix).$(domain_tld)"
       http:
         paths:
-          - backend:
-              serviceName: nginx-gateway
-              servicePort: 443
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: nginx-gateway
+                port:
+                  number: 443
+    - host: "admin-$(subdomain_suffix).$(domain_tld)"
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: admin-ui
+                port:
+                  number: 443

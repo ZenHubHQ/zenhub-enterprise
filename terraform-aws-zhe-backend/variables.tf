@@ -67,7 +67,7 @@ variable "postgres_dbname" {
 variable "postgres_engine_version" {
   description = "PostgreSQL engine version"
   type        = string
-  default     = "11.9"
+  default     = "11"
 }
 
 variable "postgres_vars" {

@@ -20,7 +20,14 @@ metadata:
 apiVersion: v1
 data:
   action_cable_workers_pool_size: "2"
-  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld)
+kind: ConfigMap
+metadata:
+  name: raptor-cable
+---
+apiVersion: v1
+data:
+  action_cable_workers_pool_size: "2"
+  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld), https://$(github_hostname)
   rails_max_threads: "5"
   web_concurrency: "4"
 kind: ConfigMap
@@ -38,7 +45,7 @@ metadata:
 apiVersion: v1
 data:
   action_cable_workers_pool_size: "2"
-  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld)
+  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld), https://$(github_hostname)
   disable_prepare_db: "1"
   github_api_url: $(github_hostname)/api/v3
   github_graphql_url: $(github_hostname)/api/graphql

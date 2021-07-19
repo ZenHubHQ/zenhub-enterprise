@@ -79,6 +79,13 @@ vars:
       apiVersion: v1
     fieldref:
       fieldpath: data.redis_url
+  - name: cable_redis_url_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.cable_redis_url
   - name: rabbitmq_url_from_secret_configuration
     objref:
       kind: Secret

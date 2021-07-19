@@ -2,49 +2,70 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app: raptor-redis
-    chart: raptorCacheRedis-11.2.3
-    heritage: Helm
-    release: cache
+    app.kubernetes.io/component: master
+    app.kubernetes.io/instance: cache
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: raptor-redis
+    helm.sh/chart: raptorCacheRedis-14.6.2
   name: cache-raptor-redis-master
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: raptor-redis
-      release: cache
-      role: master
+      app.kubernetes.io/component: master
+      app.kubernetes.io/instance: cache
+      app.kubernetes.io/name: raptor-redis
   serviceName: cache-raptor-redis-headless
   template:
     metadata:
       annotations:
-        checksum/configmap: 46db79426a5bfbba05cfea1d18824aca10bfab784905a6e1bae5c216228380a4
-        checksum/health: c12f2dd6e78b1cce5c0d9d87a61ff58b580f7fc9207ba99b9cf0b4c5e7bce8d2
-        checksum/secret: 5ac488fa201703d94cfe31491c236b9e765704bc1031b29b92687c36a48cbeec
+        checksum/configmap: 830a691fc8252d5e666eac4c2a602e6b856144627d527fc1fb5e9b8c86808467
+        checksum/health: 81b0d00f84e1536d6eed7b3c88493b5708b069ac8a62282aa79587d3b60fe430
+        checksum/scripts: 205ca3996a3228ed2bf4bfa9da1131ebaccb11789206062aa432f274ad8c7464
+        checksum/secret: 81d637e61a0c8f69c3ed107fdb975a590591773c25787b3cf874c6e94c9fad63
       labels:
-        app: raptor-redis
-        chart: raptorCacheRedis-11.2.3
-        release: cache
-        role: master
+        app.kubernetes.io/component: master
+        app.kubernetes.io/instance: cache
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: raptor-redis
+        helm.sh/chart: raptorCacheRedis-14.6.2
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: master
+                  app.kubernetes.io/instance: cache
+                  app.kubernetes.io/name: raptor-redis
+              namespaces:
+              - default
+              topologyKey: kubernetes.io/hostname
+            weight: 1
       containers:
-      - command:
-        - /bin/bash
+      - args:
         - -c
         - /opt/bitnami/scripts/start-scripts/start-master.sh
+        command:
+        - /bin/bash
         env:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               key: raptor_redis_password
               name: internal
+        - name: BITNAMI_DEBUG
+          value: "false"
         - name: REDIS_REPLICATION_MODE
           value: master
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "no"
         - name: REDIS_TLS_ENABLED
           value: "no"
         - name: REDIS_PORT
           value: "6379"
-        image: docker.io/bitnami/redis:5.0
+        image: docker.io/bitnami/redis:6.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -57,7 +78,7 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 6
-        name: raptor-redis
+        name: redis
         ports:
         - containerPort: 6379
           name: redis
@@ -72,6 +93,9 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 2
+        resources:
+          limits: {}
+          requests: {}
         securityContext:
           runAsUser: 1001
         volumeMounts:
@@ -85,9 +109,12 @@ spec:
           name: config
         - mountPath: /opt/bitnami/redis/etc/
           name: redis-tmp-conf
+        - mountPath: /tmp
+          name: tmp
       securityContext:
         fsGroup: 1001
-      serviceAccountName: default
+      serviceAccountName: cache-raptor-redis
+      terminationGracePeriodSeconds: 30
       volumes:
       - configMap:
           defaultMode: 493
@@ -98,12 +125,15 @@ spec:
           name: cache-raptor-redis-health
         name: health
       - configMap:
-          name: cache-raptor-redis
+          name: cache-raptor-redis-configuration
         name: config
       - emptyDir: {}
-        name: redis-data
-      - emptyDir: {}
         name: redis-tmp-conf
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: redis-data
   updateStrategy:
+    rollingUpdate: {}
     type: RollingUpdate
   volumeClaimTemplates: []
