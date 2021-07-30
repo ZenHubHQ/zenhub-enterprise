@@ -34,22 +34,22 @@ commonAnnotations:
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-3.2.0
+    newTag: zhe-3.2.1
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-3.2.0
+    newTag: zhe-3.2.1
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-3.2.0
+    newTag: zhe-3.2.1
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-3.2.0
+    newTag: zhe-3.2.1
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-3.2.0
+    newTag: zhe-3.2.1
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-3.2.0
+    newTag: zhe-3.2.1
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest

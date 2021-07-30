@@ -193,7 +193,7 @@ spec:
               value: ""
             - name: ACTION_CABLE_WORKERS_POOL_SIZE
               value: ""
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.2.0
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.2.1
           imagePullPolicy: Always
           name: sauron-migration
           resources:

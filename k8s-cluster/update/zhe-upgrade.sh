@@ -46,7 +46,7 @@ else
 fi
 
 IMAGE=raptor-backend
-TAG=zhe-3.2.0
+TAG=zhe-3.2.1
 NAMESPACE=$1
 REPLICAS=0
 
