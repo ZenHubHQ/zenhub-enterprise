@@ -22,7 +22,7 @@ resource "aws_db_instance" "zhe_postgresql" {
   db_subnet_group_name   = aws_db_subnet_group.zhe[count.index].name
   copy_tags_to_snapshot  = true
   vpc_security_group_ids = [aws_security_group.zhe_vpc.id]
-  skip_final_snapshot    = false 
+  skip_final_snapshot    = false
   tags = {
     Creator     = var.creator
     Environment = var.env
