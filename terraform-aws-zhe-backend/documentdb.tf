@@ -13,7 +13,7 @@ resource "aws_docdb_cluster" "zhe" {
   master_username                 = var.documentdb_user
   master_password                 = random_password.documentdb_pass[count.index].result
   backup_retention_period         = 5
-  skip_final_snapshot             = true
+  skip_final_snapshot             = false 
   storage_encrypted               = true
   port                            = var.documentdb_port
   db_subnet_group_name            = aws_docdb_subnet_group.zhe[count.index].name
