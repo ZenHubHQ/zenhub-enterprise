@@ -143,9 +143,8 @@ tar -xf mongo.tar.gz
 4. Restore the Mongo database. The default name for the MongoDB database is `zenhub`, but if you have changed this (in your `mongo_url` connection string configured in your `kustomization.yaml` file), please reflect that in your restore command.
 
 ```bash
-mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --nsInclude='zenhub_enterprise.*' --stopOnError --drop --host zenhub-mongo.example.com --port 27017 --username restorer --authenticationDatabase=zenhub ./dump
+mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --nsInclude='zenhub_enterprise.*' --stopOnError --noIndexRestore --drop --host zenhub-mongo.example.com --port 27017 --username restorer --authenticationDatabase=zenhub ./dump
 ```
-> ⚠️ **NOTE:** If you are using Amazon DocumentDB, add the `--noIndexRestore` option, as DocumentDB requires shorter index names. With this option, the application will rebuild the indexes as needed with the shorter names.
 
 > ⚠️ **NOTE:** Set the value of `authenticationDatabase` to whichever database you created your `restorer` user in from Step 3 above.
 
