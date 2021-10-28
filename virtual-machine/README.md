@@ -633,23 +633,20 @@ zhe-config --images-import
 ```
 
 ### 6.8 License Renewal
-The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for ZenHub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to re-configure the app. Each time you configure the application, a `configuration.yaml` file is created at `$ZENHUB_HOME/configuration/configuration.yaml`. This is the source of truth for your application's configuration values. We recommend reconfiguring your application using a copy of this file rather than updating it directly.
+The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for ZenHub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to re-configure the app.
 
 ⚠️ NOTE: This will cause the application to restart, leading to a minute or two of downtime.
 
-1. Get a copy of the existing configuration file in the current directory
-```bash
-cp $ZENHUB_HOME/configuration/configuration.yaml .
-```
-2. Update the value for `ENTERPRISE_LICENSE_TOKEN`
+1. Update the value for `ENTERPRISE_LICENSE_TOKEN`
 ```bash
 vim configuration.yaml
 ```
-3. Re-configure ZenHub with the new license
+2. Re-configure ZenHub with the new license
 ```bash
 zhe-config --config-file $(pwd)/configuration.yaml
 ```
 
+⚠️ NOTE: If you have misplaced your `configuration.yaml` file, you can find a backup of the current running configuration at `$ZENHUB_HOME/configuration/configuration.yaml`.
 
 ## 7. `zhe-config` Specification
 
