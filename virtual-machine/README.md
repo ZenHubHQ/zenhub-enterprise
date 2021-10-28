@@ -54,6 +54,7 @@
     - [6.7.1 Viewing Disk Usage](#671-viewing-disk-usage)
     - [6.7.2 Increasing Disk Space](#672-increasing-disk-space)
     - [6.7.3 Recovery From Low Disk Space Outage](#673-recovery-from-low-disk-space-outage)
+  - [6.8 License Renewal](#68-license-renewal)
 - [7. `zhe-config` Specification](#7-zhe-config-specification)
 - [8. Logs](#8-logs)
   - [8.1 Sending Logs to an External Log Aggregator](#81-sending-logs-to-an-external-log-aggregator)
@@ -630,6 +631,22 @@ Clear disk space, or increase the available disk space using the steps in sectio
 ```bash
 zhe-config --images-import
 ```
+
+### 6.8 License Renewal
+The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for ZenHub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to re-configure the app.
+
+⚠️ NOTE: This will cause the application to restart, leading to a minute or two of downtime.
+
+1. Update the value for `ENTERPRISE_LICENSE_TOKEN`
+```bash
+vim configuration.yaml
+```
+2. Re-configure ZenHub with the new license
+```bash
+zhe-config --config-file $(pwd)/configuration.yaml
+```
+
+⚠️ NOTE: If you have misplaced your `configuration.yaml` file, you can find a backup of the current running configuration at `$ZENHUB_HOME/configuration/configuration.yaml`.
 
 ## 7. `zhe-config` Specification
 
