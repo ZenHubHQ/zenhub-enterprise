@@ -129,7 +129,7 @@ When deploying ZenHub on your VM, ZenHub will check the available hardware resou
 
 | Number of Users | vCPUs                               | Memory | Disk         |
 | --------------- | ----------------------------------- | ------ | ------------ |
-| 10-100          | 4                                   | 16GB   | 80GB+ (SSD)  |
+| 10-100          | 4                                   | 16GB   | 90GB+ (SSD)  |
 | 100-1000        | 8                                   | 32GB   | 250GB+ (SSD) |
 | 1000-5000       | 16                                  | 64GB   | 500GB+ (SSD) |
 | 5000+           | [Contact us](enterprise@zenhub.com) |        |              |
