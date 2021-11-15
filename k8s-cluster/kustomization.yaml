@@ -121,7 +121,7 @@ secretGenerator:
       # [EDIT] Admin-UI password
       - admin_ui_pass=<some_pass>
   # [EDIT] Certificates for Postgres DB SSL/TLS.
-  # [NOTE] If you use this you must add "?sslmode=require&sslrootcert=/var/ca-bundle/mongo/postgres-ca.pem" to the end of postgres_url
+  # [NOTE] If you use this you must add "?sslmode=require&sslrootcert=/var/ca-bundle/postgres/postgres-ca.pem" to the end of postgres_url
   # - name: postgres-ca-bundle
   #   behavior: replace
   #   files:
