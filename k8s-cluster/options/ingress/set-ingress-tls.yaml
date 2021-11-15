@@ -6,4 +6,5 @@ spec:
   tls:
     - hosts:
         - "$(subdomain_suffix).$(domain_tld)"
+        - admin-$(subdomain_suffix).$(domain_tld)
       secretName: <host_ssl_secret>
