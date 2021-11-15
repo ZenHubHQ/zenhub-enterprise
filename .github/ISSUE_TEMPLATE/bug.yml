@@ -19,6 +19,7 @@ body:
 
   - type: input
     attributes:
+      label: Version
       description: What version of ZenHub Enterprise On-Premise are you having an issue with?
       placeholder: 3.2.0
     validations:
