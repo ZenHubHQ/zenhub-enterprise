@@ -24,3 +24,8 @@ spec:
                 name: admin-ui
                 port:
                   number: 443
+  defaultBackend:
+    service:
+      name: nginx-gateway
+      port:
+        number: 443

@@ -27,29 +27,29 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 3.0.0
+  app.kubernetes.io/version: 3.3.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-3.2.1
+    newTag: zhe-3.3.0
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-3.2.1
+    newTag: zhe-3.3.0
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-3.2.1
+    newTag: zhe-3.3.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-3.2.1
+    newTag: zhe-3.3.0
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-3.2.1
+    newTag: zhe-3.3.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-3.2.1
+    newTag: zhe-3.3.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -121,8 +121,14 @@ secretGenerator:
       # [EDIT] Admin-UI password
       - admin_ui_pass=<some_pass>
   # [EDIT] Certificates for Postgres DB SSL/TLS.
-  # [NOTE] If you use this you must add "?sslmode=require&sslrootcert=/var/ca-bundle/postgres/postgres-ca.pem" to the end of postgres_url
+  # [NOTE] If you use this you must add "?sslmode=verify-ca&sslrootcert=/var/ca-bundle/postgres/<some_pem>" to the end of postgres_url
   # - name: postgres-ca-bundle
+  #   behavior: replace
+  #   files:
+  #     - <some_path>/<some_pem>
+  # [EDIT] Certificates for MongoDB SSL/TLS.
+  # [NOTE] If you use this you must add "?tls=true&tlsCAFile=/var/ca-bundle/mongo/<some_pem>" to the end of mongo_url
+  # - name: mongo-ca-bundle
   #   behavior: replace
   #   files:
   #     - <some_path>/<some_pem>
@@ -139,9 +145,9 @@ secretGenerator:
       # => If you are setting up a new ZenHub Enterprise, respect the regexp format
       # on Linux, you can run the following to generate the secret as follows:
       # for most secrets
-      # tr -dc A-Za-z0-9 </dev/urandom | head -c ${1-38} ; echo ''
+      # tr -dc '[:alnum:]' </dev/urandom | head -c ${1-38} ; echo ''
       # for the ones requiring an hex format
-      # tr -dc a-f0-9 </dev/urandom | head -c ${1-64} ; echo ''
+      # tr -dc '[:xdigit:]' </dev/urandom | head -c ${1-64} | awk '{print tolower($0)}'
       # on MacOS, add LC_CTYPE=C to the beginning of the tr command
       # [EDIT]
       - toad_redis_password=<[A-Za-z0-9]{24}>

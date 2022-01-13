@@ -37,7 +37,6 @@
     - [5.1.1 Update](#511-update)
     - [5.1.2 Rollback](#512-rollback)
   - [5.2 OS (Ubuntu) Updates](#52-os-ubuntu-updates)
-  - [5.3 Migration from ZHE 2.44 to ZHE3](#53-migration-from-zhe-244-to-zhe3)
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
   - [6.1 Tasks in the Admin UI](#61-tasks-in-the-admin-ui)
     - [6.1.1 Publishing the Chrome and Firefox Extensions](#611-publishing-the-chrome-and-firefox-extensions)
@@ -66,7 +65,7 @@
 
 ## 1. Getting Started
 
-This README will be your guide to setting up ZenHub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set ZenHub up there, please go back to the [**k8s-cluster**](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using ZenHub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Slack community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
+This README will be your guide to setting up ZenHub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set ZenHub up there, please go back to the [**k8s-cluster**](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using ZenHub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
 
 Thank you for your interest in ZenHub!
 
@@ -91,8 +90,6 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 >> ZenHub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 >
 >**Authorization callback URL**: `https://<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
-
-> ⚠️ **NOTE:** The `/api` path is a new addition to the ZHE3 infrastructure. If you are migrating to ZHE3 from ZHE2, you will need to add this to the Authorization callback URL in your existing OAuth App, as well as any scripts you've created that utilize the ZenHub API.
 
 ### 2.3 ZenHub Enterprise On-Premise License
 
@@ -129,13 +126,14 @@ When deploying ZenHub on your VM, ZenHub will check the available hardware resou
 
 | Number of Users | vCPUs                               | Memory | Disk         |
 | --------------- | ----------------------------------- | ------ | ------------ |
-| 10-100          | 4                                   | 16GB   | 80GB+ (SSD)  |
+| 10-100          | 4                                   | 16GB   | 90GB+ (SSD)  |
 | 100-1000        | 8                                   | 32GB   | 250GB+ (SSD) |
 | 1000-5000       | 16                                  | 64GB   | 500GB+ (SSD) |
 | 5000+           | [Contact us](enterprise@zenhub.com) |        |              |
 
-> ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to ZenHub, as well as how many backups you are storing on the VM. At 90% disk utilization, pods in the internal K3s cluster will begin getting evicted. At 95% disk utilization, container images will start being removed from containerd. As a result, it is essential to remain below 90% disk utilization at all times. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
+> ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to ZenHub, as well as how many backups you are storing on the VM. At 95% disk utilization, container images will start being removed from containerd, with the least recently used images being removed first. Eventually, if disk space is not increased, the kubelet will be forced to remove images that are essential to the running of ZenHub and you will see pods in the **Evicted** state. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
 
+> ⚠️ **NOTE:** The ZenHub Enterprise OVA for VMware is pre-configured with a 60GB data filesystem and a 20GB root filesystem on ZHE 3.1 and 3.2. ZHE 3.3 and greater is pre-configured with a 30GB root volume. If you launch a VM with a 500GB volume, you will need to [expand the filesystems](#67-disk-management) to occupy the extra space. 
 #### 3.1.3 Ports
 
 Below, we've summarized the list of ports and firewall rules that the ZenHub Enterprise VM will need to function in your network.
@@ -149,7 +147,7 @@ Below, we've summarized the list of ports and firewall rules that the ZenHub Ent
 | HTTP   | TCP      | 80         | IP of GitHub Enterprise        |
 | HTTPS  | TCP      | 443        | IP of GitHub Enterprise        |
 
-You do not need to set this up inside the VM—this is strictly for any virtual or physical firewalls you have when deploying the VM, such as AWS Security Groups.
+You do not need to set this up inside the VM. This is strictly for any virtual or physical firewalls you have when deploying the VM, such as AWS Security Groups.
 
 ### 3.2 Configure Access and Network
 
@@ -226,14 +224,7 @@ zenhub_configuration:
   ADMIN_UI_PASS:
   CHROME_EXTENSION_WEBSTORE_URL:
   MANIFEST_FIREFOX_ID: zenhub-enterprise@<your-company-domain.com>
-  # The remaining required values MUST be set if and only if you are migrating from ZHE 2.44.
-  # See section "3.3.1 Required Values" in the documentation for how to obtain.
-  # CRYPTO_PASS:
-  # SECRET_KEY_BASE:
-  # GHWEBHOOK_PASS:
-  # GHWEBHOOK_SECRET:
-  # GITHUB_TOKEN_VALUE_KEY:
-  # GITHUB_WEBHOOKS_SECRET:
+  
 ## Optional configurations
 
 # ssl_self_signed: true
@@ -272,15 +263,6 @@ zenhub_configuration:
 
 > ⚠️ **NOTE:** Always use the same `MANIFEST_FIREFOX_ID`. This enables your users to receive an automatic update rather than reinstalling the extension. You can find this value in the [Mozilla Add-On Developer Hub](https://addons.mozilla.org/developers/) by clicking Edit Product Page and scrolling down to UUID on your existing extension.
 
-**If you are migrating from a ZHE2 VM**, you must use the values from your existing VM for the variables below. To obtain them, run the `zhe3-migration-dump.sh` script on your ZHE2 VM, as specified in [these steps](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance) from the migration guide. Once complete, you will have a `migration-dump-<timestamp>.tar.gz` bundle that contains a file called `variables.txt` with the values you need to complete this configuration file. **If you are not migrating**, you can leave the following config variables commented out and they will be autogenerated for you.
-
-- `CRYPTO_PASS`: A random string used to encrypt sensitive data in the ZenHub backend.
-- `SECRET_KEY_BASE`: A random string used to seed the encryption of sensitive data in the Postgres database.
-- `GHWEBHOOK_PASS`: Encrypt repository ID. Part of the GitHub webhook callback URL.
-- `GHWEBHOOK_SECRET`: Secret for authenticating GitHub webhooks in the Node.js backend. This is set in your GitHub Enterprise instance.
-- `GITHUB_TOKEN_VALUE_KEY`: Private key used to encrypt GitHub token retrieved and cached in the database.
-- `GITHUB_WEBHOOKS_SECRET`: Should be the same value as `GHWEBHOOK_SECRET` above. This is used by the Ruby backend.
-
 ### 3.3.2 Optional Values
 
 - `ssl_self_signed`: To deploy ZenHub with a self-signed SSL certificate
@@ -314,32 +296,7 @@ zhe-config --config-file <configuration_file_full_path>
 
 ### 4.2 Sanity Check
 
-We have included a `sanitycheck` utility which scans the cluster and helps diagnose common problems that can occur when deploying a large number of services.
-
-To review the results of the check, view the logs of the `sanitycheck` Kubernetes Job:
-
-```bash
-sudo kubectl -n zenhub get pods
-sudo kubectl -n zenhub logs <sanitycheck-pod-name>
-```
-
-The sanity check will:
-
-- Ensure a connection can be established to MongoDB, PostgreSQL, RabbitMQ and Redis.
-  - Hostname resolves
-  - Port is open
-  - Credentials exist to open database/cache connection
-- Ensure a connection can be established to the GitHub Enterprise server.
-  - Hostname resolves
-  - Port is open
-- Ensure a connection can be established to the file storage.
-  - Hostname resolves
-  - PutObject, GetObject and ListBucket operations perform without error
-- Ensure you have a valid `enterprise_license_token`
-
-The `sanitycheck` script will execute every 10 seconds until all the checks have passed. If the Job status is "Complete", all the checks were successful.
-
-Before moving on to check the application, it can also be beneficial to check the status of the pods again to ensure they all have the status of `Running` or `Completed`:
+Before moving on to check the application, it can also be beneficial to check the status of the pods to ensure they all have the status of `Running` or `Completed`:
 
 ```bash
 sudo kubectl -n zenhub get pods
@@ -368,10 +325,11 @@ Update Docker images, Kubernetes manifests, and install system-wide updates for 
 1. Download the latest ZenHub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com)):
 
 ```bash
-curl -o zhe_upgrade.run <link-to-upgrade-bundle>
+curl -o zhe_upgrade.run "<link-to-upgrade-bundle>"
 ```
 
 2. If not already directly downloaded to the VM, move the bundle into the VM (use `scp` or your choice of tool).
+
 3. Run the upgrade script:
 
 ```bash
@@ -380,7 +338,9 @@ bash zhe_upgrade.run
 > ⚠️ **NOTE:** To protect the upgrade from SSH disconnects, you may want to run the upgrade inside `tmux` or `screen`, e.g. `tmux new-session -s "upgrade" "bash zhe_upgrade.run"`
 
 4. Answer the update prompts. If you would like to install available OS updates, answer 'y' to `Proceed with OS and system wide updates?`
+
 5. Wait for ZenHub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with ZenHub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
+
 6. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
 
 #### 5.1.2 Rollback
@@ -403,10 +363,6 @@ The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is 
 All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
 
 Debian utility `unattended-upgrades` is enabled and setup to automatically apply _security updates_ (only) once per day.
-
-### 5.3 Migration from ZHE 2.44 to ZHE3
-
-Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
 
 ## 6. Maintenance and Operational Tasks
 
@@ -633,17 +589,15 @@ zhe-config --images-import
 ```
 
 ### 6.8 License Renewal
-The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for ZenHub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to re-configure the app.
-
-⚠️ NOTE: This will cause the application to restart, leading to a minute or two of downtime.
+The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for ZenHub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to apply your new license.
 
 1. Update the value for `ENTERPRISE_LICENSE_TOKEN`
 ```bash
 vim configuration.yaml
 ```
-2. Re-configure ZenHub with the new license
+2. Apply the new license using the updated configuration file
 ```bash
-zhe-config --config-file $(pwd)/configuration.yaml
+zhe-config --update-license $(pwd)/configuration.yaml
 ```
 
 ⚠️ NOTE: If you have misplaced your `configuration.yaml` file, you can find a backup of the current running configuration at `$ZENHUB_HOME/configuration/configuration.yaml`.
@@ -666,11 +620,12 @@ Examples:
   zhe-config --config-file /your/path/config.yaml
   zhe-config --restore 2021-04-28T04-15
 
- Options:
- --backup                        Create a backup of databases and files
+Options:
+  --backup                        Create a backup of databases and files
   --chrony-ntp                    Set custom NTP servers in chrony
   --config-example                Show a configuration file example
   --config-file   FILE_PATH       Deploy ZenHub from a configuration file
+  --dhcp                          Configure VM to use DHCP
   --help                          Show this help message
   --images-import                 Re import container images
   --maintenance   enable|disable  Enable or disable maintenance mode
@@ -680,9 +635,11 @@ Examples:
   --support-bundle                Generate a support bundle
   --sshkey                        Add an SSH key manually
   --staticip                      Configure VM to use static IP
-  --dhcp                          Configure VM to use DHCP
+  --update-tls                    Update ZenHub to use new TLS cert and key placed at:
+                                  /opt/zenhub/configuration/ssl/tls.crt
+                                  /opt/zenhub/configuration/ssl/tls.key
+  --update-license  FILE_PATH     Update license from configuration file with updated ENTERPRISE_LICENSE_TOKEN
   --version                       Display ZenHub Version
-  --zhe2-migrate  BUNDLE_NAME     Migrate ZHE2 data to this ZHE3 instance (deprecated in ZHE 3.2.0+)
 
 More details about ZenHub configuration can be found at:
 https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine

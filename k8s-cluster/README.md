@@ -26,7 +26,7 @@
   - [3.2 Resource Scaling](#32-resource-scaling)
   - [3.3 Ingress](#33-ingress)
     - [3.3.1 TLS/SSL Backend](#331-tlsssl-backend)
-  - [3.4 Database CA certificate](#34-database-ca-certificate)
+  - [3.4 Database CA certificates](#34-database-ca-certificates)
   - [3.5 Buckets](#35-buckets)
   - [3.6 AWS DocumentDB as MongoDB](#36-aws-documentdb-as-mongodb)
 - [4. Deployment](#4-deployment)
@@ -34,10 +34,9 @@
   - [4.2 Application Check](#42-application-check)
   - [4.3 Publish the Chrome and Firefox extensions](#43-publish-chrome-and-firefox-extensions)
 - [5. Upgrades](#5-upgrades)
-  - [5.1 Migration from ZHE2 to ZHE3](#51-migration-from-zhe2-to-zhe3)
-  - [5.2 From ZHE3 to ZHE3.x](#52-from-zhe3-to-zhe3x)
-    - [5.2.1 Infrastructure Upgrades](#521-infrastructure-upgrades)
-    - [5.2.2 Application Updates](#522-application-updates)
+  - [5.1 Minor and Patch Versions](#51-minor-and-patch-versions)
+    - [5.1.1 Infrastructure Upgrades](#511-infrastructure-upgrades)
+    - [5.1.2 Application Updates](#512-application-updates)
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
   - [6.1 Publishing the Chrome and Firefox extensions](#61-publishing-the-chrome-and-firefox-extensions)
   - [6.2 Setting the first ZenHub Admin (License Governance)](#62-setting-the-first-zenhub-admin-license-governance)
@@ -46,7 +45,7 @@
 - [7. Roadmap](#7-roadmap)
 
 ## 1. Getting Started
-This README will be your guide to setting up ZenHub Enterprise (ZHE) in your Kubernetes cluster. If you do not currently run a Kubernetes cluster and still want to self-host ZenHub, please go back to the [**virtual-machine**](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine) folder. If this is your first time using ZenHub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Slack community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
+This README will be your guide to setting up ZenHub Enterprise (ZHE) in your Kubernetes cluster. If you do not currently run a Kubernetes cluster and still want to self-host ZenHub, please go back to the [**virtual-machine**](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine) folder. If this is your first time using ZenHub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
 
 > As there are numerous steps to be followed and services to be deployed for ZenHub for Kubernetes, we have created a [deployment checklist](https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/k8s-cluster/deployment-checklist.txt) in Markdown format that you can copy to a GitHub Issue to help you keep track of your progress.
 
@@ -77,8 +76,6 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 >> ZenHub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 >
 >**Authorization callback URL**: `https://<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
-
-> ⚠️ **NOTE:** The `/api` path is a new addition to the ZHE3 infrastructure. If you are migrating to ZHE3 from ZHE2, you will need to add this to the Authorization callback URL in your existing OAuth App, as well as any scripts you've created that utilize the ZenHub API.
 
 ### 2.3 Kubernetes
 
@@ -172,7 +169,7 @@ docker login -u _json_key -p "$(cat dockerpassword | base64 --decode)" https://u
 
 # Push, tag and pull ZenHub images into your registry
 your_registry=<your_own_registry_without_trailing_slash>
-tag=enterprise-<version>
+tag=zhe-<version>
 images="kraken-webapp toad-backend raptor-backend kraken-extension"
 for i in $(echo $images); do docker pull us.gcr.io/zenhub-public/${i}:${tag} && docker tag us.gcr.io/zenhub-public/${i}:master ${your_registry}/${i}:${tag} && docker push ${your_registry}/${i}:${tag}; done
 ```
@@ -183,19 +180,19 @@ Finally you need to edit your `kustomization.yaml` file to configure all the dep
 images:
 - name: kraken-webapp
   newName: <your_own_registry>/kraken-webapp
-  newTag: enterprise-<version>
+  newTag: zhe-<version>
 - name: raptor-backend
   newName: <your_own_registry>/raptor-backend
-  newTag: enterprise-<version>
+  newTag: zhe-<version>
 - name: toad-backend
   newName: <your_own_registry>/toad-backend
-  newTag: enterprise-<version>
+  newTag: zhe-<version>
 - name: kraken-extension
   newName: <your_own_registry>/kraken-extension
-  newTag: enterprise-<version>
+  newTag: zhe-<version>
 - name: kraken-zhe-admin
   newName: <your_own_registry>/kraken-zhe-admin
-  newTag: enterprise-<version>
+  newTag: zhe-<version>
 - name: sanitycheck
   newName: <your_own_registry>/sanitycheck
   newTag: <version>
@@ -373,9 +370,10 @@ metadata:
 [Documentation](https://doc.traefik.io/traefik/routing/providers/docker/#services)
 
 
-### 3.4 Database CA certificate
+### 3.4 Database CA certificates
 
-TLS connection with Postgres utilizes the secret generator at the end of the [kustomization.yaml](kustomization.yaml)
+#### Postgres
+TLS connection with Postgres utilizes the `secretGenerator` near the end of the [kustomization.yaml](kustomization.yaml)
 
 > The files can be stored anywhere and referenced in the configuration by entering a full path name.
 
@@ -386,7 +384,17 @@ TLS connection with Postgres utilizes the secret generator at the end of the [ku
     - <some_path>/<some_pem>
 ```
 
-> ⚠️ **NOTE:** TLS connection for MongoDB is not supported at this time.
+#### MongoDB
+TLS connection with Postgres utilizes the `secretGenerator` near the end of the [kustomization.yaml](kustomization.yaml)
+
+> The files can be stored anywhere and referenced in the configuration by entering a full path name.
+
+```yaml
+- name: mongo-ca-bundle
+  behavior: replace
+  files:
+    - <some_path>/<some_pem>
+```
 
 ### 3.5 Buckets
 
@@ -485,25 +493,21 @@ See section [6.1](#61-publishing-the-chrome-and-firefox-extensions) for instruct
 
 ## 5. Upgrades
 
-### 5.1 Migration from ZHE2 to ZHE3
-
-Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
-
-### 5.2 From ZHE3 to ZHE3.x
+### 5.1 Minor and Patch Versions
 
 Two types of upgrades will have to be conducted:
 
-1. Occasional infrastructure upgrade
-2. Frequent application update
+1. Occasional infrastructure upgrades
+2. Frequent application updates
 
-#### 5.2.1 Infrastructure Upgrades
+#### 5.1.1 Infrastructure Upgrades
 
 Infrastructure upgrades are related the Kubernetes resources themselves.
 
 From time to time, we will release a new version of ZenHub Enterprise infrastructure via a GitHub Release on the [ZenHubHQ/zenhub-enterprise](https://github.com/ZenHubHQ/zenhub-enterprise)
 repository. Along with new manifests, a [release note](https://github.com/ZenHubHQ/zenhub-enterprise/releases) will be included to detail extra steps or concerns for the given release. Most releases will not require downtime.
 
-> This doesn't update the application code. See below for [application updates](#522-application-updates).
+> This doesn't update the application code. See below for [application updates](#512-application-updates).
 
 ##### 1. Prepare
 * You need to get the `kustomization.yaml` you configured with all the secrets to take into account
@@ -542,7 +546,7 @@ kustomize build . | kubectl apply -f-
 ##### 3. Finalize
 * Securely store the updated `kustomization.yaml`
 
-#### 5.2.2 Application Updates
+#### 5.1.2 Application Updates
 
 The application update is related the ZenHub application code—the containers ZenHub is running on.
 
@@ -566,19 +570,19 @@ kustomize build . | kubectl diff -f-
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: enterprise-<version>
+    newTag: zhe-<version>
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: enterprise-<version>
+    newTag: zhe-<version>
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: enterprise-<version>
+    newTag: zhe-<version>
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: enterprise-<version>
+    newTag: zhe-<version>
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: enterprise-<version>
+    newTag: zhe-<version>
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
     newTag: <version>
@@ -654,6 +658,4 @@ Since ZenHub Enterprise On-Premise is a completely self-contained system in your
 
 ZHE3 is actively in development. We are planning to add the following features shortly:
 
-- Application feature parity with our SaaS offering on `app.zenhub.com`
-- TLS support for MongoDB/DocumentDB
 - Support for IAM role authorization when writing objects to S3 buckets

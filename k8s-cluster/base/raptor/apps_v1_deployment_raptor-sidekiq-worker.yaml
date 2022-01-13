@@ -234,6 +234,11 @@ spec:
             secretKeyRef:
               key: product_board_key
               name: raptor
+        - name: HUBSPOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: hubspot_api_key
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:

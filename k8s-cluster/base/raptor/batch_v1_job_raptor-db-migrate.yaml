@@ -39,8 +39,6 @@ spec:
               name: configuration
         - name: CABLE_URL
           value: raptor-cable
-        - name: DATABASE_STATEMENT_TIMEOUT
-          value: 120s
         - name: SAFETY_ASSURED
           value: "1"
         - name: RUBYOPT
@@ -55,6 +53,11 @@ spec:
             configMapKeyRef:
               key: rails_log_to_stdout
               name: raptor
+        - name: DATABASE_STATEMENT_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: database_statement_timeout
+              name: raptor-migrate
         - name: LOG_JSON
           valueFrom:
             configMapKeyRef:

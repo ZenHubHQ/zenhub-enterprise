@@ -182,7 +182,7 @@ spec:
               value: ""
             - name: ACTION_CABLE_WORKERS_POOL_SIZE
               value: ""
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.2.1
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.3.0
           imagePullPolicy: Always
           name: raptor-db-migrate
           resources:
@@ -192,4 +192,18 @@ spec:
             requests:
               cpu: "1"
               memory: 2Gi
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
       restartPolicy: Never
