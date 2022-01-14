@@ -35,24 +35,25 @@ else
 
     REGISTRY=$2
 
-    # Replace occurences of ZenHub registry in sauron migration manifests with the custom registry
+    # Replace occurences of ZenHub registry in releasereport migration manifests with the custom registry
     sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_raptor-db-migrate.yaml
-    sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_sauron_migration.yaml
-    
+    sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_releasereport_migration.yaml
+
     # Remove imagePullSecrets for ZenHub registry
     sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_raptor-db-migrate.yaml
-    sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_sauron_migration.yaml
-    
+    sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_releasereport_migration.yaml
+
 fi
 
 IMAGE=raptor-backend
-TAG=zhe-3.2.1
+TAG=zhe-3.3.0
 NAMESPACE=$1
 REPLICAS=0
 
 DEPLOYMENTS=(
 raptor-sidekiq-worker
 raptor-admin
+raptor-cable
 kraken-webapp
 toad-worker
 toad-webhook
@@ -79,6 +80,7 @@ kraken-webapp
 nginx-gateway
 raptor-admin
 raptor-api
+raptor-cable
 toad-api
 toad-webhook
 toad-websocket
@@ -137,7 +139,7 @@ echo "All Deployments Scaled to 0"
 echo ""
 echo ""
 echo "###############################################"
-echo "         Starting Sauron Migration Job"
+echo "         Starting Release Report Migration Job"
 echo "###############################################"
 
 echo "         Updating Databases..."
@@ -153,11 +155,17 @@ kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=1
 # kubectl -n $NAMESPACE rollout restart deployment/raptor-sidekiq-worker
 kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
 
-echo "         Updating data..."
-kubectl -n $NAMESPACE apply -f batch_v1_job_sauron_migration.yaml
+# Required just for 3.2 -> 3.3 upgrade due to new hubspot_api_key key
+# being required by the raptor-backend:3.3.0 image to run the
+# releasereport-migration pod
+echo "         Adding required secret..."
+kubectl -n $NAMESPACE apply -f ../base/raptor/secret.yaml
 
-echo "         Waiting Sauron Migration Job to be 'complete' (timeout 3000s)"
-kubectl -n $NAMESPACE wait --for=condition=complete job/sauron-migration --timeout=3000s
+echo "         Updating data..."
+kubectl -n $NAMESPACE apply -f batch_v1_job_releasereport_migration.yaml
+
+echo "         Waiting Release Report Migration Job to be 'complete' (timeout 3000s)"
+kubectl -n $NAMESPACE wait --for=condition=complete job/releasereport-migration --timeout=3000s
 
 echo "###############################################"
 echo "         Deleting Old Resources"

@@ -108,7 +108,6 @@ spec:
           name: kraken-extension
         - mountPath: /root/config
           name: kraken-webapp-config
-      serviceAccountName: kraken-automount-sa-token-false-webapp
       volumes:
       - name: kraken-extension
       - configMap:

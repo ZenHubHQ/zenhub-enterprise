@@ -230,12 +230,18 @@ spec:
             secretKeyRef:
               key: product_board_key
               name: raptor
+        - name: HUBSPOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: hubspot_api_key
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
             path: /ping/all
             port: http
+          initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 5
         name: raptor-cable
@@ -250,3 +256,10 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1
+            memory: 4G
+          requests:
+            cpu: 250m
+            memory: 1G

@@ -98,3 +98,17 @@ spec:
               # valueFrom:
               # pattern is duplicated in kustomization.yaml
               value: redis://default:$(INTERNAL_REDIS_PASSWORD)@cache-raptor-redis-master:6379/0
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle

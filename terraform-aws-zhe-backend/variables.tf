@@ -133,7 +133,7 @@ variable "documentdb_dbname" {
 variable "documentdb_engine_version" {
   description = "DocumentDB engine version"
   type        = string
-  default     = "3.6"
+  default     = "4.0"
 }
 
 variable "documentdb_port" {
