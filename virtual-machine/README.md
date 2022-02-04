@@ -215,8 +215,6 @@ zenhub_configuration:
   # The remaining required values MUST be set if and only if you are migrating from ZHE 2.44
   # CRYPTO_PASS:
   # SECRET_KEY_BASE:
-  # RAPTOR_ADMIN_PASSWORD:
-  # LOCKBOX_MASTER_KEY:
   # GITHUB_TOKEN_VALUE_KEY:
   # GITHUB_WEBHOOKS_SECRET:
   # GHWEBHOOK_PASS:
