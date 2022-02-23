@@ -382,7 +382,7 @@ Debian utility `unattended-upgrades` is enabled and setup to automatically apply
 
 ### 5.3 Migration from ZHE 2.44 to ZHE3
 
-Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
+Please see the [zhe3-migration](https://github.com/ZenHubHQ/zenhub-enterprise/tree/v3.1.2/virtual-machine/zhe3-migration) folder for guidance on migrating from ZHE2 to ZHE3.
 
 ## 6. Maintenance and Operational Tasks
 ### 6.1 Tasks in the Admin UI
