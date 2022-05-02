@@ -270,7 +270,11 @@ spec:
 
 ### 3.3 Ingress
 
-We don't make any assumptions about the type of Ingress that is used with the cluster. It will be your responsibility to expose ZenHub through your preferred Ingress. The only requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 80 or 443 for the main app, and `admin-ui` service on port 80 or 443 for the Administration Panel.
+We highly recommend the use of NGINX Ingress Controller in your cluster. We provide an example configuration for an AWS EKS cluster in[k8s-cluster/options/ingress/](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/options/ingress), but this will likely need tweaks for your specific environment.
+
+The main requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 80 or 443 for the main app, and `admin-ui` service on port 80 or 443 for the Administration Panel.
+
+There is a secondary requirement for mid-size and larger environments where the `toad-websocket` pod will need to run more than 1 replica. In this situation, cookie-based sticky sessions must be enabled, and a server-snippet must be used for a path rewrite. We have found that NGINX Ingress supports this, hence our recommendation.
 
 The provided manifests expose ZenHub behind a single ClusterIP service, listening on port 80 and 443. You will need to setup and configure HTTPS through your Ingress (public facing SSL configuration is not within the scope of "ZenHub for Kubernetes").
 
