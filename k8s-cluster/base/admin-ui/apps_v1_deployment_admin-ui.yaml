@@ -59,6 +59,11 @@ spec:
             configMapKeyRef:
               key: images_bucket_name
               name: configuration
+        - name: FIREFOX_EXT_S3_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              key: bucket_domain
+              name: configuration
         - name: FIREFOX_EXT_S3_REGION
           valueFrom:
             configMapKeyRef:

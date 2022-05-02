@@ -3,7 +3,4 @@ kind: Kustomization
 
 resources:
   - ingress.yaml
-
-patchesStrategicMerge:
-  - set-ingress-annotation.yaml
-  - set-ingress-tls.yaml
+  - ingress-websocket.yaml

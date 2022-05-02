@@ -38,11 +38,6 @@ spec:
             configMapKeyRef:
               key: api
               name: zhe-gw-vars
-        - name: SOCKET
-          valueFrom:
-            configMapKeyRef:
-              key: socket
-              name: zhe-gw-vars
         - name: FILES
           valueFrom:
             configMapKeyRef:
@@ -52,6 +47,11 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: webhook
+              name: zhe-gw-vars
+        - name: SOCKET
+          valueFrom:
+            configMapKeyRef:
+              key: socket
               name: zhe-gw-vars
         - name: ACTIONCABLE
           valueFrom:
@@ -91,7 +91,7 @@ spec:
           name: proxy-conf-volume
           subPath: default.conf.template
         - mountPath: /usr/share/nginx/html/maintenance.html
-          name: maitenance-page-volume
+          name: maintenance-page-volume
           subPath: maintenance.html
         - mountPath: /etc/nginx/conf.d/include-ssl.conf
           name: zhe-gw-include-ssl-volume
@@ -102,6 +102,9 @@ spec:
         - mountPath: /etc/nginx/templates/include-location-images.conf.template
           name: zhe-gw-include-location-images-volume
           subPath: include-location-images.conf.template
+        - mountPath: /etc/nginx/templates/include-location-files.conf.template
+          name: zhe-gw-include-location-files-volume
+          subPath: include-location-files.conf.template
         - mountPath: /etc/nginx/templates/include-location-ff-extension.conf.template
           name: zhe-gw-include-location-ff-extension-volume
           subPath: include-location-ff-extension.conf.template
@@ -143,8 +146,8 @@ spec:
           name: zhe-gw-conf
         name: proxy-conf-volume
       - configMap:
-          name: zhe-maitenance-page
-        name: maitenance-page-volume
+          name: zhe-maintenance-page
+        name: maintenance-page-volume
       - configMap:
           defaultMode: 511
           name: zhe-monitor
@@ -158,6 +161,9 @@ spec:
       - configMap:
           name: zhe-gw-include-location-images
         name: zhe-gw-include-location-images-volume
+      - configMap:
+          name: zhe-gw-include-location-files
+        name: zhe-gw-include-location-files-volume
       - configMap:
           name: zhe-gw-include-location-ff-extension
         name: zhe-gw-include-location-ff-extension-volume

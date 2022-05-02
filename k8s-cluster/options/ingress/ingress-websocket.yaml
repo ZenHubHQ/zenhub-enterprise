@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-zhe-websocket
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100M"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-path: "/"
+    nginx.ingress.kubernetes.io/affinity-mode: "balanced"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location /api/socket.io {
+        rewrite ^/api/socket.io(.*)$ /socket.io$1;
+      }
+spec:
+  rules:
+    - host: "$(subdomain_suffix).$(domain_tld)"
+      http:
+        paths:
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: toad-websocket
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - $(subdomain_suffix).$(domain_tld)
+      secretName: <host_ssl_secret>

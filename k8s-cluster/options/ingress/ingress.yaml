@@ -2,9 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-zhe
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100M"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # terminated by nginx-gateway pod
 spec:
   rules:
-    - host: "$(subdomain_suffix).$(domain_tld)"
+    - host: $(subdomain_suffix).$(domain_tld)
       http:
         paths:
           - pathType: Prefix
@@ -14,7 +19,7 @@ spec:
                 name: nginx-gateway
                 port:
                   number: 443
-    - host: "admin-$(subdomain_suffix).$(domain_tld)"
+    - host: $(admin_ui_subdomain).$(domain_tld)
       http:
         paths:
           - pathType: Prefix
@@ -29,3 +34,8 @@ spec:
       name: nginx-gateway
       port:
         number: 443
+  tls:
+    - hosts:
+        - $(subdomain_suffix).$(domain_tld)
+        - $(admin_ui_subdomain).$(domain_tld)
+      secretName: <host_ssl_secret>
