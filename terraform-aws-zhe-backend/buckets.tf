@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "zhe_files" {
       apply_server_side_encryption_by_default {
         # kms_master_key_id = aws_kms_key.bucket_key.arn
         # TODO: Implement AWS API Signature Version 4
-        # ! "When creating a presigned URL for an object encrypted using an AWS KMS CMK, you must explicitly specify Signature Version 4" 
+        # ! "When creating a presigned URL for an object encrypted using an AWS KMS CMK, you must explicitly specify Signature Version 4"
         sse_algorithm = "AES256" # "aws:kms"
       }
     }
@@ -38,7 +38,7 @@ resource "aws_s3_bucket" "zhe_images" {
       apply_server_side_encryption_by_default {
         # kms_master_key_id = aws_kms_key.bucket_key.arn
         # TODO: Implement AWS API Signature Version 4
-        # ! "When creating a presigned URL for an object encrypted using an AWS KMS CMK, you must explicitly specify Signature Version 4" 
+        # ! "When creating a presigned URL for an object encrypted using an AWS KMS CMK, you must explicitly specify Signature Version 4"
         sse_algorithm = "AES256" # "aws:kms"
       }
     }
@@ -81,6 +81,42 @@ resource "aws_s3_bucket_policy" "AllowReadFromVPCE" {
             "Effect": "Allow",
             "Action": "s3:GetObject",
             "Resource": ["${aws_s3_bucket.zhe_images.arn}/*"],
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": "${data.aws_vpc_endpoint.eks_s3.id}"
+              }
+            }
+        }
+    ]
+}
+POLICY
+}
+
+resource "aws_s3_bucket_policy" "AllowReadFromVPCEFiles" {
+  bucket = aws_s3_bucket.zhe_files.id
+
+  policy = <<POLICY
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ZHEAllowVPCEndpointLIST",
+            "Principal": "*",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": ["${aws_s3_bucket.zhe_files.arn}"],
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": "${data.aws_vpc_endpoint.eks_s3.id}"
+              }
+            }
+        },
+        {
+            "Sid": "ZHEAllowVPCEndpointREAD",
+            "Principal": "*",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": ["${aws_s3_bucket.zhe_files.arn}/*"],
             "Condition": {
               "StringEquals": {
                 "aws:SourceVpce": "${data.aws_vpc_endpoint.eks_s3.id}"

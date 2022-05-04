@@ -13,10 +13,15 @@ spec:
                 configMapKeyRef:
                   key: bucket_domain
                   name: configuration
-            - name: BUCKET_NAME
+            - name: IMAGES_BUCKET_NAME
               valueFrom:
                 configMapKeyRef:
                   key: images_bucket_name
+                  name: configuration
+            - name: FILES_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  key: files_bucket_name
                   name: configuration
             - name: FIREFOX_EXT_S3_BUCKET_DIR
               valueFrom:

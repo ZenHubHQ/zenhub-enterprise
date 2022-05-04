@@ -38,15 +38,17 @@ else
     # Replace occurences of ZenHub registry in releasereport migration manifests with the custom registry
     sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_raptor-db-migrate.yaml
     sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_releasereport_migration.yaml
+    sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
     # Remove imagePullSecrets for ZenHub registry
     sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_raptor-db-migrate.yaml
     sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_releasereport_migration.yaml
+    sed -i.bak "/remove-if-custom-registry/d" apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
 fi
 
 IMAGE=raptor-backend
-TAG=zhe-3.3.0
+TAG=zhe-3.3.2
 NAMESPACE=$1
 REPLICAS=0
 
@@ -151,12 +153,15 @@ kubectl -n $NAMESPACE wait --for=condition=complete job/db-migration --timeout=3
 echo "         Updating raptor-sidekiq-worker..."
 kubectl -n $NAMESPACE set image deployment/raptor-sidekiq-worker \
     raptor-sidekiq-worker=$REGISTRY/$IMAGE:$TAG
-kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=1
+kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
 # kubectl -n $NAMESPACE rollout restart deployment/raptor-sidekiq-worker
 kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
 
+# Required for upgrades with migrations that use the toad_events_processor queue
+kubectl -n $NAMESPACE apply -f apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
+
 # Required just for 3.2 -> 3.3 upgrade due to new hubspot_api_key key
-# being required by the raptor-backend:3.3.0 image to run the
+# being required by the raptor-backend:3.3.2 image to run the
 # releasereport-migration pod
 echo "         Adding required secret..."
 kubectl -n $NAMESPACE apply -f ../base/raptor/secret.yaml
@@ -166,6 +171,20 @@ kubectl -n $NAMESPACE apply -f batch_v1_job_releasereport_migration.yaml
 
 echo "         Waiting Release Report Migration Job to be 'complete' (timeout 3000s)"
 kubectl -n $NAMESPACE wait --for=condition=complete job/releasereport-migration --timeout=3000s
+
+# Wait for toad_events_processor sidekiq queue to empty, required only for toad migrations that use that queue
+SIDEKIQ_WORKER_POD_NAME=$(kubectl -n $NAMESPACE get pods --selector=app.kubernetes.io/component=raptor-sidekiq-worker-for-toad-events -o jsonpath='{.items[0]..metadata.name}')
+TOAD_QUEUE_SIZE="1"
+while [ $TOAD_QUEUE_SIZE != 0 ]
+do
+  RAILS_QUERY_OUTPUT=$(kubectl -n $NAMESPACE exec $SIDEKIQ_WORKER_POD_NAME -- /bin/sh -c "echo 'Sidekiq::Queue.new(\"toad_events_processor\").size' | rails c" 2> /dev/null)
+  TOAD_QUEUE_SIZE=$(echo $RAILS_QUERY_OUTPUT | tail -n1)
+  echo "Events in queue remaining: $TOAD_QUEUE_SIZE"
+  sleep 30
+done
+
+# Required for upgrades with migrations that use the toad_events_processor queue
+kubectl -n $NAMESPACE delete -f apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
 echo "###############################################"
 echo "         Deleting Old Resources"
