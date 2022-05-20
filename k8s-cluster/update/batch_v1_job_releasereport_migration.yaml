@@ -237,7 +237,7 @@ spec:
                 secretKeyRef:
                   key: hubspot_api_key
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.3.2
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.3.3
           imagePullPolicy: Always
           name: releasereport-migration
           resources:
