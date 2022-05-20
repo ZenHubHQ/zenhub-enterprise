@@ -48,7 +48,7 @@ else
 fi
 
 IMAGE=raptor-backend
-TAG=zhe-3.3.2
+TAG=zhe-3.3.3
 NAMESPACE=$1
 REPLICAS=0
 
@@ -161,7 +161,7 @@ kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-w
 kubectl -n $NAMESPACE apply -f apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
 # Required just for 3.2 -> 3.3 upgrade due to new hubspot_api_key key
-# being required by the raptor-backend:3.3.2 image to run the
+# being required by the raptor-backend:3.3.3 image to run the
 # releasereport-migration pod
 echo "         Adding required secret..."
 kubectl -n $NAMESPACE apply -f ../base/raptor/secret.yaml

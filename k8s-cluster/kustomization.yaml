@@ -10,11 +10,10 @@ namespace: <a_dedicated_namespace>
 resources:
   - base
   - options/sanitycheck
-  # Example of ingress
-  # - options/ingress
-  #
+  # - options/ingress # Example of an Nginx Ingress
+
   # Optional configurations
-# patchesStrategicMerge:
+patchesStrategicMerge:
 # - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
@@ -27,29 +26,29 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 3.3.2
+  app.kubernetes.io/version: 3.3.3
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-3.3.2
+    newTag: zhe-3.3.3
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-3.3.2
+    newTag: zhe-3.3.3
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-3.3.2
+    newTag: zhe-3.3.3
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-3.3.2
+    newTag: zhe-3.3.3
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-3.3.2
+    newTag: zhe-3.3.3
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-3.3.2
+    newTag: zhe-3.3.3
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -87,7 +86,8 @@ configMapGenerator:
       - bucket_domain=<bucket_public_domain> # e.g., s3.us-east-1.amazonaws.com
       - files_bucket_name=<bucket_name>
       - images_bucket_name=<bucket_name>
-      # AWS DocumentDB as MongoDB
+      #
+      # If you are using AWS DocumentDB for your MongoDB, enable this
       # - mongo_is_documentdb=true
       #
       # [EDIT] Link to your Chome Extension download page. Obtained by configuring your Chrome Extension through the ZenHub Admin User Interface
@@ -146,35 +146,35 @@ secretGenerator:
       # on Linux, you can run the following to generate the secret as follows:
       # for most secrets
       # tr -dc '[:alnum:]' </dev/urandom | head -c ${1-38} ; echo ''
-      # for the ones requiring an hex format
+      # for the ones requiring a hex format
       # tr -dc '[:xdigit:]' </dev/urandom | head -c ${1-64} | awk '{print tolower($0)}'
       # on MacOS, add LC_CTYPE=C to the beginning of the tr command
       # [EDIT]
-      - toad_redis_password=<[A-Za-z0-9]{24}>
+      - toad_redis_password=<[:alnum:]{24}>
       # [EDIT]
-      - raptor_redis_password=<[A-Za-z0-9]{24}>
+      - raptor_redis_password=<[:alnum:]{24}>
       # [EDIT]
-      - internal_auth_token=<[A-Za-z0-9]{38}>
+      - internal_auth_token=<[:alnum:]{38}>
       # [EDIT]
-      - raptor_admin_password=<[A-Za-z0-9]{38}>
+      - raptor_admin_password=<[:alnum:]{38}>
       # [EDIT]
-      - crypto_pass=<[A-Za-z0-9]{38}>
+      - crypto_pass=<[:alnum:]{38}>
       # [EDIT]
-      - lockbox_master_key=<[a-f0-9]{64}>
+      - lockbox_master_key=<[:xdigit:]{64}>
       # [EDIT] A random string used to seed the encryption of sensitive data in
       # the Raptor database.
-      - secret_key_base=<[A-Za-z0-9]{38}>
+      - secret_key_base=<[:alnum:]{38}>
       # [EDIT] Private key used to encrypt GitHub token retrieved and cached in
       # the database.
-      - github_token_value_key=<[a-f0-9]{64}>
+      - github_token_value_key=<[:xdigit:]{64}>
       # [EDIT] Secret for authenticating GitHub webhooks from Toad. This is set in your
       # GitHub Enterprise instance. If migrating from ZHE2, use your existing value! Check variables.txt:
       # https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance
-      - ghwebhook_secret=<[A-Za-z0-9]{38}>
+      - ghwebhook_secret=<[:alnum:]{38}>
       # [EDIT] Encrypt repository ID. Part of the GitHub webhook callback URL.
       # If migrating from ZHE2, use your existing value! Check variables.txt:
       # https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance
-      - ghwebhook_pass=<[A-Za-z0-9]{38}>
+      - ghwebhook_pass=<[:alnum:]{38}>
       # [EDIT] Should be the same value as `ghwebhook_secret` above. This
       # one is used by the Raptor services.
-      - github_webhooks_secret=<[A-Za-z0-9]{38}>
+      - github_webhooks_secret=<[:alnum:]{38}>
