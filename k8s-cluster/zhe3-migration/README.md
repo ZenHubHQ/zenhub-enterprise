@@ -143,7 +143,7 @@ tar -xf mongo.tar.gz
 4. Restore the Mongo database. The default name for the MongoDB database is `zenhub`, but if you have changed this (in your `mongo_url` connection string configured in your `kustomization.yaml` file), please reflect that in your restore command.
 
 ```bash
-mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --nsInclude='zenhub_enterprise.*' --stopOnError --drop --host zenhub-mongo.example.com --port 27017 --username restorer --authenticationDatabase=zenhub ./dump
+mongorestore --nsFrom='zenhub_enterprise.*' --nsTo='zenhub.*' --nsInclude='zenhub_enterprise.*' --stopOnError --drop --host zenhub-mongo.example.com --port 27017 --username restorer --authenticationDatabase=zenhub --noIndexRestore ./dump
 ```
 > ⚠️ **NOTE:** If you are using Amazon DocumentDB, add the `--noIndexRestore` option, as DocumentDB requires shorter index names. With this option, the application will rebuild the indexes as needed with the shorter names.
 
@@ -164,7 +164,7 @@ brew install postgresql@11
 3. Restore the DB. The default name for the PostgreSQL database is `raptor_production` and the default user is `postgres`, but if you have changed this (in your `postgres_url` connection string configured in your `kustomization.yaml` file), please reflect that in your restore command.
 
 ```bash
-pg_restore --clean --no-owner -v -h zenhub.pg.example.com -p 5432 -d raptor_production -U postgres -W --sslrootcert=<path/to/postgres-ca-cert.pem> --sslmode=verify-full postgres_raptor_data.dump
+pg_restore --clean -j1 --no-owner -v -h zenhub.pg.example.com -p 5432 -d raptor_production -U postgres -W --sslrootcert=<path/to/postgres-ca-cert.pem> --sslmode=verify-full postgres_raptor_data.dump
 ```
 
 ### Update the references in the MongoDB blob collection
