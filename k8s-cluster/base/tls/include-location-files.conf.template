@@ -43,3 +43,7 @@ location /files/ {
     proxy_ssl_verify        off;
     proxy_ssl_server_name   on;
 }
+
+location = /files/ {
+  return 403;
+}

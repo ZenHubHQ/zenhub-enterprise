@@ -94,6 +94,25 @@ spec:
               memory: 2500M
 
 ---
+# raptor-sidekiq-worker-default
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-sidekiq-worker-default
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-sidekiq-worker-default
+          resources:
+            requests:
+              cpu: 200m
+              memory: 500M
+            limits:
+              cpu: 500m
+              memory: 2500M
+
+---
 # raptor-admin
 apiVersion: apps/v1
 kind: Deployment

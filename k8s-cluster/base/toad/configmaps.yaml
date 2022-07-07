@@ -9,6 +9,10 @@ metadata:
 apiVersion: v1
 data:
   attribution_app_id: ""
+  auth0_audience: ""
+  auth0_client_id: ""
+  auth0_domain: ""
+  auth0_issuer: ""
   ghwebhook_enabled: "true"
   ghwebhook_whitelist: '*'
   github_server_address: $(github_hostname)

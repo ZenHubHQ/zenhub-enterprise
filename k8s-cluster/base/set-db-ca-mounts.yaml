@@ -201,6 +201,31 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: raptor-sidekiq-worker-default
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-sidekiq-worker
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: raptor-cable
 spec:
   template:

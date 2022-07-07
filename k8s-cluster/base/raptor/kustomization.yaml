@@ -4,8 +4,10 @@ resources:
 - apps_v1_deployment_raptor-admin.yaml
 - apps_v1_deployment_raptor-api.yaml
 - apps_v1_deployment_raptor-cable.yaml
+- apps_v1_deployment_raptor-sidekiq-worker-default.yaml
 - apps_v1_deployment_raptor-sidekiq-worker.yaml
 - autoscaling_v2beta2_horizontalpodautoscaler_raptor-api.yaml
+- autoscaling_v2beta2_horizontalpodautoscaler_raptor-cable.yaml
 - batch_v1_job_raptor-db-migrate.yaml
 - configmaps.yaml
 - persistentvolume.yaml

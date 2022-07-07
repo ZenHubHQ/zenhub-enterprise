@@ -9,6 +9,16 @@ spec:
   minReplicas: 2
 
 ---
+# raptor-cable
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: raptor-cable
+spec:
+  maxReplicas: 2
+  minReplicas: 2
+
+---
 #toad-api
 apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
@@ -47,6 +57,15 @@ spec:
   replicas: 2
 
 ---
+# raptor-sidekiq-worker-default
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-sidekiq-worker-default
+spec:
+  replicas: 2
+
+---
 # kraken-webapp
 apiVersion: apps/v1
 kind: Deployment
@@ -72,15 +91,6 @@ metadata:
   name: raptor-admin
 spec:
   replicas: 2
-
----
-# raptor-cable
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: raptor-cable
-spec:
-  replicas: 1
 
 ---
 # toad-cron

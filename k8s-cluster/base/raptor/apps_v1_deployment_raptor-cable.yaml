@@ -110,10 +110,15 @@ spec:
             configMapKeyRef:
               key: github_graphql_url
               name: raptor
-        - name: ROLLBAR_ENV
+        - name: SENTRY_DSN
           valueFrom:
             configMapKeyRef:
-              key: rollbar_env
+              key: sentry_dsn
+              name: raptor
+        - name: SENTRY_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              key: sentry_environment
               name: raptor
         - name: NEW_RELIC_AGENT_ENABLED
           valueFrom:
@@ -160,6 +165,21 @@ spec:
             configMapKeyRef:
               key: cable_allowed_origins
               name: raptor
+        - name: AUTH_ISSUER_URLS
+          valueFrom:
+            configMapKeyRef:
+              key: auth_issuer_urls
+              name: raptor
+        - name: AUTH_JWKS_URL
+          valueFrom:
+            configMapKeyRef:
+              key: auth_jwks_url
+              name: raptor
+        - name: AUTH0_TENANT
+          valueFrom:
+            configMapKeyRef:
+              key: auth0_tenant
+              name: raptor
         - name: SIDEKIQ_REDIS_URL
           valueFrom:
             secretKeyRef:
@@ -194,11 +214,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: ld_sdk_key
-              name: raptor
-        - name: ROLLBAR_ACCESS_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: rollbar_access_token
               name: raptor
         - name: NEW_RELIC_LICENSE_KEY
           valueFrom:
@@ -235,15 +250,25 @@ spec:
             secretKeyRef:
               key: hubspot_api_key
               name: raptor
+        - name: AUTH_MANAGEMENT_API_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: auth_management_api_client_id
+              name: raptor
+        - name: AUTH_MANAGEMENT_API_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: auth_management_api_client_secret
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
             path: /ping/all
             port: http
-          initialDelaySeconds: 15
-          periodSeconds: 10
-          timeoutSeconds: 5
+          initialDelaySeconds: 40
+          periodSeconds: 20
+          timeoutSeconds: 10
         name: raptor-cable
         ports:
         - containerPort: 28080
@@ -259,7 +284,7 @@ spec:
         resources:
           limits:
             cpu: 1
-            memory: 4G
+            memory: 6G
           requests:
             cpu: 250m
-            memory: 1G
+            memory: 3G

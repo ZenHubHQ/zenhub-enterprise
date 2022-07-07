@@ -354,15 +354,25 @@ spec:
             secretKeyRef:
               key: knowtify_token
               name: toad
-        - name: ROLLBAR_ACCOUNT_READ_TOKEN
+        - name: AUTH0_AUDIENCE
           valueFrom:
-            secretKeyRef:
-              key: rollbar_account_read_token
+            configMapKeyRef:
+              key: auth0_audience
               name: toad
-        - name: ROLLBAR_ACCOUNT_WRITE_TOKEN
+        - name: AUTH0_CLIENT_ID
           valueFrom:
-            secretKeyRef:
-              key: rollbar_account_write_token
+            configMapKeyRef:
+              key: auth0_client_id
+              name: toad
+        - name: AUTH0_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              key: auth0_domain
+              name: toad
+        - name: AUTH0_ISSUER
+          valueFrom:
+            configMapKeyRef:
+              key: auth0_issuer
               name: toad
         image: toad-backend
         imagePullPolicy: IfNotPresent
