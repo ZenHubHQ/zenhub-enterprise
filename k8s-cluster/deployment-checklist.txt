@@ -21,7 +21,7 @@
 - [ ] Deploy a PostgreSQL version 11 database. 
 
 #### MongoDB Requirement
-- [ ] Deploy a MongoDB version 3.6 database.
+- [ ] Deploy a MongoDB version 4.4 database.
 
 #### RabbitMQ Requirement
 - [ ] Deploy RabbitMQ. (A few options here are a pod in a cluster, AmazonMQ, CloudAMQP)

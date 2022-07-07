@@ -27,7 +27,7 @@ metadata:
 apiVersion: v1
 data:
   action_cable_workers_pool_size: "2"
-  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld), https://$(github_hostname)
+  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld), $(github_hostname), null
   database_statement_timeout: 120s
   rails_max_threads: "5"
   web_concurrency: "4"
@@ -41,12 +41,25 @@ data:
   rails_max_threads: "5"
 kind: ConfigMap
 metadata:
+  labels:
+    app.kubernetes.io/component: raptor-sidekiq-worker-default
+  name: raptor-sidekiq-default
+---
+apiVersion: v1
+data:
+  database_statement_timeout: 15s
+  rails_max_threads: "5"
+kind: ConfigMap
+metadata:
   name: raptor-sidekiq
 ---
 apiVersion: v1
 data:
   action_cable_workers_pool_size: "2"
-  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld), https://$(github_hostname)
+  auth_issuer_urls: ""
+  auth_jwks_url: ""
+  auth0_tenant: ""
+  cable_allowed_origins: https://$(subdomain_suffix).$(domain_tld), $(github_hostname), null
   disable_prepare_db: "1"
   github_api_url: $(github_hostname)/api/v3
   github_graphql_url: $(github_hostname)/api/graphql
@@ -59,7 +72,8 @@ data:
   new_relic_app_name: ""
   rails_env: production
   rails_log_to_stdout: "1"
-  rollbar_env: ""
+  sentry_dsn: ""
+  sentry_environment: ""
   zenhub_webhook_domain_v1: https://$(subdomain_suffix).$(domain_tld)
   zenhub_webhook_domain_v2: https://$(subdomain_suffix).$(domain_tld)
 kind: ConfigMap

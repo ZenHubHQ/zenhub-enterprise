@@ -2,34 +2,32 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/component: raptor-sidekiq-worker-for-toad-events
-  name: raptor-sidekiq-worker-for-toad-events
+    app.kubernetes.io/component: raptor-sidekiq-worker-default
+  name: raptor-sidekiq-worker-default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/component: raptor-sidekiq-worker-for-toad-events
+      app.kubernetes.io/component: raptor-sidekiq-worker-default
   template:
     metadata:
       labels:
-        app.kubernetes.io/component: raptor-sidekiq-worker-for-toad-events
+        app.kubernetes.io/component: raptor-sidekiq-worker-default
     spec:
-      imagePullSecrets: # remove-if-custom-registry
-        - name: zenhub-docker-registry-credentials # remove-if-custom-registry
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app.kubernetes.io/component: raptor-sidekiq-worker-for-toad-events
+                  app.kubernetes.io/component: raptor-sidekiq-worker-default
               namespaces: []
               topologyKey: kubernetes.io/hostname
             weight: 2
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app.kubernetes.io/component: raptor-sidekiq-worker-for-toad-events
+                  app.kubernetes.io/component: raptor-sidekiq-worker-default
               namespaces: []
               topologyKey: topology.kubernetes.io/zone
             weight: 2
@@ -41,7 +39,7 @@ spec:
         - -c
         - $(RAILS_MAX_THREADS)
         - -q
-        - toad_events_processor
+        - default
         env:
         - name: DATABASE_URL
           valueFrom:
@@ -66,12 +64,12 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: rails_max_threads
-              name: raptor-sidekiq
+              name: raptor-sidekiq-default
         - name: DATABASE_STATEMENT_TIMEOUT
           valueFrom:
             configMapKeyRef:
               key: database_statement_timeout
-              name: raptor-sidekiq
+              name: raptor-sidekiq-default
         - name: WEB_CONCURRENCY
           valueFrom:
             configMapKeyRef:
@@ -109,10 +107,15 @@ spec:
             configMapKeyRef:
               key: github_graphql_url
               name: raptor
-        - name: ROLLBAR_ENV
+        - name: SENTRY_DSN
           valueFrom:
             configMapKeyRef:
-              key: rollbar_env
+              key: sentry_dsn
+              name: raptor
+        - name: SENTRY_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              key: sentry_environment
               name: raptor
         - name: NEW_RELIC_AGENT_ENABLED
           valueFrom:
@@ -164,6 +167,21 @@ spec:
             configMapKeyRef:
               key: action_cable_workers_pool_size
               name: raptor
+        - name: AUTH_ISSUER_URLS
+          valueFrom:
+            configMapKeyRef:
+              key: auth_issuer_urls
+              name: raptor
+        - name: AUTH_JWKS_URL
+          valueFrom:
+            configMapKeyRef:
+              key: auth_jwks_url
+              name: raptor
+        - name: AUTH0_TENANT
+          valueFrom:
+            configMapKeyRef:
+              key: auth0_tenant
+              name: raptor
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
@@ -203,11 +221,6 @@ spec:
             secretKeyRef:
               key: ld_sdk_key
               name: raptor
-        - name: ROLLBAR_ACCESS_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: rollbar_access_token
-              name: raptor
         - name: NEW_RELIC_LICENSE_KEY
           valueFrom:
             secretKeyRef:
@@ -243,14 +256,24 @@ spec:
             secretKeyRef:
               key: hubspot_api_key
               name: raptor
-        image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.3.3
+        - name: AUTH_MANAGEMENT_API_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: auth_management_api_client_id
+              name: raptor
+        - name: AUTH_MANAGEMENT_API_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: auth_management_api_client_secret
+              name: raptor
+        image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
             command:
             - /app/docker/sidekick-health-check
           periodSeconds: 60
-        name: raptor-sidekiq-worker-for-toad-events
+        name: raptor-sidekiq-worker
         resources:
           limits:
             cpu: 1000m

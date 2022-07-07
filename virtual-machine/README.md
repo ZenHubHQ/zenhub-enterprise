@@ -1,10 +1,10 @@
 <div align="center">
-  <img alt="ZenHub" src="logo-vm.png" width="500" />
+  <img alt="Zenhub" src="logo-vm.png" width="500" />
 </div>
 
 [Website](https://www.zenhub.com/) • [On-Premise](https://www.zenhub.com/enterprise) • [Releases](https://www.zenhub.com/enterprise/releases/) • [Blog](https://blog.zenhub.com/) • [Chat (Community Support)](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community)
 
-**ZenHub Enterprise On-Premise as a VM** is the only self-hosted, vm-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
+**Zenhub Enterprise On-Premise as a VM** is the only self-hosted, vm-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 
 ## Table of Contents
 
@@ -12,7 +12,7 @@
 - [2. Requirements](#2-requirements)
   - [2.1 Systems Administration Skills](#21-systems-administration-skills)
   - [2.2 GitHub Enterprise Server](#22-github-enterprise-server)
-  - [2.3 ZenHub Enterprise On-Premise License](#23-zenhub-enterprise-on-premise-license)
+  - [2.3 Zenhub Enterprise On-Premise License](#23-zenhub-enterprise-on-premise-license)
 - [3. Configuration](#3-configuration)
   - [3.1 Deploy the VM](#31-deploy-the-vm)
     - [3.1.1 Platforms](#311-platforms)
@@ -23,7 +23,7 @@
     - [3.2.2 Adding an SSH Key](#322-adding-an-ssh-key)
     - [3.2.3 SSH Known Issues](#323-ssh-known-issues)
     - [3.2.4 Configure a Static IP](#324-configure-a-static-ip)
-  - [3.3 Configure ZenHub](#33-configure-zenhub)
+  - [3.3 Configure Zenhub](#33-configure-zenhub)
     - [3.3.1 Required Values](#331-required-values)
     - [3.3.2 Optional Values](#332-optional-values)
   - [3.4 SSL/TLS Ingress Certificate](#34-ssltls-ingress-certificate)
@@ -40,7 +40,7 @@
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
   - [6.1 Tasks in the Admin UI](#61-tasks-in-the-admin-ui)
     - [6.1.1 Publishing the Chrome and Firefox Extensions](#611-publishing-the-chrome-and-firefox-extensions)
-    - [6.1.2 Setting the first ZenHub Admin (License Governance)](#612-setting-the-first-zenhub-admin-license-governance)
+    - [6.1.2 Setting the first Zenhub Admin (License Governance)](#612-setting-the-first-zenhub-admin-license-governance)
     - [6.1.3 Usage Report](#613-usage-report)
   - [6.2 Maintenance Mode](#62-maintenance-mode)
   - [6.3 Backup/Restore](#63-backuprestore)
@@ -65,9 +65,9 @@
 
 ## 1. Getting Started
 
-This README will be your guide to setting up ZenHub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set ZenHub up there, please go back to the [**k8s-cluster**](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using ZenHub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
+This README will be your guide to setting up Zenhub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set Zenhub up there, please go back to the [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using Zenhub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
 
-Thank you for your interest in ZenHub!
+Thank you for your interest in Zenhub!
 
 ## 2. Requirements
 
@@ -77,23 +77,23 @@ Basic systems administration skills are required for set-up. Those deploying the
 
 ### 2.2 GitHub Enterprise Server
 
-ZenHub Enterprise for VM requires a persistent connection to your own deployment of a recent version of [GitHub Enterprise Server](https://github.com/enterprise). You can find specific version compatibility information in the [release notes](https://github.com/zenhubhq/zenhub-enterprise/releases).
+Zenhub Enterprise for VM requires a persistent connection to your own deployment of a recent version of [GitHub Enterprise Server](https://github.com/enterprise). You can find specific version compatibility information in the [release notes](https://github.com/zenhubhq/zenhub-enterprise/releases).
 
-You will need to [set up an OAuth App](https://docs.github.com/en/developers/apps/creating-an-oauth-app) for ZenHub in your GitHub Enterprise Server. We recommend setting up the OAuth App under your primary GitHub Organization:
+You will need to [set up an OAuth App](https://docs.github.com/en/developers/apps/creating-an-oauth-app) for Zenhub in your GitHub Enterprise Server. We recommend setting up the OAuth App under your primary GitHub Organization:
 
->**Application name**: ZenHub Enterprise
+>**Application name**: Zenhub Enterprise
 >
 >**Homepage URL**: `https://<subdomain_suffix>.<domain_tld>`
 >
 >**Application description**:
 >
->> ZenHub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
+>> Zenhub Enterprise is the only self-hosted, Kubernetes-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 >
 >**Authorization callback URL**: `https://<subdomain_suffix>.<domain_tld>/api/auth/github/callback`
 
-### 2.3 ZenHub Enterprise On-Premise License
+### 2.3 Zenhub Enterprise On-Premise License
 
-ZenHub Enterprise On-Premise requires a license to run. This license is an encoded string that is entered as the `enterprise_license_token` secret in the main configuration file. Please contact your Customer Success Manager to receive your token. For new customers, please visit https://www.zenhub.com/enterprise to get in touch with us.
+Zenhub Enterprise On-Premise requires a license to run. This license is an encoded string that is entered as the `enterprise_license_token` secret in the main configuration file. Please contact your Customer Success Manager to receive your token. For new customers, please visit https://www.zenhub.com/enterprise to get in touch with us.
 
 ## 3. Configuration
 
@@ -120,9 +120,9 @@ For **VMware**, **Azure**, **KVM**, **GCP** or **Hyper-V**, indicate the desired
 
 #### 3.1.2 Hardware Sizes
 
-When deploying ZenHub on your VM, ZenHub will check the available hardware resources and scale itself accordingly in order to give your users the most performant ZenHub experience. Out of the box, ZenHub for VM supports the following hardware configurations.
+When deploying Zenhub on your VM, Zenhub will check the available hardware resources and scale itself accordingly in order to give your users the most performant Zenhub experience. Out of the box, Zenhub for VM supports the following hardware configurations.
 
-> ⚠️ **NOTE:** User count is an approximation and your use may vary depending on the usage of ZenHub per user.
+> ⚠️ **NOTE:** User count is an approximation and your use may vary depending on the usage of Zenhub per user.
 
 | Number of Users | vCPUs                               | Memory | Disk         |
 | --------------- | ----------------------------------- | ------ | ------------ |
@@ -131,12 +131,12 @@ When deploying ZenHub on your VM, ZenHub will check the available hardware resou
 | 1000-5000       | 16                                  | 64GB   | 500GB+ (SSD) |
 | 5000+           | [Contact us](enterprise@zenhub.com) |        |              |
 
-> ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to ZenHub, as well as how many backups you are storing on the VM. At 95% disk utilization, container images will start being removed from containerd, with the least recently used images being removed first. Eventually, if disk space is not increased, the kubelet will be forced to remove images that are essential to the running of ZenHub and you will see pods in the **Evicted** state. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
+> ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to Zenhub, as well as how many backups you are storing on the VM. At 95% disk utilization, container images will start being removed from containerd, with the least recently used images being removed first. Eventually, if disk space is not increased, the kubelet will be forced to remove images that are essential to the running of Zenhub and you will see pods in the **Evicted** state. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
 
-> ⚠️ **NOTE:** The ZenHub Enterprise OVA for VMware is pre-configured with a 60GB data filesystem and a 20GB root filesystem on ZHE 3.1 and 3.2. ZHE 3.3 and greater is pre-configured with a 30GB root volume. If you launch a VM with a 500GB volume, you will need to [expand the filesystems](#67-disk-management) to occupy the extra space. 
+> ⚠️ **NOTE:** The Zenhub Enterprise OVA for VMware is pre-configured with a 60GB data filesystem and a 20GB root filesystem on ZHE 3.1 and 3.2. ZHE 3.3 and greater is pre-configured with a 30GB root volume. If you launch a VM with a 500GB volume, you will need to [expand the filesystems](#67-disk-management) to occupy the extra space.
 #### 3.1.3 Ports
 
-Below, we've summarized the list of ports and firewall rules that the ZenHub Enterprise VM will need to function in your network.
+Below, we've summarized the list of ports and firewall rules that the Zenhub Enterprise VM will need to function in your network.
 
 | Type   | Protocol | Port Range | Source                         |
 | ------ | -------- | ---------- | ------------------------------ |
@@ -169,7 +169,7 @@ SSH RSA Public KEY (ssh-rsa AbC123xYz...):
 Another way is to import a key from another computer/workstation
 
 ```bash
-ssh-copy-id -i <path_to_key> zenhub@<ZenHub_VM_IP>
+ssh-copy-id -i <path_to_key> zenhub@<Zenhub_VM_IP>
 ```
 
 #### 3.2.3 SSH Known Issues
@@ -180,14 +180,14 @@ ssh-copy-id -i <path_to_key> zenhub@<ZenHub_VM_IP>
 Some errors while using `ssh-copy-id` or connecting using password can be be caused by multiple ssh keys loaded in the computer/workstation ssh agent. The flags `PreferredAuthentications=password` and `PubkeyAuthentication=no` can be added to the command to fix the issue.
 
 ```bash
-ssh-copy-id -o PreferredAuthentications=password -o PubkeyAuthentication=no -i <path_to_key> zenhub@<ZenHub_VM_IP>
+ssh-copy-id -o PreferredAuthentications=password -o PubkeyAuthentication=no -i <path_to_key> zenhub@<Zenhub_VM_IP>
 ```
 
 #### 3.2.4 Configure a Static IP
 
-By default, ZenHub Enterprise 3 uses the dynamic host configuration protocol (DHCP) for DNS settings when DHCP leases provide nameservers.
+By default, Zenhub Enterprise 3 uses the dynamic host configuration protocol (DHCP) for DNS settings when DHCP leases provide nameservers.
 
-> Your nameservers must resolve your ZenHub Enterprise instance's hostname.
+> Your nameservers must resolve your Zenhub Enterprise instance's hostname.
 
 If a static IP is required, use the provided configuration tool and provide the required information:
 
@@ -207,7 +207,7 @@ After running these commands, you will either need to reboot your instance, or r
 
 > ⚠️ **NOTE:** If you are remotely connected to your instance (with SSH for example) and you change your instance's IP via the method above, you will be ejected from your connected session.
 
-### 3.3 Configure ZenHub
+### 3.3 Configure Zenhub
 
 Access the VM and create a `YAML` configuration file using the below example. Details about what values to set can be found in [section 3.3.1](#331-required-values) below the example.
 
@@ -224,7 +224,7 @@ zenhub_configuration:
   ADMIN_UI_PASS:
   CHROME_EXTENSION_WEBSTORE_URL:
   MANIFEST_FIREFOX_ID: zenhub-enterprise@<your-company-domain.com>
-  
+
 ## Optional configurations
 
 # ssl_self_signed: true
@@ -249,23 +249,23 @@ zenhub_configuration:
 
 ### 3.3.1 Required Values
 
-- `DOMAIN_TLD` : Set your top-level domain where ZenHub will be served from. This is used to tell the ZenHub webapp how to
-  reach the ZenHub APIs.
-- `SUBDOMAIN_SUFFIX` : Set the subdomain that ZenHub will be served from, or leave as default "zenhub" value.
+- `DOMAIN_TLD` : Set your top-level domain where Zenhub will be served from. This is used to tell the Zenhub webapp how to
+  reach the Zenhub APIs.
+- `SUBDOMAIN_SUFFIX` : Set the subdomain that Zenhub will be served from, or leave as default "zenhub" value.
 - `GITHUB_HOSTNAME` : Make sure the value includes `https://` and does not have a trailing slash.
-- `GITHUB_APP_ID` : Specify the OAuth App ID for the ZenHub application. See here for instructions on how to setup an OAuth
+- `GITHUB_APP_ID` : Specify the OAuth App ID for the Zenhub application. See here for instructions on how to setup an OAuth
   app on your GitHub server: https://docs.github.com/en/developers/apps/creating-an-oauth-app
 - `GITHUB_APP_SECRET` : The OAuth secret value that corresponds with the above OAuth App ID.
-- `ENTERPRISE_LICENSE_TOKEN` : The ZenHub license (JWT) you should have received by email from the ZenHub team. If you do not have a license, reach out to enterprise@zenhub.com.
-- `ADMIN_UI_PASS` : The password to the ZenHub Admin UI, which runs on port 8443 and is used to execute a number of administrative tasks such as publishing extensions, usage reporting, creating a ZenHub Admin for license administration.
-- `CHROME_EXTENSION_WEBSTORE_URL` : The URL of your published Chrome extension. If you have not published a ZenHub extension before, this will be blank for your first configuration. After publishing the extension, set this variable and re-run your configuration to activate the Chrome extension installation link on ZenHub's landing page.
+- `ENTERPRISE_LICENSE_TOKEN` : The Zenhub license (JWT) you should have received by email from the Zenhub team. If you do not have a license, reach out to enterprise@zenhub.com.
+- `ADMIN_UI_PASS` : The password to the Zenhub Admin UI, which runs on port 8443 and is used to execute a number of administrative tasks such as publishing extensions, usage reporting, creating a Zenhub Admin for license administration.
+- `CHROME_EXTENSION_WEBSTORE_URL` : The URL of your published Chrome extension. If you have not published a Zenhub extension before, this will be blank for your first configuration. After publishing the extension, set this variable and re-run your configuration to activate the Chrome extension installation link on Zenhub's landing page.
 - `MANIFEST_FIREFOX_ID` : The UUID used by the FireFox add-on store to uniquely identify your FireFox extension. Ex. zenhub-enterprise@your-company-domain.com
 
 > ⚠️ **NOTE:** Always use the same `MANIFEST_FIREFOX_ID`. This enables your users to receive an automatic update rather than reinstalling the extension. You can find this value in the [Mozilla Add-On Developer Hub](https://addons.mozilla.org/developers/) by clicking Edit Product Page and scrolling down to UUID on your existing extension.
 
 ### 3.3.2 Optional Values
 
-- `ssl_self_signed`: To deploy ZenHub with a self-signed SSL certificate
+- `ssl_self_signed`: To deploy Zenhub with a self-signed SSL certificate
 - `ssh_keys`: SSH key(s) to be included as authorized_keys
 - `ip`: Configure the VM to use static IP
 - `chrony`: Configure the VM to use custom NTP servers for your environment
@@ -292,7 +292,7 @@ Run the configuration tool with your completed configuration file:
 zhe-config --config-file <configuration_file_full_path>
 ```
 
-> Your ZenHub Enterprise application will then configure itself and start up.
+> Your Zenhub Enterprise application will then configure itself and start up.
 
 ### 4.2 Sanity Check
 
@@ -304,9 +304,9 @@ sudo kubectl -n zenhub get pods
 
 ### 4.3 Application Check
 
-To verify that your deployment was successful, you should be able to visit the ZenHub application, log into the web app, load/create a Workspace, and see a board with issues.
+To verify that your deployment was successful, you should be able to visit the Zenhub application, log into the web app, load/create a Workspace, and see a board with issues.
 
-Additionally, a good test is to open ZenHub in two separate browser tabs. In tab #1, move an issue on the board from one pipeline to another. Check tab #2 to verify that the issue moved.
+Additionally, a good test is to open Zenhub in two separate browser tabs. In tab #1, move an issue on the board from one pipeline to another. Check tab #2 to verify that the issue moved.
 
 ### 4.4 Publish the Chrome and Firefox Extensions
 
@@ -318,11 +318,11 @@ See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for instr
 
 #### 5.1.1 Update
 
-Update Docker images, Kubernetes manifests, and install system-wide updates for the ZenHub application.
+Update Docker images, Kubernetes manifests, and install system-wide updates for the Zenhub application.
 
 > Before updating, perform a data backup `zhe-config --backup`
 
-1. Download the latest ZenHub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com)):
+1. Download the latest Zenhub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com)):
 
 ```bash
 curl -o zhe_upgrade.run "<link-to-upgrade-bundle>"
@@ -339,13 +339,13 @@ bash zhe_upgrade.run
 
 4. Answer the update prompts. If you would like to install available OS updates, answer 'y' to `Proceed with OS and system wide updates?`
 
-5. Wait for ZenHub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with ZenHub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
+5. Wait for Zenhub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with Zenhub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
 
 6. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
 
 #### 5.1.2 Rollback
 
-If you have any problems with ZenHub after installing an update, you can quickly rollback to your most recent application version using the automated application backup taken at the start of your upgrade.
+If you have any problems with Zenhub after installing an update, you can quickly rollback to your most recent application version using the automated application backup taken at the start of your upgrade.
 
 > ⚠️ **NOTE:** If you have already published the extensions after updating, rolling back the application may break your extensions.
 
@@ -368,32 +368,32 @@ Debian utility `unattended-upgrades` is enabled and setup to automatically apply
 
 ### 6.1 Tasks in the Admin UI
 
-ZenHub Enterprise comes with an Admin UI that is used for a number of administrative tasks best suited to a visual user interface. On ZenHub Enterprise for VMs, this Admin UI runs on port 8443 of the application URL: `https://<subdomain_suffix>`.`<domain_tld>:8443`. This application is separate from the main ZenHub application, and since it runs on port 8443 you may use network access controls to expose this application to your system administrators only.
+Zenhub Enterprise comes with an Admin UI that is used for a number of administrative tasks best suited to a visual user interface. On Zenhub Enterprise for VMs, this Admin UI runs on port 8443 of the application URL: `https://<subdomain_suffix>`.`<domain_tld>:8443`. This application is separate from the main Zenhub application, and since it runs on port 8443 you may use network access controls to expose this application to your system administrators only.
 
 #### 6.1.1 Publishing the Chrome and Firefox Extensions
 
-There are two methods to interact with the ZenHub UI:
+There are two methods to interact with the Zenhub UI:
 
-- The ZenHub web app
-- The ZenHub browser extensions for Chrome and Firefox, which allows users access to the power of ZenHub from within the UI of GitHub Enterprise
+- The Zenhub web app
+- The Zenhub browser extensions for Chrome and Firefox, which allows users access to the power of Zenhub from within the UI of GitHub Enterprise
 
 To use the extensions with GitHub Enterprise, you must publish your own versions of them. The first time you publish the extensions, you will need to set up a Chrome Developer account and a Mozilla Developer account before creating a new extension in each platform. When application updates are applied, you will publish updates to the _existing_ extension on each platform.
 
-For detailed instructions, please visit the ZenHub Enterprise Admin UI (`https://<subdomain_suffix>`.`<domain_tld>:8443`).
+For detailed instructions, please visit the Zenhub Enterprise Admin UI (`https://<subdomain_suffix>`.`<domain_tld>:8443`).
 
 > ⚠️ **NOTE:** After the Chrome extension is published, you will need to get the URL of the published extension and put it into your configuration file as `CHROME_EXTENSION_WEBSTORE_URL`. With this value entered, re-run your configuration. This will ensure the link to download the Chrome extension on the application landing page is active.
 
-#### 6.1.2 Setting the first ZenHub Admin (License Governance)
+#### 6.1.2 Setting the first Zenhub Admin (License Governance)
 
-ZenHub provides a method of license governance that is enforced across the entire set of GitHub Enterprise users. By default, any user of the connected GitHub Enterprise Server can access, install, and use ZenHub Enterprise On-Premise. If you would like to control access to ZenHub, you will need to promote one or more users to be ZenHub Admins.
+Zenhub provides a method of license governance that is enforced across the entire set of GitHub Enterprise users. By default, any user of the connected GitHub Enterprise Server can access, install, and use Zenhub Enterprise On-Premise. If you would like to control access to Zenhub, you will need to promote one or more users to be Zenhub Admins.
 
-ZenHub Admins can be created from the Admin UI (`https://<subdomain_suffix>`.`<domain_tld>:8443/settings`). This mechanism exists to ensure only a privileged user can create the first ZenHub Admin. Existing ZenHub Admins can also promote existing ZenHub users to Admin from within the ZenHub web app.
+Zenhub Admins can be created from the Admin UI (`https://<subdomain_suffix>`.`<domain_tld>:8443/settings`). This mechanism exists to ensure only a privileged user can create the first Zenhub Admin. Existing Zenhub Admins can also promote existing Zenhub users to Admin from within the Zenhub web app.
 
 For more information on License Governance, please view [this article](https://help.zenhub.com/support/solutions/articles/43000559760-license-governance-in-zenhub-enterprise) in our Help Center.
 
 #### 6.1.3 Usage Report
 
-Since ZenHub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your ZenHub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<subdomain_suffix>.<domain_tld>:8443/usage` and sent to enterprise@zenhub.com.
+Since Zenhub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your Zenhub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<subdomain_suffix>.<domain_tld>:8443/usage` and sent to enterprise@zenhub.com.
 
 ### 6.2 Maintenance Mode
 
@@ -401,7 +401,7 @@ When operating a ZHE3 deployment, you may face situations in which you would lik
 
 Maintenance mode can be enabled in two ways:
 
-1. _Automatically_, when ZenHub detects that GitHub is in maintenance mode. ZenHub checks GitHub for this status every 30 seconds.
+1. _Automatically_, when Zenhub detects that GitHub is in maintenance mode. Zenhub checks GitHub for this status every 30 seconds.
 2. _Manually_, when a system administrator determines it necessary to gracefully block user access to the application.
 
 Enable maintenance mode:
@@ -418,7 +418,7 @@ zhe-config --maintenance disable
 
 ### 6.3 Backup/Restore
 
-ZenHub snapshots contain database data and files/images uploaded to the ZenHub web app by users.
+Zenhub snapshots contain database data and files/images uploaded to the Zenhub web app by users.
 
 #### 6.3.1 Backup
 
@@ -437,11 +437,11 @@ zhe-config --backup
 Restores require the existing databases to be dumped and started fresh. The restore script executes the following process:
 
 1. Configure the persistent volumes to be recycled
-2. Abruptly shut down all ZenHub containers
+2. Abruptly shut down all Zenhub containers
 3. Delete all databases/caches and associated volumes (all their data)
 4. Create new databases/caches
 5. Restore the snapshots in the databases
-6. Restart ZenHub containers
+6. Restart Zenhub containers
 
 ```bash
 zhe-config --restore <snapshot_name>
@@ -462,16 +462,16 @@ It will generate an archive to be found under `${ZENHUB_HOME}/support-bundle`. P
 ### 6.5 VM Size Changes
 > ⚠️ **NOTE:** For hard drive size changes, see section [6.7](#67-disk-management)
 
-If you have increased or decreased the amount of CPUs or RAM available to your VM running ZenHub Enterprise, you can use the `zhe-config` tool to scale the application to fit the new hardware size. Here is the general re-size process to follow:
+If you have increased or decreased the amount of CPUs or RAM available to your VM running Zenhub Enterprise, you can use the `zhe-config` tool to scale the application to fit the new hardware size. Here is the general re-size process to follow:
 
-1. SSH onto your ZenHub VM and put ZenHub into maintenance mode
+1. SSH onto your Zenhub VM and put Zenhub into maintenance mode
 
 ```bash
 zhe-config --maintenance enable
 ```
 
 2. Re-size your VM according to your hosting provider's instructions
-3. SSH onto your ZenHub VM and scale ZenHub
+3. SSH onto your Zenhub VM and scale Zenhub
 
 ```bash
 zhe-config --reload
@@ -479,7 +479,7 @@ zhe-config --reload
 
 ### 6.6 Configuring a Secondary VM
 
-If you would like set up a secondary ZenHub Enterprise VM for staging or disaster recovery, it is important to configure it correctly so that the configuration values are compatible with the data being restored from the primary VM.
+If you would like set up a secondary Zenhub Enterprise VM for staging or disaster recovery, it is important to configure it correctly so that the configuration values are compatible with the data being restored from the primary VM.
 
 1. Follow sections [3.1](#31-deploy-the-vm) and [3.2](#32-configure-access-and-network) to deploy your secondary VM
 2. Copy `/opt/zenhub/configuration/internal.secret.env` from your primary VM and place it on your secondary VM at the same folder location
@@ -492,12 +492,12 @@ Repeat the backup and restore steps as regularly as desired to keep your seconda
 
 ### 6.7 Disk Management
 
-ZenHub Enterprise for VM makes use of local storage for databases, files, pictures, application images, a local registry, etc. It is important that your disk usage is kept below 90% to keep the OS and application running smoothly.
+Zenhub Enterprise for VM makes use of local storage for databases, files, pictures, application images, a local registry, etc. It is important that your disk usage is kept below 90% to keep the OS and application running smoothly.
 
 Disk management varies between different hosts, and you are responsible for managing your disk usage. We have provided some tools and documentation to assist you.
 
 #### 6.7.1 Viewing Disk Usage
-Check the disk usage on ZenHub Enterprise for VM is via the command below, which omits displaying the overlay and temp filesystems used and managed by K3S.
+Check the disk usage on Zenhub Enterprise for VM is via the command below, which omits displaying the overlay and temp filesystems used and managed by K3S.
 
 ```bash
 df -h -x tmpfs -x overlay
@@ -539,19 +539,19 @@ sudo pvcreate /dev/sda<new-partition-number>   (eg. /dev/sda5)
   4. Extend the volume group
 
   ```bash
-  vgextend ubuntu-vg /dev/sda<new-partition-number>
+  sudo vgextend ubuntu-vg /dev/sda<new-partition-number>
   ```
 
   5. Extend the logical volume
 
   ```bash
-  lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv /dev/sda<new-partition-number>
+  sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv /dev/sda<new-partition-number>
   ```
 
   6. Resize the filesystem
 
   ```bash
-  resize2fs /dev/ubuntu-vg/ubuntu-lv
+  sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
   ```
 </details>
 
@@ -561,26 +561,26 @@ sudo pvcreate /dev/sda<new-partition-number>   (eg. /dev/sda5)
   4. Extend the volume group
 
   ```bash
-  vgextend data-vg /dev/sda<new-partition-number>
+  sudo vgextend data-vg /dev/sda<new-partition-number>
   ```
 
   5. Extend the logical volume
 
   ```bash
-  lvextend -l +100%FREE /dev/data-vg/data-lv /dev/sda<new-partition-number>
+  sudo lvextend -l +100%FREE /dev/data-vg/data-lv /dev/sda<new-partition-number>
   ```
 
   6. Resize the filesystem
 
   ```bash
-  resize2fs /dev/data-vg/data-lv
+  sudo resize2fs /dev/data-vg/data-lv
   ```
 </details>
 
 Once you have completed the steps above, the system will be using the extra disk space you have added.
 
 #### 6.7.3 Recovery From Low Disk Space Outage
-If your root or /opt filesystem reaches 90% disk capacity, the kubernetes scheduler can start deleting images and evicting pods. If this occurs, ZenHub will not function.
+If your root or /opt filesystem reaches 90% disk capacity, the kubernetes scheduler can start deleting images and evicting pods. If this occurs, Zenhub will not function.
 
 Clear disk space, or increase the available disk space using the steps in section [6.7.2](#672-increasing-disk-space), and then run the following command to reload any deleted images back into your VM's local registry:
 
@@ -588,8 +588,15 @@ Clear disk space, or increase the available disk space using the steps in sectio
 zhe-config --images-import
 ```
 
+Then, delete the `Evicted` pods, which can cause issues with upgrades if not removed:
+
+```bash
+sudo su
+kubectl -n zenhub get pods | grep Evicted | awk '{print $1}' | xargs kubectl -n zenhub delete pod
+```
+
 ### 6.8 License Renewal
-The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for ZenHub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to apply your new license.
+The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for Zenhub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to apply your new license.
 
 1. Update the value for `ENTERPRISE_LICENSE_TOKEN`
 ```bash
@@ -608,10 +615,10 @@ The configuration tool `zhe-config` has been included to help with various admin
 
 ```bash
 *********************************
-*** ZenHub Configuration Tool ***
+*** Zenhub Configuration Tool ***
 *********************************
 
-A tool for configuring, deploying, and managing your ZenHub Enterprise appliance.
+A tool for configuring, deploying, and managing your Zenhub Enterprise appliance.
 
 Usage:
   zhe-config [Options]
@@ -624,33 +631,33 @@ Options:
   --backup                        Create a backup of databases and files
   --chrony-ntp                    Set custom NTP servers in chrony
   --config-example                Show a configuration file example
-  --config-file   FILE_PATH       Deploy ZenHub from a configuration file
+  --config-file   FILE_PATH       Deploy Zenhub from a configuration file
   --dhcp                          Configure VM to use DHCP
   --help                          Show this help message
   --images-import                 Re import container images
   --maintenance   enable|disable  Enable or disable maintenance mode
-  --reload                        Redeploys ZenHub using last configuration
+  --reload                        Redeploys Zenhub using last configuration
                                   and scale application based on hardware resources available
   --restore       BACKUP_NAME     Restore from a backup in /opt/snapshots
   --support-bundle                Generate a support bundle
   --sshkey                        Add an SSH key manually
   --staticip                      Configure VM to use static IP
-  --update-tls                    Update ZenHub to use new TLS cert and key placed at:
+  --update-tls                    Update Zenhub to use new TLS cert and key placed at:
                                   /opt/zenhub/configuration/ssl/tls.crt
                                   /opt/zenhub/configuration/ssl/tls.key
   --update-license  FILE_PATH     Update license from configuration file with updated ENTERPRISE_LICENSE_TOKEN
-  --version                       Display ZenHub Version
+  --version                       Display Zenhub Version
 
-More details about ZenHub configuration can be found at:
-https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/virtual-machine
+More details about Zenhub configuration can be found at:
+https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/virtual-machine
 ```
 
 ## 8. Logs
 
-ZenHub Logs are available `/var/log/zenhub/<type>.<service_name>.log`, archived daily as
+Zenhub Logs are available `/var/log/zenhub/<type>.<service_name>.log`, archived daily as
 `/var/log/zenhub/<type>.<service_name>.log.tar.gz.<date>` and rotated weekly.
 
-`<type>` is either `database` or `application`. `service_name` refers to a different component of ZenHub Enterprise
+`<type>` is either `database` or `application`. `service_name` refers to a different component of Zenhub Enterprise
 (in short, a different container).
 
 ### 8.1 Sending Logs to an External Log Aggregator
@@ -659,7 +666,7 @@ Internally, [Fluentd](https://www.fluentd.org/) is used to collect logs, and you
 
 Fluentd offers a wide range of [output plugins](https://www.fluentd.org/plugins/all#input-output) like AWS Cloudwatch, GCP Stack Driver, New Relic, Logz.io, and more.
 
-Once you found the plugin for your need, follow the steps below to configure ZenHub to forward logs.
+Once you found the plugin for your need, follow the steps below to configure Zenhub to forward logs.
 
 #### 8.1.1 Enhance the Fluentd Configuration
 
@@ -724,7 +731,7 @@ kubectl -n kube-system logs -f -l "app.kubernetes.io/name=fluentd-logging" --tai
 
 - Login in the app, generate some changes and you should see them appear in your external log aggregator.
 
-> Disclaimer: At the moment, the ZenHub upgrade process overrides `${ZENHUB_HOME}/kustomizations/fluentd`. You will have to repeat section 6.1.3 after a ZenHub upgrade if you are running the `prepare-cluster.sh` script or wish to restart Fluentd.
+> Disclaimer: At the moment, the Zenhub upgrade process overrides `${ZENHUB_HOME}/kustomizations/fluentd`. You will have to repeat section 6.1.3 after a Zenhub upgrade if you are running the `prepare-cluster.sh` script or wish to restart Fluentd.
 
 ### 8.2 Reverting to the Default Log Configuration
 

@@ -78,10 +78,15 @@ spec:
             configMapKeyRef:
               key: github_graphql_url
               name: raptor
-        - name: ROLLBAR_ENV
+        - name: SENTRY_DSN
           valueFrom:
             configMapKeyRef:
-              key: rollbar_env
+              key: sentry_dsn
+              name: raptor
+        - name: SENTRY_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              key: sentry_environment
               name: raptor
         - name: NEW_RELIC_AGENT_ENABLED
           valueFrom:
@@ -137,11 +142,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: ld_sdk_key
-              name: raptor
-        - name: ROLLBAR_ACCESS_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: rollbar_access_token
               name: raptor
         - name: NEW_RELIC_LICENSE_KEY
           valueFrom:

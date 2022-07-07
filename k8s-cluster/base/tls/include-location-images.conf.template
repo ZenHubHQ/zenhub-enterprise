@@ -38,3 +38,7 @@ location /images/ {
     proxy_ssl_verify        off;
     proxy_ssl_server_name   on;
 }
+
+location = /images/ {
+  return 403;
+}
