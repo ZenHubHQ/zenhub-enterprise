@@ -139,6 +139,17 @@ spec:
     spec:
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
 ---
 apiVersion: batch/v1
 kind: Job

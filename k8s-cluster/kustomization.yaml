@@ -102,8 +102,10 @@ secretGenerator:
   - name: configuration
     behavior: merge
     literals:
-      # [EDIT] The full standard full credentials URI for PostgreSQL
-      - postgres_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/raptor_production
+      # [EDIT] Fill in postgres_username and postgres_password for PGBouncer connection pooler
+      - postgres_url=postgresql://<postgres_username>:<postgres_password>@pgbouncer:5432/raptor_production?sslmode=disable
+      # [EDIT] The full standard credentials URI for PostgreSQL to be provided to pgbouncer to make connections to PostgreSQL
+      - pgbouncer_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/raptor_production
       # [EDIT] The full standard full credentials URI for MongoDB
       - mongo_url=mongodb://<mongo_username>:<mongo_password>@<mongo_hostname>:<mongo_port>/zenhub
       # [EDIT] The full standard full credentials URI for Redis
@@ -120,12 +122,11 @@ secretGenerator:
       - enterprise_license_token=<zhe-license-jwt>
       # [EDIT] Admin-UI password
       - admin_ui_pass=<some_pass>
-  # [EDIT] Certificates for Postgres DB SSL/TLS.
-  # [NOTE] If you use this you must add "?sslmode=verify-ca&sslrootcert=/var/ca-bundle/postgres/<some_pem>" to the end of postgres_url
-  # - name: postgres-ca-bundle
-  #   behavior: replace
-  #   files:
-  #     - <some_path>/<some_pem>
+  # [EDIT] Certificate for Postgres DB SSL/TLS.
+  - name: postgres-ca-bundle
+    behavior: replace
+    files:
+      - <some_path>/postgres-ca.pem
   # [EDIT] Certificates for MongoDB SSL/TLS.
   # [NOTE] If you use this you must add "?tls=true&tlsCAFile=/var/ca-bundle/mongo/<some_pem>" to the end of mongo_url
   # - name: mongo-ca-bundle

@@ -65,6 +65,13 @@ vars:
       apiVersion: v1
     fieldref:
       fieldpath: data.postgres_url
+  - name: pgbouncer_url_from_secret_configuration
+    objref:
+      kind: Secret
+      name: configuration
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.pgbouncer_url
   - name: mongo_url_from_secret_configuration
     objref:
       kind: Secret

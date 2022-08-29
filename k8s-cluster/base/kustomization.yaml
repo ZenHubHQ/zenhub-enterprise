@@ -10,6 +10,7 @@ resources:
   - toad
   # - admin-ui
   - tls
+  - pgbouncer
 
 # temporary dirty hack, until https://app.zenhub.com/workspaces/devops-5b9af195dfeccd3433cd71b3/issues/zenhubhq/devops/663 is tackled
 # this should not be in enterprise/base (since ZHE vanilla doesn't need this)

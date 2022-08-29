@@ -248,6 +248,28 @@ spec:
             secretName: postgres-ca-bundle
 
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: pgbouncer
+    app.kubernetes.io/name: pgbouncer
+  name: pgbouncer
+spec:
+  template:
+    spec:
+      containers:
+        - name: pgbouncer
+          volumeMounts:
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
