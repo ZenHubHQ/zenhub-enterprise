@@ -17,6 +17,8 @@ patchesStrategicMerge:
 # - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
+# - options/pgbouncer/pgbouncer-config.yaml #! Enable if custom configuration is required for pgbouncer (connection and pool limits, etc).
+                                            #! See documentation in options/pgbouncer/README.md to make configuration changes.
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
@@ -133,6 +135,19 @@ secretGenerator:
   #   behavior: replace
   #   files:
   #     - <some_path>/<some_pem>
+
+  # [EDIT] If you need admin access to pgbouncer to view pools, connections, etc. and the username that you use to connect to postgres is not named "postgres".
+  # [IMPORTANT NOTE] See documentation in options/pgbouncer/README.md to make configuration changes.
+  # - name: pgbouncer-userlist
+  #   files:
+  #     - options/pgbouncer/userlist.txt
+  #   options:
+  #     disableNameSuffixHash: true
+  # - name: pgbouncer-ini
+  #   files:
+  #     - options/pgbouncer/pgbouncer.ini
+  #   options:
+  #     disableNameSuffixHash: true
 
   - name: internal
     # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer
