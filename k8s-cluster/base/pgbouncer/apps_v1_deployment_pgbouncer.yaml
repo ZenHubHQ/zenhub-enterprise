@@ -57,10 +57,10 @@ spec:
         resources:
           limits:
             cpu: 1000m
-            memory: 1G
+            memory: 4G
           requests:
-            cpu: 100m
-            memory: 100M
+            cpu: 500m
+            memory: 1G
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
