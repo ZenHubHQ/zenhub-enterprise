@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - ingress.yaml
   - ingress-websocket.yaml
-  - ingress-cable.yaml

@@ -1,0 +1,209 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration
+spec:
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      imagePullSecrets: # remove-if-custom-registry
+        - name: zenhub-docker-registry-credentials # remove-if-custom-registry
+      containers:
+        - args:
+            - bundle
+            - exec
+            - rake
+            - db:setup_or_migrate_safely
+          env:
+            - name: MONGO_IS_DOCUMENTDB
+              valueFrom:
+                configMapKeyRef:
+                  key: mongo_is_documentdb
+                  name: configuration
+            - name: MIGRATIONS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  key: postgres_url
+                  name: configuration
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  key: postgres_url
+                  name: configuration
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: raptor_redis_password
+                  name: internal
+            - name: CACHE_REDIS_URL
+              value: redis://default:$(REDIS_PASSWORD)@cache-raptor-redis-master:6379/0
+            - name: ENTERPRISE_LICENSE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: enterprise_license_token
+                  name: configuration
+            - name: DATABASE_STATEMENT_TIMEOUT
+              value: 120s
+            - name: SAFETY_ASSURED
+              value: "1"
+            - name: RUBYOPT
+              value: -W0
+            - name: RAILS_ENV
+              valueFrom:
+                configMapKeyRef:
+                  key: rails_env
+                  name: raptor
+            - name: RAILS_LOG_TO_STDOUT
+              valueFrom:
+                configMapKeyRef:
+                  key: rails_log_to_stdout
+                  name: raptor
+            - name: LOG_JSON
+              valueFrom:
+                configMapKeyRef:
+                  key: log_json
+                  name: raptor
+            - name: GITHUB_HTML_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: github_html_url
+                  name: raptor
+            - name: GITHUB_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: github_api_url
+                  name: raptor
+            - name: GITHUB_GRAPHQL_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: github_graphql_url
+                  name: raptor
+            - name: ROLLBAR_ENV
+              valueFrom:
+                configMapKeyRef:
+                  key: rollbar_env
+                  name: raptor
+            - name: NEW_RELIC_AGENT_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  key: new_relic_agent_enabled
+                  name: raptor
+            - name: NEW_RELIC_APP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  key: new_relic_app_name
+                  name: raptor
+            - name: LD_OFFLINE
+              valueFrom:
+                configMapKeyRef:
+                  key: ld_offline
+                  name: raptor
+            - name: IS_ENTERPRISE
+              valueFrom:
+                configMapKeyRef:
+                  key: is_enterprise
+                  name: raptor
+            - name: SIDEKIQ_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  key: redis_url
+                  name: configuration
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  key: secret_key_base
+                  name: internal
+            - name: LOCKBOX_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: lockbox_master_key
+                  name: internal
+            - name: GITHUB_TOKEN_VALUE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: github_token_value_key
+                  name: internal
+            - name: GITHUB_WEBHOOKS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: github_webhooks_secret
+                  name: internal
+            - name: INTERNAL_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: internal_auth_token
+                  name: internal
+            - name: LD_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: ld_sdk_key
+                  name: raptor
+            - name: ROLLBAR_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: rollbar_access_token
+                  name: raptor
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: new_relic_license_key
+                  name: raptor
+            - name: TOAD_MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  key: mongo_url
+                  name: configuration
+            - name: TOAD_RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  key: rabbitmq_url
+                  name: configuration
+            - name: RAILS_MAX_THREADS
+              valueFrom:
+                configMapKeyRef:
+                  key: rails_max_threads
+                  name: raptor-migrate
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: WEB_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  key: web_concurrency
+                  name: raptor-migrate
+            - name: CABLE_URL
+              value: ""
+            - name: CABLE_REDIS_URL
+              value: ""
+            - name: CABLE_ALLOWED_ORIGINS
+              value: ""
+            - name: ACTION_CABLE_WORKERS_POOL_SIZE
+              value: ""
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.4.1
+          imagePullPolicy: Always
+          name: raptor-db-migrate
+          resources:
+            limits:
+              cpu: "1"
+              memory: 8Gi
+            requests:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - mountPath: /var/ca-bundle/mongo
+              name: mongo-ca-bundle
+              readOnly: true
+            - mountPath: /var/ca-bundle/postgres
+              name: postgres-ca-bundle
+              readOnly: true
+      volumes:
+        - name: mongo-ca-bundle
+          secret:
+            secretName: mongo-ca-bundle
+        - name: postgres-ca-bundle
+          secret:
+            secretName: postgres-ca-bundle
+      restartPolicy: Never
