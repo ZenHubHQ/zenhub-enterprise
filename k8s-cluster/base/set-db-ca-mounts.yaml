@@ -221,7 +221,7 @@ spec:
         - name: postgres-ca-bundle
           secret:
             secretName: postgres-ca-bundle
-
+            
 ---
 apiVersion: apps/v1
 kind: Deployment

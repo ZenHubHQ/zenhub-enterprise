@@ -84,12 +84,12 @@ spec:
     spec:
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
-
+        
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: raptor-sidekiq-worker
+  name: raptor-sidekiq-worker-default
 spec:
   template:
     spec:
@@ -100,7 +100,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: raptor-sidekiq-worker-default
+  name: raptor-sidekiq-worker
 spec:
   template:
     spec:
