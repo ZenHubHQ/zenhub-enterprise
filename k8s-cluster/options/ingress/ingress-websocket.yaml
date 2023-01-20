@@ -15,7 +15,7 @@ metadata:
       }
 spec:
   rules:
-    - host: "$(subdomain_suffix).$(domain_tld)"
+    - host: "$(zhe_hostname)"
       http:
         paths:
           - path: /socket.io
@@ -27,5 +27,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - $(subdomain_suffix).$(domain_tld)
+        - $(zhe_hostname)
       secretName: <host_ssl_secret>

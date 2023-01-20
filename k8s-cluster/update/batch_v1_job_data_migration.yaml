@@ -15,7 +15,7 @@ spec:
             - bundle
             - exec
             - rake
-            - roadmap_items:delete_orphans
+            - zhe:migrate_3_5
           env:
             - name: MONGO_IS_DOCUMENTDB
               valueFrom:
@@ -102,11 +102,6 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: github_graphql_url
-                  name: raptor
-            - name: ROLLBAR_ENV
-              valueFrom:
-                configMapKeyRef:
-                  key: rollbar_env
                   name: raptor
             - name: NEW_RELIC_AGENT_ENABLED
               valueFrom:
@@ -197,11 +192,6 @@ spec:
                 secretKeyRef:
                   key: ld_sdk_key
                   name: raptor
-            - name: ROLLBAR_ACCESS_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  key: rollbar_access_token
-                  name: raptor
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
@@ -222,6 +212,11 @@ spec:
                 secretKeyRef:
                   key: cable_redis_url
                   name: configuration
+            - name: GRAPHQL_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  key: graphql_redis_url
+                  name: configuration
             - name: MIXPANEL_PROJECT_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -237,7 +232,7 @@ spec:
                 secretKeyRef:
                   key: hubspot_api_key
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.4.1
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.5.0
           imagePullPolicy: Always
           name: data-migration
           resources:

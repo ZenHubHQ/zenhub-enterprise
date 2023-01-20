@@ -20,6 +20,7 @@
 ## 1. About Zenhub Enterprise On-Premise
 
 ### 1.1 What is Zenhub Enterprise On-Premise 3 (ZHE3)?
+
 ZHE3 is Zenhub's next-generation fully-containerized Zenhub Enterprise On-Prem infrastructure, built on a Kubernetes platform. ZHE3 replaces the outgoing VM-based ZHE2 architecture.
 
 ZHE3 comes in two variants:
@@ -27,7 +28,7 @@ ZHE3 comes in two variants:
 1. **Zenhub for Kubernetes**
 2. **Zenhub as a VM**
 
-Both variants ship the same application but the distribution and deployment strategy is different between the two. **Zenhub for Kubernetes** is deployed to your existing Kubernetes cluster and is typically recommended for customers with large amounts of data and users. This variant offers the best scalability and performance, but requires a dedicated SRE team to manage. **Zenhub as a VM** is distributed as a VM image which can be deployed to a private or public cloud solution. The entire application will run from a single VM and be orchestrated by a lightweight Kubernetes binary, which makes it easy to set up, configure and manage. This variant is ideal for smaller teams who are just getting started with Zenhub. It is possible to upgrade the Zenhub as a VM variant to a Zenhub for Kubernetes down-the-road, however, moving from a Kubernetes deployment back to a VM is not supported at this time.
+Both variants ship the same application but the distribution and deployment strategy is different between the two. **Zenhub for Kubernetes** is deployed to your existing Kubernetes cluster and is typically recommended for customers with large amounts of data and users. This variant offers the best scalability and performance but requires a dedicated SRE team to manage. **Zenhub as a VM** is distributed as a VM image that can be deployed to a private or public cloud solution. The entire application will run from a single VM and be orchestrated by a lightweight Kubernetes binary, which makes it easy to set up, configure and manage. This variant is ideal for smaller teams who are just getting started with Zenhub. It is possible to upgrade the Zenhub as a VM variant to a Zenhub for Kubernetes down the road, however, moving from a Kubernetes deployment back to a VM is not supported at this time.
 
 Below is a table illustrating the main differences and our recommendations:
 
@@ -42,15 +43,21 @@ Below is a table illustrating the main differences and our recommendations:
 | **Built-in File Storage**     |                           | ✅                  |
 
 ### 1.2 Why is ZHE3 important?
-- Lay the groundwork for near-parity with Zenhub Cloud release cycle ✅
+
+- Lay the groundwork for near-parity with the Zenhub Cloud release cycle ✅
 - Improved options for scalability ✅
 - Remove dependence on old infrastructure ✅
 - Deploy Zenhub in the same deployment paradigm as your other applications ✅
+
 ### 1.3 How do we set up ZHE3?
+
 - For **Zenhub for Kubernetes**, please refer to the [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster) directory.
 - For **Zenhub as a VM**, please refer to the [**virtual-machine**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/virtual-machine) directory.
+
 ### 1.4 How do we migrate from ZHE2 to ZHE3?
+
 The *basic* steps to migrate from your existing ZHE2 machine to ZHE3 are:
+
 1. Decide if you want to deploy **Zenhub for Kubernetes** or **Zenhub as a VM**.
 2. Deploy a ZHE3 "landing zone" to prepare for the migration.
 3. Gather data from the existing ZHE2 source instance.
@@ -74,6 +81,7 @@ Please review the [LICENSE](/LICENSE) in this repository for additional details.
 </div>
 
 Please note the following:
+
 - Zenhub ships with two backend technologies we call **Raptor** and **Toad**.
 - Raptor and Toad are both made up of several microservices (eg. `raptor-admin`, `raptor-api`, `toad-webhook`, etc...)
 - Zenhub requires the use of two databases: **MongoDB** and **PostgreSQL**.
@@ -91,5 +99,6 @@ Please note the following:
 ## 4. Next Steps
 
 For details about Requirements, Configuration, Deployment, Migration and Management please look inside the folders for each Zenhub variant:
+
 - **Zenhub for Kubernetes** -> [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster)
 - **Zenhub as a VM** -> [**virtual-machine**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/virtual-machine)

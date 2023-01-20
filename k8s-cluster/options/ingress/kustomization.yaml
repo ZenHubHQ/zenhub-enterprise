@@ -3,5 +3,7 @@ kind: Kustomization
 
 resources:
   - ingress.yaml
+  - ingress-devsite.yaml
   - ingress-websocket.yaml
   - ingress-cable.yaml
+  - ingress-api-public.yaml

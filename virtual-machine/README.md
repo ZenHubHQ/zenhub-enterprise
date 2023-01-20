@@ -4,7 +4,7 @@
 
 [Website](https://www.zenhub.com/) • [On-Premise](https://www.zenhub.com/enterprise) • [Releases](https://www.zenhub.com/enterprise/releases/) • [Blog](https://blog.zenhub.com/) • [Chat (Community Support)](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community)
 
-**Zenhub Enterprise On-Premise as a VM** is the only self-hosted, vm-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
+**Zenhub Enterprise On-Premise as a VM** is the only self-hosted, VM-based team collaboration solution built for GitHub Enterprise Server. Plan roadmaps, use taskboards, and generate automated reports directly from your team’s work in GitHub. Always accurate.
 
 ## Table of Contents
 
@@ -54,6 +54,9 @@
     - [6.7.2 Increasing Disk Space](#672-increasing-disk-space)
     - [6.7.3 Recovery From Low Disk Space Outage](#673-recovery-from-low-disk-space-outage)
   - [6.8 License Renewal](#68-license-renewal)
+  - [6.9 K3s Certificate Rotation (401 Unauthorized)](#69-k3s-certificate-rotation-401-unauthorized)
+  - [6.10 User Management](#610-user-management)
+  - [6.11 System Health Check](#611-system-health-check)
 - [7. `zhe-config` Specification](#7-zhe-config-specification)
 - [8. Logs](#8-logs)
   - [8.1 Sending Logs to an External Log Aggregator](#81-sending-logs-to-an-external-log-aggregator)
@@ -73,7 +76,7 @@ Thank you for your interest in Zenhub!
 
 ### 2.1 Systems Administration Skills
 
-Basic systems administration skills are required for set-up. Those deploying the VM should be comfortable with deploying a virtual machine to their chosen hypervisor, making an SSH connection, and using a Linux command-line and text editor.
+Basic systems administration skills are required for set-up. Those deploying the VM should be comfortable with deploying a virtual machine to their chosen hypervisor, making an SSH connection, and using a Linux command line and text editor.
 
 ### 2.2 GitHub Enterprise Server
 
@@ -101,7 +104,7 @@ Zenhub Enterprise On-Premise requires a license to run. This license is an encod
 
 #### 3.1.1 Platforms
 
-To deploy the VM, you need the machine image for your hypervisor of choice. Currently supported platforms include:
+To deploy the VM, you need the machine image for your hypervisor of choice. Currently, supported platforms include:
 
 - **AWS EC2**
 - **VMware**
@@ -132,8 +135,8 @@ When deploying Zenhub on your VM, Zenhub will check the available hardware resou
 | 5000+           | [Contact us](enterprise@zenhub.com) |        |              |
 
 > ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to Zenhub, as well as how many backups you are storing on the VM. At 95% disk utilization, container images will start being removed from containerd, with the least recently used images being removed first. Eventually, if disk space is not increased, the kubelet will be forced to remove images that are essential to the running of Zenhub and you will see pods in the **Evicted** state. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
-
 > ⚠️ **NOTE:** The Zenhub Enterprise OVA for VMware is pre-configured with a 60GB data filesystem and a 20GB root filesystem on ZHE 3.1 and 3.2. ZHE 3.3 and greater is pre-configured with a 30GB root volume. If you launch a VM with a 500GB volume, you will need to [expand the filesystems](#67-disk-management) to occupy the extra space.
+
 #### 3.1.3 Ports
 
 Below, we've summarized the list of ports and firewall rules that the Zenhub Enterprise VM will need to function in your network.
@@ -177,7 +180,7 @@ ssh-copy-id -i <path_to_key> zenhub@<Zenhub_VM_IP>
 - Too many authentication failures
 - /usr/bin/ssh-copy-id: ERROR:
 
-Some errors while using `ssh-copy-id` or connecting using password can be be caused by multiple ssh keys loaded in the computer/workstation ssh agent. The flags `PreferredAuthentications=password` and `PubkeyAuthentication=no` can be added to the command to fix the issue.
+Some errors while using `ssh-copy-id` or connecting using a password can be caused by multiple ssh keys loaded in the computer/workstation ssh-agent. The flags `PreferredAuthentications=password` and `PubkeyAuthentication=no` can be added to the command to fix the issue.
 
 ```bash
 ssh-copy-id -o PreferredAuthentications=password -o PubkeyAuthentication=no -i <path_to_key> zenhub@<Zenhub_VM_IP>
@@ -203,7 +206,7 @@ To revert the instance to use DHCP, run:
 zhe-config --dhcp
 ```
 
-After running these commands, you will either need to reboot your instance, or run `sudo netplan apply`
+After running these commands, you will either need to reboot your instance or run `sudo netplan apply`
 
 > ⚠️ **NOTE:** If you are remotely connected to your instance (with SSH for example) and you change your instance's IP via the method above, you will be ejected from your connected session.
 
@@ -249,17 +252,17 @@ zenhub_configuration:
 
 ### 3.3.1 Required Values
 
-- `DOMAIN_TLD` : Set your top-level domain where Zenhub will be served from. This is used to tell the Zenhub webapp how to
+- `DOMAIN_TLD` : Set your top-level domain where Zenhub will be served from. This is used to tell the Zenhub web app how to
   reach the Zenhub APIs.
-- `SUBDOMAIN_SUFFIX` : Set the subdomain that Zenhub will be served from, or leave as default "zenhub" value.
+- `SUBDOMAIN_SUFFIX` : Set the subdomain that Zenhub will be served from, or leave it as the default "zenhub" value.
 - `GITHUB_HOSTNAME` : Make sure the value includes `https://` and does not have a trailing slash.
-- `GITHUB_APP_ID` : Specify the OAuth App ID for the Zenhub application. See here for instructions on how to setup an OAuth
+- `GITHUB_APP_ID` : Specify the OAuth App ID for the Zenhub application. See here for instructions on how to set up an OAuth
   app on your GitHub server: https://docs.github.com/en/developers/apps/creating-an-oauth-app
 - `GITHUB_APP_SECRET` : The OAuth secret value that corresponds with the above OAuth App ID.
 - `ENTERPRISE_LICENSE_TOKEN` : The Zenhub license (JWT) you should have received by email from the Zenhub team. If you do not have a license, reach out to enterprise@zenhub.com.
-- `ADMIN_UI_PASS` : The password to the Zenhub Admin UI, which runs on port 8443 and is used to execute a number of administrative tasks such as publishing extensions, usage reporting, creating a Zenhub Admin for license administration.
+- `ADMIN_UI_PASS` : The password to the Zenhub Admin UI, which runs on port 8443 and is used to execute several administrative tasks such as publishing extensions, usage reporting, and creating a Zenhub Admin for license administration.
 - `CHROME_EXTENSION_WEBSTORE_URL` : The URL of your published Chrome extension. If you have not published a Zenhub extension before, this will be blank for your first configuration. After publishing the extension, set this variable and re-run your configuration to activate the Chrome extension installation link on Zenhub's landing page.
-- `MANIFEST_FIREFOX_ID` : The UUID used by the FireFox add-on store to uniquely identify your FireFox extension. Ex. zenhub-enterprise@your-company-domain.com
+- `MANIFEST_FIREFOX_ID` : The UUID used by the Firefox add-on store to uniquely identify your Firefox extension. Ex. zenhub-enterprise@your-company-domain.com
 
 > ⚠️ **NOTE:** Always use the same `MANIFEST_FIREFOX_ID`. This enables your users to receive an automatic update rather than reinstalling the extension. You can find this value in the [Mozilla Add-On Developer Hub](https://addons.mozilla.org/developers/) by clicking Edit Product Page and scrolling down to UUID on your existing extension.
 
@@ -269,10 +272,14 @@ zenhub_configuration:
 - `ssh_keys`: SSH key(s) to be included as authorized_keys
 - `ip`: Configure the VM to use static IP
 - `chrony`: Configure the VM to use custom NTP servers for your environment
+- `GRAPHQL_OPERATION_LIMIT`: Sets the rate limit for concurrent requests on the GraphQL API per token. Should be nested under zenhub_configuration.
+- `GRAPHQL_RUNTIME_LIMIT`: Sets the rate limit in milliseconds for the total amount of process time per minute per token for GraphQL API. Should be nested under zenhub_configuration.
+- `REST_API_REQUEST_LIMIT`: Sets the number of requests the legacy REST API will serve in a given **REST_API_TIME_LIMIT** before rate limiting. Should be nested under zenhub_configuration.
+- `REST_API_TIME_LIMIT`: Sets the timespan in seconds that the legacy REST API will use to calculate rate limiting. Should be nested under zenhub_configuration.
 
 ### 3.4 SSL/TLS Ingress Certificate
 
-A SSL/TLS certificate needs to be provided.
+An SSL/TLS certificate needs to be provided.
 
 Copy the certificate and key pair to the following path:
 
@@ -280,7 +287,7 @@ Copy the certificate and key pair to the following path:
 
 `${ZENHUB_HOME}/configuration/ssl/tls.crt` - certificate
 
-A self signed certificate can be generated by enabling the `ssl_self_signed` option in configuration file.
+A self-signed certificate can be generated by enabling the `ssl_self_signed` option in the configuration file.
 
 ## 4. Application Deployment
 
@@ -314,6 +321,8 @@ See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for instr
 
 ## 5. Upgrades
 
+Upgrading Zenhub is important for both stability and security. We suggest updating Zenhub _at least_ once every 12 months to avoid issues related to outdated software.
+
 ### 5.1 Application Updates
 
 #### 5.1.1 Update
@@ -328,6 +337,8 @@ Update Docker images, Kubernetes manifests, and install system-wide updates for 
 curl -o zhe_upgrade.run "<link-to-upgrade-bundle>"
 ```
 
+> ⚠️ **NOTE:** The file integrity is checked automatically via an integrated **checksum** when the upgrade is run. If you want to check the file integrity without running the upgrade, run `bash zhe_upgrade.run --check`
+
 2. If not already directly downloaded to the VM, move the bundle into the VM (use `scp` or your choice of tool).
 
 3. Run the upgrade script:
@@ -337,7 +348,7 @@ bash zhe_upgrade.run
 ```
 > ⚠️ **NOTE:** To protect the upgrade from SSH disconnects, you may want to run the upgrade inside `tmux` or `screen`, e.g. `tmux new-session -s "upgrade" "bash zhe_upgrade.run"`
 
-4. Answer the update prompts. If you would like to install available OS updates, answer 'y' to `Proceed with OS and system wide updates?`
+4. Answer the update prompts. If you would like to install available OS updates, answer 'y' to `Proceed with OS and system-wide updates?`
 
 5. Wait for Zenhub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with Zenhub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
 
@@ -345,7 +356,7 @@ bash zhe_upgrade.run
 
 #### 5.1.2 Rollback
 
-If you have any problems with Zenhub after installing an update, you can quickly rollback to your most recent application version using the automated application backup taken at the start of your upgrade.
+If you have any problems with Zenhub after installing an update, you can quickly roll back to your most recent application version using the automated application backup taken at the start of your upgrade.
 
 > ⚠️ **NOTE:** If you have already published the extensions after updating, rolling back the application may break your extensions.
 
@@ -362,7 +373,7 @@ The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is 
 
 All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
 
-Debian utility `unattended-upgrades` is enabled and setup to automatically apply _security updates_ (only) once per day.
+The Debian utility `unattended-upgrades` is enabled and set up to automatically apply _security updates_ (only) once per day.
 
 ## 6. Maintenance and Operational Tasks
 
@@ -402,7 +413,7 @@ When operating a ZHE3 deployment, you may face situations in which you would lik
 Maintenance mode can be enabled in two ways:
 
 1. _Automatically_, when Zenhub detects that GitHub is in maintenance mode. Zenhub checks GitHub for this status every 30 seconds.
-2. _Manually_, when a system administrator determines it necessary to gracefully block user access to the application.
+2. _Manually_, when a system administrator determines it is necessary to gracefully block user access to the application.
 
 Enable maintenance mode:
 
@@ -428,7 +439,7 @@ Backups use the database engine backup capability, are not intrusive, and can be
 zhe-config --backup
 ```
 
-- A snapshot of zenhub will be created in `/opt/snapshots/<yyyy-mm-ddThh-mm>`
+- A snapshot of Zenhub will be created in `/opt/snapshots/<yyyy-mm-ddThh-mm>`
 - The script will silently erase any existing snapshots found under the same date in `/opt/snapshots`
 - No rotation is set up by default—please monitor your snapshot's usage
 
@@ -479,12 +490,16 @@ zhe-config --reload
 
 ### 6.6 Configuring a Secondary VM
 
-If you would like set up a secondary Zenhub Enterprise VM for staging or disaster recovery, it is important to configure it correctly so that the configuration values are compatible with the data being restored from the primary VM.
+If you would like to set up a secondary Zenhub Enterprise VM for staging or disaster recovery, it is important to configure it correctly so that the configuration values are compatible with the data being restored from the primary VM.
 
 1. Follow sections [3.1](#31-deploy-the-vm) and [3.2](#32-configure-access-and-network) to deploy your secondary VM
 2. Copy `/opt/zenhub/configuration/internal.secret.env` from your primary VM and place it on your secondary VM at the same folder location
 3. Fill out your secondary's [configuration file](#33-configure-zenhub) and run the configuration
+
    > ⚠️ **NOTE:** If the secondary is being used for disaster recovery, we recommend using the same configuration values for both environments, and controlling which is "active" with DNS. If you want to have two environments running in parallel (such as for staging) you can set up a second OAuth App in GitHub Enterprise and set different values for `SUBDOMAIN_SUFFIX`, `GITHUB_APP_ID`, `GITHUB_APP_SECRET`, `MANIFEST_FIREFOX_ID` and `CHROME_WEBSTORE_URL`.
+
+   > ⚠️ **NOTE:** If you are running ZHE 3.2 or greater, it is important to set a configuration value called `LOCKBOX_MASTER_KEY` in your [configuration file](#33-configure-zenhub) to the value found in `/opt/zenhub/configuration/internal.secret.env`. This environment variable was not present in ZHE before version 3.2. This environment variable must be maintained across VMs that are using the same data.
+
 4. Create a [backup](#631-backup) on your primary VM
 5. [Restore](#632-restore) the backup on your secondary VM
 
@@ -497,13 +512,15 @@ Zenhub Enterprise for VM makes use of local storage for databases, files, pictur
 Disk management varies between different hosts, and you are responsible for managing your disk usage. We have provided some tools and documentation to assist you.
 
 #### 6.7.1 Viewing Disk Usage
-Check the disk usage on Zenhub Enterprise for VM is via the command below, which omits displaying the overlay and temp filesystems used and managed by K3S.
+
+Check the disk usage on Zenhub Enterprise for VM via the command below, which omits to display the overlay and temp filesystems used and managed by K3S.
 
 ```bash
 df -h -x tmpfs -x overlay
 ```
 
 #### 6.7.2 Increasing Disk Space
+
 **AWS and similar platforms**
 
 For platforms like AWS which use elastic storage, manual management of the disk via the operating system is not required; You just need to follow the documentation of your hosting provider to increase your disk space.
@@ -515,11 +532,13 @@ For platforms like VMWare, resize or add an additional hard drive and then use t
 > ⚠️ **NOTE:**  While these steps can be performed on a live environment, a mistake while writing to the partition table can corrupt your disk. We recommend taking a snapshot prior to carrying out disk related activities.
 
 1. Enter the fdisk utility
+
 ```bash
 sudo fdisk /dev/sda
 ```
 
 2. Create a new partition of your desired additional size
+
 ```bash
 n        (create a new partition)
 enter    (use the default partition number)
@@ -529,6 +548,7 @@ w        (write to the partition table to save your changes)
 ```
 
 3. Create a physical volume on the new partition
+
 ```bash
 sudo pvcreate /dev/sda<new-partition-number>   (eg. /dev/sda5)
 ```
@@ -580,7 +600,7 @@ sudo pvcreate /dev/sda<new-partition-number>   (eg. /dev/sda5)
 Once you have completed the steps above, the system will be using the extra disk space you have added.
 
 #### 6.7.3 Recovery From Low Disk Space Outage
-If your root or /opt filesystem reaches 90% disk capacity, the kubernetes scheduler can start deleting images and evicting pods. If this occurs, Zenhub will not function.
+If your root or /opt filesystem reaches 90% disk capacity, the Kubernetes scheduler can start deleting images and evicting pods. If this occurs, Zenhub will not function.
 
 Clear disk space, or increase the available disk space using the steps in section [6.7.2](#672-increasing-disk-space), and then run the following command to reload any deleted images back into your VM's local registry:
 
@@ -591,23 +611,77 @@ zhe-config --images-import
 Then, delete the `Evicted` pods, which can cause issues with upgrades if not removed:
 
 ```bash
-sudo su
-kubectl -n zenhub get pods | grep Evicted | awk '{print $1}' | xargs kubectl -n zenhub delete pod
+sudo kubectl -n zenhub delete pods --field-selector=status.phase=Failed
 ```
 
 ### 6.8 License Renewal
 The environment variable `ENTERPRISE_LICENSE_TOKEN` mentioned in section [3.3](#33-configure-zenhub) is your software license for Zenhub. When you get a new license, you'll need to update the value for `ENTERPRISE_LICENSE_TOKEN` in your `configuration.yaml` file, then use the `zhe-config` tool to apply your new license.
 
 1. Update the value for `ENTERPRISE_LICENSE_TOKEN`
+
 ```bash
 vim configuration.yaml
 ```
+
 2. Apply the new license using the updated configuration file
+
 ```bash
 zhe-config --update-license $(pwd)/configuration.yaml
 ```
 
 ⚠️ NOTE: If you have misplaced your `configuration.yaml` file, you can find a backup of the current running configuration at `$ZENHUB_HOME/configuration/configuration.yaml`.
+
+### 6.9 K3s Certificate Rotation (401 Unauthorized)
+
+If you encounter a situation where you running a backup, support bundle, or upgrade, and you see a `401 Unauthorized` error message, your Kubernetes certificates have likely expired. These certificates are used to establish trust with the K8s API and are automatically refreshed whenever you perform a Zenhub upgrade.
+
+If Zenhub has not been updated within the last 12 months and the certs have expired, they can be updated by running the following command to restart the systemd service called `k3s`, which will renew the certificates if they are expired or are within 90 days of expiring:
+
+```bash
+sudo systemctl restart k3s
+```
+
+In order to proactively manage these certificates, we suggest regularly updating Zenhub, at a minimum of once every 12 months. You can confirm when your certificates will expire by running:
+
+```bash
+sudo su
+for i in `ls /opt/k3s/server/tls/*.crt`; do echo $i; openssl x509 -enddate -noout -in $i; done
+```
+
+Then, take note of when your certificates expire and plan to either perform a Zenhub upgrade or restart the `k3s` service running on your VM within that 90 day period.
+
+
+### 6.10 User management
+
+The Zenhub Enterprise VM for VMware ships with a default Ubuntu user called 'zenhub' which is used for some internal operations and has also been set up for administrators to optionally use to safely interact with the appliance. The password for this user is set up to expire after 60 days by default. Note that the application will continue to operate normally even if the 'zenhub' user password expires.
+
+
+Some basic operations that may be needed to manage this user are:
+
+Changing the password:
+
+```bash
+sudo passwd zenhub
+```
+
+Changing the number of days before the next password expiration:
+
+```bash
+sudo chage zenhub -M <NUMBER_OF_DAYS_TO_EXPIRATION>
+```
+
+### 6.11 System Health Check
+Health check does the following:
+1. Checks for K3S internal certificates that are expiring within 30 days.
+2. Checks if K3S service is up and running.
+3. Checks if your Zenhub Enterprise license will expire in 30 days.
+4. Checks if the root disk space is above 90% utilized.
+
+To run:
+```bash
+zhe-config --health-check
+```
+
 
 ## 7. `zhe-config` Specification
 
@@ -633,6 +707,7 @@ Options:
   --config-example                Show a configuration file example
   --config-file   FILE_PATH       Deploy Zenhub from a configuration file
   --dhcp                          Configure VM to use DHCP
+  --health-check                  Run a health check to validate the status of your enterprise appliance
   --help                          Show this help message
   --images-import                 Re import container images
   --maintenance   enable|disable  Enable or disable maintenance mode
@@ -678,7 +753,7 @@ Once you found the plugin for your need, follow the steps below to configure Zen
 
 - Get the sample Dockerfile from `${ZENHUB_HOME}/kustomizations/fluentd/Dockerfile` and add your plugin.
 - The provided sample Dockerfile installs the Stack Driver plugins with `sudo gem install fluent-plugin-google-cloud`, update it to reflect your plugin installation process.
-- Build the image and load it onto the VM, you can do with the following code snippet:
+- Build the image and load it onto the VM. You can do this with the following code snippet:
 
 ```bash
 # from a context with the Dockerfile and a Docker daemon available
@@ -729,7 +804,7 @@ kubectl -n kube-system rollout restart daemonset/fluentd
 kubectl -n kube-system logs -f -l "app.kubernetes.io/name=fluentd-logging" --tail=1000 -f
 ```
 
-- Login in the app, generate some changes and you should see them appear in your external log aggregator.
+- Log in to the app, generate some changes and you should see them appear in your external log aggregator.
 
 > Disclaimer: At the moment, the Zenhub upgrade process overrides `${ZENHUB_HOME}/kustomizations/fluentd`. You will have to repeat section 6.1.3 after a Zenhub upgrade if you are running the `prepare-cluster.sh` script or wish to restart Fluentd.
 
@@ -739,5 +814,5 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=docker.io/fluent/fluentd:v1.6-debian-1`
+   - Run `kustomize edit set image fluentd=docker.io/fluent/fluentd:v1.15-debian-1`
 2. Perform the steps in section 6.1.4

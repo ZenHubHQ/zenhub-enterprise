@@ -4,12 +4,12 @@ data:
   firefox_ext_s3_bucket_dir: ff-extension
   firefox_ext_s3_endpoint: https://$(bucket_domain)
   next_public_unsigned_dir: extension
-  nextauth_url: https://$(admin_ui_subdomain).$(domain_tld)
+  nextauth_url: $(https_admin_zhe_hostname)
   node_tls_reject_unauthorized: "0"
   raptor_url: http://raptor-api
   toad_url: http://toad-api
-  zenhub_firefox_ext_json_url: https://$(subdomain_suffix).$(domain_tld)/zhe-public/ff-ext-signed/latest.json
-  zenhub_firefox_ext_xpi_root_url: https://$(subdomain_suffix).$(domain_tld)/zhe-public/ff-ext-signed
+  zenhub_firefox_ext_json_url: $(https_zhe_hostname)/zhe-public/ff-ext-signed/latest.json
+  zenhub_firefox_ext_xpi_root_url: $(https_zhe_hostname)/zhe-public/ff-ext-signed
 kind: ConfigMap
 metadata:
   labels:

@@ -18,6 +18,25 @@ spec:
               memory: 2500M
 
 ---
+# raptor-api-public
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-api-public
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-api-public
+          resources:
+            requests:
+              cpu: 200m
+              memory: 500M
+            limits:
+              cpu: 500m
+              memory: 2500M
+
+---
 # raptor-cable
 apiVersion: apps/v1
 kind: Deployment
@@ -103,7 +122,7 @@ spec:
   template:
     spec:
       containers:
-        - name: raptor-sidekiq-worker-default
+        - name: raptor-sidekiq-worker
           resources:
             requests:
               cpu: 200m
@@ -264,6 +283,25 @@ spec:
     spec:
       containers:
         - name: admin-ui
+          resources:
+            limits:
+              cpu: 500m
+              memory: 500M
+            requests:
+              cpu: 100m
+              memory: 100M
+
+---
+# pgbouncer
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+spec:
+  template:
+    spec:
+      containers:
+        - name: pgbouncer
           resources:
             limits:
               cpu: 500m

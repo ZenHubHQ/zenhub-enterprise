@@ -67,6 +67,17 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: raptor-api-public
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: raptor-cable
 spec:
   template:
@@ -84,12 +95,12 @@ spec:
     spec:
       imagePullSecrets:
         - name: zenhub-docker-registry-credentials
-        
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: raptor-sidekiq-worker-default
+  name: raptor-sidekiq-worker
 spec:
   template:
     spec:
@@ -100,7 +111,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: raptor-sidekiq-worker
+  name: raptor-sidekiq-worker-default
 spec:
   template:
     spec:
@@ -134,6 +145,28 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: admin-ui
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devsite
 spec:
   template:
     spec:

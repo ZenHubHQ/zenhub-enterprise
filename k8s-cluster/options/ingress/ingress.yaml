@@ -9,7 +9,7 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # terminated by nginx-gateway pod
 spec:
   rules:
-    - host: $(subdomain_suffix).$(domain_tld)
+    - host: $(zhe_hostname)
       http:
         paths:
           - pathType: Prefix
@@ -19,7 +19,7 @@ spec:
                 name: nginx-gateway
                 port:
                   number: 443
-    - host: $(admin_ui_subdomain).$(domain_tld)
+    - host: $(admin_zhe_hostname)
       http:
         paths:
           - pathType: Prefix
@@ -36,6 +36,6 @@ spec:
         number: 443
   tls:
     - hosts:
-        - $(subdomain_suffix).$(domain_tld)
-        - $(admin_ui_subdomain).$(domain_tld)
+        - $(zhe_hostname)
+        - $(admin_zhe_hostname)
       secretName: <host_ssl_secret>

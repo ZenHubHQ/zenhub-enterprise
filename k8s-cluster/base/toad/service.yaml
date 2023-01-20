@@ -1,5 +1,4 @@
 apiVersion: v1
-automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
   labels:
@@ -7,7 +6,6 @@ metadata:
   name: toad-automount-sa-token-false-api
 ---
 apiVersion: v1
-automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
   labels:
@@ -15,7 +13,6 @@ metadata:
   name: toad-automount-sa-token-false-cron
 ---
 apiVersion: v1
-automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
   labels:
@@ -23,7 +20,6 @@ metadata:
   name: toad-automount-sa-token-false-webhook
 ---
 apiVersion: v1
-automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
   labels:
@@ -31,7 +27,6 @@ metadata:
   name: toad-automount-sa-token-false-websocket
 ---
 apiVersion: v1
-automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
   labels:

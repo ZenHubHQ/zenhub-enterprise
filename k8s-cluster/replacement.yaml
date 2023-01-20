@@ -1,0 +1,230 @@
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.https_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: toad
+    fieldPaths:
+    - data.zenhub_staging_webapp_address
+    - data.zenhub_webapp_address
+    - data.zenhub_webhook_address
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.https_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: toad
+    fieldPaths:
+    - data.zenhub_server_address
+    - data.zenhub_staging_server_address
+    options:
+      delimiter: '/'
+      index: 0
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.https_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: raptor
+    fieldPaths:
+    - data.zenhub_webhook_domain_v1
+    - data.zenhub_webhook_domain_v2
+    - data.webapp_url
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.https_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: raptor
+    fieldPaths:
+    - data.webapp_url
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.https_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: raptor
+    fieldPaths:
+    - data.cable_allowed_origins
+    options:
+      delimiter: ','
+      index: 0
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.cable_allowed_origins
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: raptor
+    fieldPaths:
+    - data.cable_allowed_origins
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.cable_allowed_origins
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: raptor-migrate
+    fieldPaths:
+    - data.cable_allowed_origins
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.bucket_domain
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: admin-ui
+    fieldPaths:
+    - data.firefox_ext_s3_endpoint
+    options:
+      delimiter: '/'
+      index: 2
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.https_admin_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: admin-ui
+    fieldPaths:
+    - data.nextauth_url
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.https_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: admin-ui
+    fieldPaths:
+    - data.zenhub_firefox_ext_json_url
+    - data.zenhub_firefox_ext_xpi_root_url
+    options:
+      delimiter: '/'
+      index: 0
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.github_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: raptor
+    fieldPaths:
+    - data.github_api_url
+    - data.github_graphql_url
+    options:
+      delimiter: '/'
+      index: 0
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.github_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: raptor
+    fieldPaths:
+    - data.github_html_url
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.github_hostname
+   version: v1
+  targets:
+  - select:
+      kind: ConfigMap
+      name: toad
+    fieldPaths:
+    - data.github_server_address
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.github_hostname
+   version: v1
+  targets:
+  - select:
+      kind: Deployment
+      name: kraken-webapp
+    fieldPaths:
+    - spec.template.spec.containers.[name=kraken-extension].env.[name=GITHUB_SERVER_ADDRESS].value
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: Ingress
+      name: ingress-zhe
+    fieldPaths:
+    - spec.tls.0.hosts.0
+    - spec.rules.0.host
+  - select:
+      kind: Ingress
+      name: ingress-zhe-raptor-cable
+    fieldPaths:
+    - spec.tls.0.hosts.0
+    - spec.rules.0.host
+  - select:
+      kind: Ingress
+      name: ingress-zhe-websocket
+    fieldPaths:
+    - spec.tls.0.hosts.0
+    - spec.rules.0.host
+  - select:
+      kind: Ingress
+      name: ingress-zhe-raptor-api-public
+    fieldPaths:
+    - spec.tls.0.hosts.0
+    - spec.rules.0.host
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.admin_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: Ingress
+      name: ingress-zhe
+    fieldPaths:
+    - spec.tls.0.hosts.1
+    - spec.rules.1.host
+- source:
+   kind: ConfigMap
+   name: configuration
+   fieldPath: data.devsite_zhe_hostname
+   version: v1
+  targets:
+  - select:
+      kind: Ingress
+      name: ingress-dev-zhe
+    fieldPaths:
+    - spec.tls.0.hosts.0
+    - spec.rules.0.host

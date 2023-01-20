@@ -6,7 +6,7 @@ set -eu
 if [ -z "${1:-}" ]; then
 
     echo "########################################"
-    echo "    PLEASE PROVIDE ZenHub NAMESPACE"
+    echo "    PLEASE PROVIDE Zenhub NAMESPACE"
     echo "   ./zhe-upgrade.sh <zhe_namespace>"
     echo "########################################"
 
@@ -15,15 +15,15 @@ fi
 
 # Check for non-zenhub registry
 if [ -z "${2:-}" ]; then
-    # Use ZenHub registry
+    # Use Zenhub registry
     echo ""
-    echo "No custom registry specified, using ZenHub's registry..."
+    echo "No custom registry specified, using Zenhub's registry..."
     echo ""
 
     REGISTRY=us.gcr.io/zenhub-public
 else
     # Use Customer registry
-    echo "Please confirm the registry below is correct and contains ZenHub images tagged with the release you are upgrading to."
+    echo "Please confirm the registry below is correct and contains Zenhub images tagged with the release you are upgrading to."
     echo ""
     echo "Your registry: ${2}"
     echo ""
@@ -35,25 +35,24 @@ else
 
     REGISTRY=$2
 
-    # Replace occurences of ZenHub registry in data migration manifests with the custom registry
+    # Replace occurences of Zenhub registry in data migration manifests with the custom registry
     sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_raptor-db-migrate.yaml
     sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_data_migration.yaml
-    sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
-    # Remove imagePullSecrets for ZenHub registry
+    # Remove imagePullSecrets for Zenhub registry
     sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_raptor-db-migrate.yaml
     sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_data_migration.yaml
-    sed -i.bak "/remove-if-custom-registry/d" apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
 fi
 
 IMAGE=raptor-backend
-TAG=zhe-3.4.1
+TAG=zhe-3.5.0
 NAMESPACE=$1
 REPLICAS=0
 
 DEPLOYMENTS=(
 raptor-sidekiq-worker
+raptor-sidekiq-worker-default
 raptor-admin
 raptor-cable
 kraken-webapp
@@ -68,8 +67,10 @@ toad-websocket
 
 HPA=(
 raptor-api
+raptor-cable
 toad-api
 toad-websocket
+toad-webhook
 )
 
 SERVICES=(
@@ -144,25 +145,24 @@ echo "###############################################"
 echo "         Starting Data Migration Job"
 echo "###############################################"
 
-echo "         Updating raptor-sidekiq-worker..."
-kubectl -n $NAMESPACE set image deployment/raptor-sidekiq-worker \
-    raptor-sidekiq-worker=$REGISTRY/$IMAGE:$TAG
-kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
-
-kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
-
-echo "         Running Migrations"
-kubectl -n $NAMESPACE apply -f batch_v1_job_data_migration.yaml
-
-echo "         Waiting for Data Migration Job to be 'complete' (timeout 3000s)"
-kubectl -n $NAMESPACE wait --for=condition=complete job/data-migration --timeout=3000s
-
-# Now that migrations have run to cleanup data, run db schema updates
-echo "         Updating Databases"
+echo "         Updating Databases..."
 kubectl -n $NAMESPACE apply -f batch_v1_job_raptor-db-migrate.yaml
 
 echo "         Waiting DB Migration Job to be 'complete' (timeout 3000s)"
 kubectl -n $NAMESPACE wait --for=condition=complete job/db-migration --timeout=3000s
+
+echo "         Updating raptor-sidekiq-worker..."
+kubectl -n $NAMESPACE set image deployment/raptor-sidekiq-worker \
+    raptor-sidekiq-worker=$REGISTRY/$IMAGE:$TAG
+kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
+# kubectl -n $NAMESPACE rollout restart deployment/raptor-sidekiq-worker
+kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
+
+echo "         Updating data..."
+kubectl -n $NAMESPACE apply -f batch_v1_job_data_migration.yaml
+
+echo "         Waiting Data Migration Job to be 'complete' (timeout 3000s)"
+kubectl -n $NAMESPACE wait --for=condition=complete job/data-migration --timeout=3000s
 
 echo "###############################################"
 echo "         Deleting Old Resources"
