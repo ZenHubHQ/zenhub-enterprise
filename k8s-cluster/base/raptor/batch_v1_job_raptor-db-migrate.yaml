@@ -113,6 +113,11 @@ spec:
             secretKeyRef:
               key: redis_url
               name: configuration
+        - name: GRAPHQL_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: graphql_redis_url
+              name: raptor-migrate
         - name: SECRET_KEY_BASE
           valueFrom:
             secretKeyRef:

@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-zhe-raptor-cable
+  name: ingress-zhe-raptor-api-public
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -15,11 +15,18 @@ spec:
     - host: "$(zhe_hostname)"
       http:
         paths:
-          - path: /cable/
+          - path: /public/graphql/*
             pathType: Prefix
             backend:
               service:
-                name: raptor-cable
+                name: raptor-api-public
+                port:
+                  number: 80
+          - path: /public/graphql
+            pathType: Prefix
+            backend:
+              service:
+                name: raptor-api-public
                 port:
                   number: 80
   tls:

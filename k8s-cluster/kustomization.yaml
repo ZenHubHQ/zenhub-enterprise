@@ -15,6 +15,7 @@ resources:
   # Optional configurations
 patchesStrategicMerge:
 # - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
+# - options/pullpolicy/always.yaml #! Sets the image pull policy of deployments to Always
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
 
@@ -26,35 +27,39 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 3.4.1
+  app.kubernetes.io/version: 3.5.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-3.4.1
+    newTag: zhe-3.5.0
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-3.4.1
+    newTag: zhe-3.5.0
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-3.4.1
+    newTag: zhe-3.5.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-3.4.1
+    newTag: zhe-3.5.0
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-3.4.1
+    newTag: zhe-3.5.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-3.4.1
+    newTag: zhe-3.5.0
+  - name: devsite
+    newName: us.gcr.io/zenhub-public/devsite
+    newTag: zhe-3.5.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
   - name: nginx
     newName: docker.io/library/nginx
     newTag: latest
+
 
 configMapGenerator:
   - name: configuration
@@ -63,15 +68,22 @@ configMapGenerator:
       # [EDIT] Set your top-level domain where ZenHub will be served from. This
       # is used to tell the ZenHub webapp how to reach the ZenHub APIs.
       - domain_tld=yourcompany.dev
+
       # [EDIT] Set the subdomain that ZenHub will be served from, or leave as
       # default "zenhub" value.
       - subdomain_suffix=zenhub
+
       # [EDIT] Set the subdomain that ZenHub Admin-UI will be served from, or leave as
       # default "admin-zenhub" value.
       - admin_ui_subdomain=admin-zenhub
-      #
-      # NOTE: Make sure the value does not have a trailing slash.
+
+      # [EDIT] Set the subdomain that ZenHub GraphiQL Explorer will be served from, or leave as
+      # default "dev-zenhub" value.
+      - graphiql_explorer_subdomain=developers
+
+      # [EDIT] NOTE: Make sure the value does not have a trailing slash.
       - github_hostname=https://<github_enterprise_host>
+
       # [EDIT] Specify the OAuth App Client ID for the ZenHub application. See here
       # for instructions on how to setup an OAuth app on your GitHub server:
       # https://docs.github.com/en/developers/apps/creating-an-oauth-app
@@ -79,37 +91,64 @@ configMapGenerator:
       # "secretGenerator" section). Section 2.2 of the README in this folder explains
       # how to configure the fields of the OAuth App.
       - github_app_id=<github_oauth_app_client_id> # GitHub OAuth App Client ID
-      #
-      # S3 API compatible object storage buckets for uploaded files and images
+
+      # [EDIT] S3 API compatible object storage buckets for uploaded files and images
       - bucket_access_key_id=<access_key_id>
       - bucket_region=<bucket_region> # e.g., us-east-1
       - bucket_domain=<bucket_public_domain> # e.g., s3.us-east-1.amazonaws.com
       - files_bucket_name=<bucket_name>
       - images_bucket_name=<bucket_name>
-      #
-      # If you are using AWS DocumentDB for your MongoDB, enable this
+
+      # If you are using AWS DocumentDB for your MongoDB, enable this and append ?retryWrites=false to mongo_url 
       # - mongo_is_documentdb=true
-      #
+
       # [EDIT] Link to your Chome Extension download page. Obtained by configuring your Chrome Extension through the ZenHub Admin User Interface
-      - chrome_extension_webstore_url="" # e.g. https://chrome.google.com/webstore/detail/your-extension-name/id
+      - chrome_extension_webstore_url=<your_chrome_extension_url> # e.g. https://chrome.google.com/webstore/detail/your-extension-name/id
       #
       # [EDIT] Firefox extension UUID used to publish Firefox extensions.
       # NOTE: Always use the same UUID to allow for automatic extension updates for your users
       #       You can find the UUID at the bottom of your extension's product page https://addons.mozilla.org/developers/
       - manifest_firefox_id=zenhub-enterprise@<your_company_domain>
 
+      # GraphQL rate limit configuration.
+      # The default limits are a maximum of 30 concurrent requests and 90 seconds of processing per request.
+      #       "graphql_active_operation_limit" refers to the maximum concurrent requests
+      #       "graphql_runtime_limit_ms" refers to maximum processing time per request
+      # Please read this documentation for further explanation:
+      #       https://developers.zenhub.com/graphql-api-docs/rate-limiting/index.html#concurrent-requests-limit
+      #       https://developers.zenhub.com/graphql-api-docs/rate-limiting/index.html#processing-time-limits
+      - graphql_active_operation_limit=30
+      - graphql_runtime_limit_ms=90000
+
+      # REST API rate limit configuration.
+      # The default limits for the Legacy REST API are 100 requests per 60 seconds.
+      - rest_api_request_limit=100
+      - rest_api_time_limit=60
+
+      # These values will automatically be replaced by running the configmap-generator.sh script during the initial setup.
+      - %%zhe_hostname=%%
+      - %%https_zhe_hostname=%%
+      - %%admin_zhe_hostname=%%
+      - %%devsite_zhe_hostname=%%
+      - %%https_admin_zhe_hostname=%%
+      - %%cable_allowed_origins=%%
+
 secretGenerator:
   - name: configuration
     behavior: merge
     literals:
-      # [EDIT] The full standard full credentials URI for PostgreSQL
-      - postgres_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/raptor_production
+      # [EDIT] Fill in postgres_username and postgres_password for pgbouncer postgres connection pooler
+      - postgres_url=postgresql://<postgres_username>:<postgres_password>@pgbouncer:5432/raptor_production?sslmode=disable
+      # [EDIT] The full standard credentials URI for PostgreSQL to be provided to pgbouncer to make connections to postgresql
+      - pgbouncer_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/raptor_production
       # [EDIT] The full standard full credentials URI for MongoDB
       - mongo_url=mongodb://<mongo_username>:<mongo_password>@<mongo_hostname>:<mongo_port>/zenhub
       # [EDIT] The full standard full credentials URI for Redis
       - redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/0
       # [EDIT] The full standard full credentials URI for Redis
       - cable_redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/1
+      # [EDIT] The full standard full credentials URI for Redis
+      - graphql_redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/2
       # [EDIT] The standard full credentials URI for RabbitMQ. Remove the 's' from amqps if not using TLS on RabbitMQ. Refer to https://www.rabbitmq.com/uri-spec.html for the proper syntax if using Virtual Hosts (vhosts).
       - rabbitmq_url=amqps://<rabbitmq_username>:<rabbitmq_password>@<rabbitmq_hostname>:<rabbitmq_port>
       # [EDIT] The secret for the GitHub OAuth app. See github_app_id above.
@@ -120,18 +159,20 @@ secretGenerator:
       - enterprise_license_token=<zhe-license-jwt>
       # [EDIT] Admin-UI password
       - admin_ui_pass=<some_pass>
-  # [EDIT] Certificates for Postgres DB SSL/TLS.
-  # [NOTE] If you use this you must add "?sslmode=verify-ca&sslrootcert=/var/ca-bundle/postgres/<some_pem>" to the end of postgres_url
-  # - name: postgres-ca-bundle
-  #   behavior: replace
-  #   files:
-  #     - <some_path>/<some_pem>
+      
+  # [EDIT] Required certificate for Postgres DB SSL/TLS.
+  # [NOTE] Your provided certificate must be named postgres-ca.pem
+  - name: postgres-ca-bundle
+    behavior: replace
+    files:
+      - <some_path>/postgres-ca.pem
+
   # [EDIT] Certificates for MongoDB SSL/TLS.
   # [NOTE] If you use this you must add "?tls=true&tlsCAFile=/var/ca-bundle/mongo/<some_pem>" to the end of mongo_url
-  # - name: mongo-ca-bundle
-  #   behavior: replace
-  #   files:
-  #     - <some_path>/<some_pem>
+  - name: mongo-ca-bundle
+    behavior: replace
+    files:
+      - <some_path>/<some_pem>
 
   - name: internal
     # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer
@@ -178,3 +219,7 @@ secretGenerator:
       # [EDIT] Should be the same value as `ghwebhook_secret` above. This
       # one is used by the Raptor services.
       - github_webhooks_secret=<[:alnum:]{38}>
+
+
+replacements:
+  - path: replacement.yaml

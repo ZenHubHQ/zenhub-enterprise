@@ -29,6 +29,9 @@
   - [3.4 Database CA certificates](#34-database-ca-certificates)
   - [3.5 Buckets](#35-buckets)
   - [3.6 AWS DocumentDB as MongoDB](#36-aws-documentdb-as-mongodb)
+  - [3.7 Configuring API Rate Limits](#37-configuring-api-rate-limits)
+    - [3.7.1 GraphQL API](#371-graphql-api)
+    - [3.7.2 Legacy REST API](#372-legacy-rest-api)
 - [4. Deployment](#4-deployment)
   - [4.1 Sanity Check](#41-sanity-check)
   - [4.2 Application Check](#42-application-check)
@@ -45,6 +48,7 @@
 - [7. Roadmap](#7-roadmap)
 
 ## 1. Getting Started
+
 This README will be your guide to setting up Zenhub Enterprise (ZHE) in your Kubernetes cluster. If you do not currently run a Kubernetes cluster and still want to self-host Zenhub, please go back to the [**virtual-machine**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/virtual-machine) folder. If this is your first time using Zenhub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
 
 > As there are numerous steps to be followed and services to be deployed for Zenhub for Kubernetes, we have created a [deployment checklist](https://github.com/ZenhubHQ/zenhub-enterprise/blob/master/k8s-cluster/deployment-checklist.txt) in Markdown format that you can copy to a GitHub Issue to help you keep track of your progress.
@@ -56,6 +60,7 @@ Thank you for your interest in Zenhub!
 ### 2.1 Systems Administration Skills
 
 Systems administration skills are required for set-up. Those deploying Zenhub Enterprise for Kubernetes should be comfortable with:
+
 - The basics of deploying and configuring cloud services, specifically those mentioned below
 - Using `kubectl` to execute operations on a Kubernetes cluster
 - Kubernetes ingress and SSL/TLS
@@ -79,11 +84,11 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 ### 2.3 Kubernetes
 
-In order to get started with Zenhub, you must have an existing Kubernetes cluster set up. You should:
+To get started with Zenhub, you must have an existing Kubernetes cluster set up. You should:
 
-- Be using Kubernetes (>= 1.21).
+- Be using Kubernetes (>= 1.22).
 - Have `kubectl` installed locally with credentials to access the cluster.
-- Have [`kustomize`](https://kustomize.io/) installed locally (>= 3.9.4).
+- Have [`kustomize`](https://kustomize.io/) installed locally (>= 4.5.3).
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
 - Have the capability to pull Docker images from Zenhub's public Docker registry or have access to a private Docker registry where you can push images (and your cluster should have the ability to pull from that private registry).
 
@@ -202,9 +207,9 @@ images:
 
 If your cluster is allowed to pull docker images from our public registry located at: `us.gcr.io/zenhub-public`, you can use this method.
 
-In order to pull images you will need to authenticate.
+To pull images you will need to authenticate.
 
-- A `dockerpassword` file which contains a base64 encoded password is needed—reach out to enterprise@zenhub.com.
+- A `dockerpassword` file that contains a base64 encoded password is needed—reach out to enterprise@zenhub.com.
 - You will need to generate a `kubernetes.io/dockerconfigjson` secret with the following command (where `<namespace>` is the name of the Kubernetes namespace you will be deploying to):
 
   ```bash
@@ -272,11 +277,15 @@ spec:
 
 We highly recommend the use of NGINX Ingress Controller in your cluster. We provide an example configuration for an AWS EKS cluster in[k8s-cluster/options/ingress/](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster/options/ingress), but this will likely need tweaks for your specific environment.
 
-The main requirement from the application side is that your Ingress targets the `nginx-gateway` service on port 80 or 443 for the main app, and `admin-ui` service on port 80 or 443 for the Administration Panel.
+The main requirement from the application side is:
 
-There is a secondary requirement for mid-size and larger environments where the `toad-websocket` pod will need to run more than 1 replica. In this situation, cookie-based sticky sessions must be enabled, and a server-snippet must be used for a path rewrite. We have found that NGINX Ingress supports this, hence our recommendation.
+- Your Ingress targets the `nginx-gateway` service on port 80 or 443 for the main app
+- `admin-ui` service on port 80 or 443 for the Administration Panel
+- `devsite` service on port 80 or 443 for the GraphiQL Explorer
 
-The provided manifests expose Zenhub behind a single ClusterIP service, listening on port 80 and 443. You will need to setup and configure HTTPS through your Ingress (public facing SSL configuration is not within the scope of "Zenhub for Kubernetes").
+There is a secondary requirement for mid-size and larger environments where the `toad-websocket` pod will need to run more than 1 replica. In this situation, cookie-based sticky sessions must be enabled, and a server snippet must be used for a path rewrite. We have found that NGINX Ingress supports this, hence our recommendation.
+
+The provided manifests expose Zenhub behind a single ClusterIP service, listening on ports 80 and 443. You will need to set up and configure HTTPS through your Ingress (public-facing SSL configuration is not within the scope of "Zenhub for Kubernetes").
 
 An example of the ClusterIP definition:
 
@@ -325,6 +334,16 @@ spec:
                 name: admin-ui
                 port:
                   number: 443
+     - host: "dev-zenhub.yourcompany.com"
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: devsite
+                port:
+                  number: 443
 ```
 
 > ⚠️ **NOTE:** These examples don't make any assumptions about your cluster. They might not work exactly as shown as they could be missing some annotations to interoperate with your existing Ingress definition.
@@ -335,9 +354,9 @@ spec:
 
 #### 3.3.1 TLS/SSL Backend
 
-The connection from the load balancer/ingress to Zenhub uses HTTP by default, but both entry points, `nginx-gateway` (Zenhub's main app) and `admin-ui` (Zenhub's administration app), can be accessed on both port `80` and `443`.
+The connection from the load balancer/ingress to Zenhub uses HTTP by default, but the entry points, `nginx-gateway` (Zenhub's main app), `admin-ui` (Zenhub's administration app), and `devsite` (Zenhub's GraphiQL explorer) can be accessed on both port `80` and `443`.
 
-To use the encrypted connection to these backends, your ingress manager needs to support the https backend protocol. Each ingress controller might have different ways to configure this feature.
+To use the encrypted connection to these backends, your ingress manager needs to support the HTTPS backend protocol. Each ingress controller might have different ways to configure this feature.
 
 > ⚠️ **NOTE:** It is very important to configure the application backend port based on the cluster ingress functionality.
 
@@ -377,6 +396,7 @@ metadata:
 ### 3.4 Database CA certificates
 
 #### Postgres
+
 TLS connection with Postgres utilizes the `secretGenerator` near the end of the [kustomization.yaml](kustomization.yaml)
 
 > The files can be stored anywhere and referenced in the configuration by entering a full path name.
@@ -389,6 +409,7 @@ TLS connection with Postgres utilizes the `secretGenerator` near the end of the 
 ```
 
 #### MongoDB
+
 TLS connection with Postgres utilizes the `secretGenerator` near the end of the [kustomization.yaml](kustomization.yaml)
 
 > The files can be stored anywhere and referenced in the configuration by entering a full path name.
@@ -438,9 +459,76 @@ To utilize AWS DocumentDB as MongoDB:
 
 > ⚠️ **NOTE:** We are investigating a solution to utilize TLS connections.
 
+### 3.7 Configuring API Rate Limits
+
+#### 3.7.1 GraphQL API
+
+Starting in ZHE v3.5, a new public GraphQL API is available for you to interact with Zenhub programmatically. There are two configurable settings for the GraphQL API:
+
+- [graphql_active_operation_limit](https://developers.zenhub.com/graphql-api-docs/rate-limiting/index.html#concurrent-requests-limit) (default: 30 concurrent requests)
+- [graphql_runtime_limit_ms](https://developers.zenhub.com/graphql-api-docs/rate-limiting/index.html#processing-time-limits) (default: 90 seconds per minute)
+
+To configure the GraphQL rate limits, follow these steps:
+
+1. Edit the kustomization file `k8s-cluster/kustomization.yaml`
+
+    a. In the _configMapGenerator_ section for the _configuration_ configMap, set your desired values for `graphql_active_operation_limit` and/or `graphql_runtime_limit_ms`
+
+    b. Save your changes to the file
+
+2. Apply the changes 
+
+```bash
+kustomize build . | kubectl apply -f-
+```
+
+3. Restart the raptor-api-public deployment so the updated rate limit configmap values are picked up
+
+```bash
+kubectl rollout restart deployment raptor-api-public -n <namespace>
+```
+
+#### 3.7.2 Legacy REST API
+
+There are two configurable settings for the Legacy REST API:
+
+- `rest_api_request_limit` (default: 100 requests)
+- `rest_api_time_limit` (default: 60 seconds)
+
+This means by default the API will only respond to a maximum of 100 requests within a 60-second window.
+
+To configure the REST API rate limits, follow these steps:
+
+1. Edit the kustomization file `k8s-cluster/kustomization.yaml`
+
+    a. In the _configMapGenerator_ section for the _configuration_ configMap, set your desired values for `rest_api_request_limit` and/or `rest_api_time_limit`
+
+    b. Save your changes to the file
+
+2. Apply the changes
+
+```bash
+kustomize build . | kubectl apply -f-
+```
+
+3. Restart the toad-api deployment so the updated rate limit configmap values are picked up
+
+```bash
+kubectl rollout restart deployment toad-api -n <namespace>
+```
+
 ## 4. Deployment
 
-Once you have setup all the configurations in your copy of `kustomization.yaml` and are ready to deploy your cluster, you can review the diff via:
+Once you have set up all the configurations in your copy of `kustomization.yaml` and are ready to deploy to your cluster, you must run the `configmap-generator.sh` script that will fill placeholders in our Kubernetes manifests with your configuration values.
+
+To run the script, navigate to the root of the directory containing your `kustomization.yaml` file, which also contains the `configmap-generator.sh` script. Then, run the script with these two commands:
+
+```bash
+chmod 700 configmap-generator.sh
+./configmap-generator.sh
+```
+
+**If you have deployed Zenhub previously**, you may review the diff via:
 
 > ⚠️ **NOTE:** Run these commands from the directory that contains your `kustomization.yaml` file.
 
@@ -459,6 +547,7 @@ kustomize build . | kubectl apply -f-
 We have included a `sanitycheck` utility which scans the cluster and helps diagnose common problems that can occur when deploying a large number of services.
 
 To review the results of the check, view the logs of the `sanitycheck` Kubernetes Job:
+
 ```bash
 kubectl logs <sanitycheck-pod-name>
 ```
@@ -480,6 +569,7 @@ The sanity check will:
 The `sanitycheck` script will execute every 10 seconds until all the checks have passed. If the Job status is "Complete", all the checks were successful.
 
 Optionally, you can disable the creation of this Job by commenting out the resource in your `kustomization.yaml` like this:
+
 ```bash
 resources:
   # - options/sanitycheck
@@ -497,6 +587,8 @@ See section [6.1](#61-publishing-the-chrome-and-firefox-extensions) for instruct
 
 ## 5. Upgrades
 
+> ⚠️ **NOTE:** Please see our [Release Notes](https://github.com/ZenhubHQ/zenhub-enterprise/releases) for detailed extra steps or concerns for a given release version.
+
 ### 5.1 Minor and Patch Versions
 
 Two types of upgrades will have to be conducted:
@@ -506,29 +598,37 @@ Two types of upgrades will have to be conducted:
 
 #### 5.1.1 Infrastructure Upgrades
 
-Infrastructure upgrades are related the Kubernetes resources themselves.
+Infrastructure upgrades are related to the Kubernetes resources themselves.
 
 From time to time, we will release a new version of Zenhub Enterprise infrastructure via a GitHub Release on the [ZenhubHQ/zenhub-enterprise](https://github.com/ZenhubHQ/zenhub-enterprise)
-repository. Along with new manifests, a [release note](https://github.com/ZenhubHQ/zenhub-enterprise/releases) will be included to detail extra steps or concerns for the given release. Most releases will not require downtime.
+repository. Most releases will not require downtime.
 
 > This doesn't update the application code. See below for [application updates](#512-application-updates).
 
 ##### 1. Prepare
+
 * You need to get the `kustomization.yaml` you configured with all the secrets to take into account
 * Perform a diff to make sure no outstanding changes are waiting to be applied
+
 ```bash
 kustomize build . | kubectl diff -f-
 ```
 
 > It should exit 0 and only display a warning of unused variables
+
 * Make a copy of your existing `kustomization.yaml` and keep it handy for the next step
+
 ##### 2. Update `kustomization.yaml`
+
 * Check out the `zenhub-enterprise` repo at the tag of the target release
 * Populate the new `kustomization.yaml` with your existing configuration values, adding any new required values for the new version.
 
 ##### 3. Diff and apply
-* First delete the `raptor-db-migrate` and `sanitycheck` jobs so they may be recreated without errors:
+
+* First, delete the `raptor-db-migrate` and `sanitycheck` jobs so they may be recreated without errors:
+
 > Make sure the status of the jobs are `Complete` and not `Running`
+
 ```bash
 kubectl -n <your_dedicated_namespace> delete job/raptor-db-migrate job/sanitycheck
 ```
@@ -548,26 +648,32 @@ kustomize build . | kubectl apply -f-
 ```
 
 ##### 3. Finalize
+
 * Securely store the updated `kustomization.yaml`
 
 #### 5.1.2 Application Updates
 
-The application update is related the Zenhub application code—the containers Zenhub is running on.
+Application updates are related to the Zenhub application code — the containers Zenhub is running on.
 
-Quite often, we will release a new version for the Zenhub Enterprise application in the form a new Docker tag to pull from our public Docker Registry.
+Quite often, we will release a new version of the Zenhub Enterprise application in the form of new Docker tags to pull from our public Docker Registry.
 
 An application update doesn't require any downtime.
 
 ##### 1. Prepare
+
 * Open your `kustomization.yaml` file that you configured when deploying Zenhub.
 * Perform a diff to make sure no outstanding changes are waiting to be applied:
+
 ```bash
 kustomize build . | kubectl diff -f-
 ```
+
 > It should exit 0 and only display a warning of unused variables.
 
 ##### 2. Update `kustomization.yaml`
+
 * To perform an application update to any Zenhub version, modify the image tags in the `images` section to match the new Zenhub application image tags.
+
 > If you are using your own registry, you have to sync the images first, see [3.1 Docker Registry](#31-docker-registry)
 
 ```txt
@@ -591,48 +697,65 @@ images:
     newName: us.gcr.io/zenhub-public/sanitycheck
     newTag: <version>
 ```
+
 * Next, modify the version to match the `<version>` of the release. Example:
+
 ```txt
 commonAnnotations:
   app.kubernetes.io/version: 3.2.0
 ```
+
 * Save the file and continue to the next step of the upgrade below.
 
 ##### 3. Diff and apply
+
 * First delete the `raptor-db-migrate` and `sanitycheck` jobs so they may be recreated without errors:
+
 > Make sure the status is `Complete` and not `Running`
+
 ```bash
 kubectl -n <your_dedicated_namespace> delete job/raptor-db-migrate delete job/sanitycheck
 ```
 
 * Then perform a diff to check what the upgrade will do:
+
 ```bash
 kustomize build . | kubectl diff -f-
 ```
 
 > All application updates can be applied safely without downtime
+
 * If everything looks correct, you can deploy the cluster:
+
 ```bash
 kustomize build . | kubectl apply -f-
 ```
 
 ##### 3. Finalize
+
 - Securely store the updated `kustomization.yaml`
+
 ##### 4. Update the Chrome and Firefox extensions
+
 While application updates will be immediately applied to the Zenhub web app, an update needs to be published in order for the Chrome and Firefox extensions to be updated for your users. See section [6.1](#61-publishing-the-chrome-and-firefox-extensions) for more information.
+
 ## 6. Maintenance and Operational Tasks
+
 ### 6.1 Publishing the Chrome and Firefox extensions
+
 There are two methods to interact with the Zenhub UI:
+
 - The Zenhub web app
 - The Zenhub browser extensions for Chrome and Firefox, which allows users access to the power of Zenhub from within the UI of GitHub Enterprise
 
-To use the extensions with GitHub Enterprise, you must publish your own versions of them. The first time you publish the extensions, you will need to set up a Chrome Developer account and a Mozilla Developer account before creating a new extension in each platform. When application updates are applied, you will publish updates to the *existing* extension on each platform.
+To use the extensions with GitHub Enterprise, you must publish your own versions of them. The first time you publish the extensions, you will need to set up a Chrome Developer account and a Mozilla Developer account before creating a new extension in each platform. When application updates are applied, you will publish updates to the _existing_ extension on each platform.
 
 For detailed instructions, please visit the Zenhub Enterprise Admin UI (`https://<admin_ui_subdomain>`.`<domain_tld>`).
 
 > ⚠️ **NOTE:** After the Chrome extension is published, you will need to get the URL of the published extension and put it into your configuration file as `CHROME_EXTENSION_WEBSTORE_URL`. With this value entered, re-run your configuration. This will ensure the link to download the Chrome extension on the application landing page is active.
 
 ### 6.2 Setting the first Zenhub Admin (License Governance)
+
 Zenhub provides a method of license governance that is enforced across the entire set of GitHub Enterprise users. By default, any user of the connected GitHub Enterprise Server can access, install, and use Zenhub Enterprise On-Premise. If you would like to control access to Zenhub, you will need to promote one or more users to be Zenhub Admins.
 
 Zenhub Admins can be created from the Admin UI (`https://<admin_ui_subdomain>`.`<domain_tld>/settings`). This mechanism exists to ensure only a privileged user can create the first Zenhub Admin. Existing Zenhub Admins can also promote existing Zenhub users to Admin from within the Zenhub web app.
@@ -640,22 +763,28 @@ Zenhub Admins can be created from the Admin UI (`https://<admin_ui_subdomain>`.`
 For more information on License Governance, please view [this article](https://help.zenhub.com/support/solutions/articles/43000559760-license-governance-in-zenhub-enterprise) in our Help Center.
 
 ### 6.3 Maintenance Mode
+
 When operating a ZHE3 deployment on Kubernetes, you may face situations in which you would like to prevent users from accessing the application (such as restoring a database backup). For this purpose, we have included a **maintenance mode** in the `nginx-gateway` pod.
 
 Maintenance mode can be enabled in two ways:
-1. *Automatically*, when Zenhub detects that GitHub is in maintenance mode. Zenhub checks GitHub for this status every 30 seconds.
-2. *Manually*, when a system administrator determines it necessary to gracefully block user access to the application.
+
+1. _Automatically_, when Zenhub detects that GitHub is in maintenance mode. Zenhub checks GitHub for this status every 30 seconds.
+2. _Manually_, when a system administrator determines it is necessary to gracefully block user access to the application.
 
 Enable maintenance mode:
+
 ```bash
 kubectl -n <namespace> set env deployment nginx-gateway -c monitor MAINTENANCE_MODE="TRUE"
 ```
+
 Disable maintenance mode:
+
 ```bash
 kubectl -n <namespace> set env deployment nginx-gateway -c monitor MAINTENANCE_MODE=""
 ```
 
 ### 6.4 Usage Report
+
 Since Zenhub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your Zenhub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<admin_ui_subdomain>.<domain_tld>/usage` and sent to enterprise@zenhub.com.
 
 ## 7. Roadmap

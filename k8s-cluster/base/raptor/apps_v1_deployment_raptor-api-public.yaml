@@ -2,17 +2,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/component: raptor-cable
-  name: raptor-cable
+    app.kubernetes.io/component: raptor-api-public
+  name: raptor-api-public
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/component: raptor-cable
+      app.kubernetes.io/component: raptor-api-public
   template:
     metadata:
       labels:
-        app.kubernetes.io/component: raptor-cable
+        app.kubernetes.io/component: raptor-api-public
     spec:
       affinity:
         podAntiAffinity:
@@ -20,23 +19,25 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app.kubernetes.io/component: raptor-cable
+                  app.kubernetes.io/component: raptor-api-public
               namespaces: []
               topologyKey: kubernetes.io/hostname
             weight: 2
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app.kubernetes.io/component: raptor-cable
+                  app.kubernetes.io/component: raptor-api-public
               namespaces: []
               topologyKey: topology.kubernetes.io/zone
             weight: 2
       containers:
       - args:
-        - puma
-        - -p
-        - "28080"
-        - cable/config.ru
+        - bundle
+        - exec
+        - rails
+        - s
+        - -b
+        - 0.0.0.0
         env:
         - name: DATABASE_URL
           valueFrom:
@@ -57,27 +58,28 @@ spec:
               name: configuration
         - name: CABLE_URL
           value: raptor-cable
-        - name: TOAD_APP_URL
-          value: toad-api
-        - name: POD_NAMESPACE
+        - name: EXTERNAL_GRAPHQL_ACTIVE_OPERATION_LIMIT
           valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
+            configMapKeyRef:
+              key: graphql_active_operation_limit
+              name: configuration
+              optional: true
+        - name: EXTERNAL_GRAPHQL_RUNTIME_LIMIT_IN_MS
+          valueFrom:
+            configMapKeyRef:
+              key: graphql_runtime_limit_ms
+              name: configuration
+              optional: true
         - name: RAILS_MAX_THREADS
           valueFrom:
             configMapKeyRef:
               key: rails_max_threads
-              name: raptor-api
+              name: raptor-api-public
         - name: WEB_CONCURRENCY
           valueFrom:
             configMapKeyRef:
               key: web_concurrency
-              name: raptor-api
-        - name: ACTION_CABLE_WORKERS_POOL_SIZE
-          valueFrom:
-            configMapKeyRef:
-              key: action_cable_workers_pool_size
-              name: raptor-cable
+              name: raptor-api-public
         - name: RUBYOPT
           value: -W0
         - name: RAILS_ENV
@@ -165,6 +167,11 @@ spec:
             configMapKeyRef:
               key: cable_allowed_origins
               name: raptor
+        - name: ACTION_CABLE_WORKERS_POOL_SIZE
+          valueFrom:
+            configMapKeyRef:
+              key: action_cable_workers_pool_size
+              name: raptor
         - name: HUBSPOT_PORTAL_ID
           valueFrom:
             configMapKeyRef:
@@ -215,6 +222,10 @@ spec:
             configMapKeyRef:
               key: stripe_yearly_price_id
               name: raptor
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         - name: SIDEKIQ_REDIS_URL
           valueFrom:
             secretKeyRef:
@@ -322,11 +333,11 @@ spec:
             path: /ping/all
             port: http
           initialDelaySeconds: 40
-          periodSeconds: 20
-          timeoutSeconds: 10
-        name: raptor-cable
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: raptor-api-public
         ports:
-        - containerPort: 28080
+        - containerPort: 5000
           name: http
           protocol: TCP
         readinessProbe:
@@ -338,8 +349,8 @@ spec:
           timeoutSeconds: 5
         resources:
           limits:
-            cpu: 300m
-            memory: 6G
+            cpu: 987m
+            memory: 1495Mi
           requests:
-            cpu: 200m
-            memory: 3G
+            cpu: 987m
+            memory: 1495Mi

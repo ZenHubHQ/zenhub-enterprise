@@ -1,28 +1,30 @@
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-zhe-raptor-cable
+  name: ingress-dev-zhe
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "100M"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
-    nginx.ingress.kubernetes.io/session-cookie-path: "/"
-    nginx.ingress.kubernetes.io/affinity-mode: "balanced"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP" # terminated by nginx-gateway pod
 spec:
   rules:
-    - host: "$(zhe_hostname)"
+    - host: "$(devsite_zhe_hostname)"
       http:
         paths:
-          - path: /cable/
-            pathType: Prefix
+          - pathType: Prefix
+            path: /
             backend:
               service:
-                name: raptor-cable
+                name: devsite
                 port:
                   number: 80
+  defaultBackend:
+    service:
+      name: devsite
+      port:
+        number: 80
   tls:
     - hosts:
-        - $(zhe_hostname)
+        - $(devsite_zhe_hostname)
       secretName: <host_ssl_secret>

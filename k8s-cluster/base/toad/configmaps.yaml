@@ -25,7 +25,6 @@ data:
   node_env: enterprise
   node_options: --max-old-space-size=2048
   port: "3031"
-  queue_backend: rabbitmq
   queue_db: "0"
   raptor_graphql_enabled: "1"
   raptor_uri: http://raptor-api
@@ -47,11 +46,11 @@ data:
   stripe_public_key: ""
   user_image_host: ""
   zenhub_env: enterprise
-  zenhub_server_address: https://$(subdomain_suffix).$(domain_tld)/api
-  zenhub_staging_server_address: https://$(subdomain_suffix).$(domain_tld)/api
-  zenhub_staging_webapp_address: https://$(subdomain_suffix).$(domain_tld)
-  zenhub_webapp_address: https://$(subdomain_suffix).$(domain_tld)
-  zenhub_webhook_address: https://$(subdomain_suffix).$(domain_tld)
+  zenhub_server_address: $(https_zhe_hostname)/api
+  zenhub_staging_server_address: $(https_zhe_hostname)/api
+  zenhub_staging_webapp_address: $(https_zhe_hostname)
+  zenhub_webapp_address: $(https_zhe_hostname)
+  zenhub_webhook_address: $(https_zhe_hostname)
 kind: ConfigMap
 metadata:
   name: toad

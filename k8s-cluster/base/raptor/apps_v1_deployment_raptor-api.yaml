@@ -160,6 +160,16 @@ spec:
             configMapKeyRef:
               key: action_cable_workers_pool_size
               name: raptor
+        - name: HUBSPOT_PORTAL_ID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_portal_id
+              name: raptor
+        - name: HUBSPOT_PLATFORM_SIGNUP_FORM_GUID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_platform_signup_form_guid
+              name: raptor
         - name: AUTH_ISSUER_URLS
           valueFrom:
             configMapKeyRef:
@@ -175,6 +185,31 @@ spec:
             configMapKeyRef:
               key: auth0_tenant
               name: raptor
+        - name: MAILGUN_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              key: mailgun_domain
+              name: raptor
+        - name: WEBAPP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: webapp_url
+              name: raptor
+        - name: STRIPE_TRIAL_PRICE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_trial_price_id
+              name: raptor
+        - name: STRIPE_MONTHLY_PRICE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_monthly_price_id
+              name: raptor
+        - name: STRIPE_YEARLY_PRICE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_yearly_price_id
+              name: raptor
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
@@ -183,6 +218,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: redis_url
+              name: configuration
+        - name: GRAPHQL_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              key: graphql_redis_url
               name: configuration
         - name: SECRET_KEY_BASE
           valueFrom:
@@ -259,6 +299,21 @@ spec:
             secretKeyRef:
               key: auth_management_api_client_secret
               name: raptor
+        - name: MAILGUN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: mailgun_api_key
+              name: raptor
+        - name: STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: stripe_api_key
+              name: raptor
+        - name: STRIPE_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: stripe_webhook_secret
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -282,8 +337,8 @@ spec:
           timeoutSeconds: 5
         resources:
           limits:
-            cpu: 4000m
-            memory: 4000Mi
-          requests:
-            cpu: 1600m
+            cpu: 350m
             memory: 2000Mi
+          requests:
+            cpu: 250m
+            memory: 1500Mi

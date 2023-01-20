@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: db-migration
 spec:
-  backoffLimit: 1
+  backoffLimit: 4
   completions: 1
   parallelism: 1
   template:
@@ -80,11 +80,6 @@ spec:
                 configMapKeyRef:
                   key: github_graphql_url
                   name: raptor
-            - name: ROLLBAR_ENV
-              valueFrom:
-                configMapKeyRef:
-                  key: rollbar_env
-                  name: raptor
             - name: NEW_RELIC_AGENT_ENABLED
               valueFrom:
                 configMapKeyRef:
@@ -140,11 +135,6 @@ spec:
                 secretKeyRef:
                   key: ld_sdk_key
                   name: raptor
-            - name: ROLLBAR_ACCESS_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  key: rollbar_access_token
-                  name: raptor
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
@@ -178,11 +168,13 @@ spec:
               value: ""
             - name: CABLE_REDIS_URL
               value: ""
+            - name: GRAPHQL_REDIS_URL
+              value: ""
             - name: CABLE_ALLOWED_ORIGINS
               value: ""
             - name: ACTION_CABLE_WORKERS_POOL_SIZE
               value: ""
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.4.1
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.5.0
           imagePullPolicy: Always
           name: raptor-db-migrate
           resources:

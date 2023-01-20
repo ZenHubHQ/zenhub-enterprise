@@ -68,11 +68,6 @@ spec:
             configMapKeyRef:
               key: queue_db
               name: toad
-        - name: QUEUE_BACKEND
-          valueFrom:
-            configMapKeyRef:
-              key: queue_backend
-              name: toad
         - name: REDIS_HOST
           valueFrom:
             configMapKeyRef:
@@ -289,11 +284,6 @@ spec:
             secretKeyRef:
               key: launchdarkly_sdk_key
               name: toad
-        - name: SALESMACHINE_API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: salesmachine_api_token
-              name: toad
         - name: SLACK_WEBHOOK
           valueFrom:
             secretKeyRef:
@@ -349,10 +339,10 @@ spec:
             secretKeyRef:
               key: autopilot_api_key
               name: toad
-        - name: KNOWTIFY_TOKEN
+        - name: CHART_MOGUL_API_TOKEN
           valueFrom:
             secretKeyRef:
-              key: knowtify_token
+              key: chart_mogul_api_token
               name: toad
         - name: AUTH0_AUDIENCE
           valueFrom:
@@ -397,16 +387,17 @@ spec:
           timeoutSeconds: 5
         resources:
           limits:
-            cpu: 750m
-            memory: 300Mi
+            cpu: 80m
+            memory: 85Mi
           requests:
-            cpu: 100m
-            memory: 150Mi
+            cpu: 70m
+            memory: 74Mi
       initContainers:
       - command:
         - sh
         - -c
-        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database: PASSED''; do echo waiting for ''Schema''; sleep 2; done'
+        - 'until wget -O - http://$(RAPTOR_SERVICE)/ping/all -q| grep ''database:
+          PASSED''; do echo waiting for ''Schema''; sleep 2; done'
         env:
         - name: RAPTOR_SERVICE
           value: raptor-api

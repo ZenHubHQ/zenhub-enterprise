@@ -9,6 +9,16 @@ spec:
   minReplicas: 2
 
 ---
+# raptor-api
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: raptor-api-public
+spec:
+  maxReplicas: 2
+  minReplicas: 2
+
+---
 # raptor-cable
 apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
