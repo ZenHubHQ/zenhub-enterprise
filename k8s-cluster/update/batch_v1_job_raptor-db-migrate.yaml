@@ -174,7 +174,7 @@ spec:
               value: ""
             - name: ACTION_CABLE_WORKERS_POOL_SIZE
               value: ""
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.5.0
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.5.1
           imagePullPolicy: Always
           name: raptor-db-migrate
           resources:
