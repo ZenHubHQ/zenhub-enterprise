@@ -192,7 +192,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  maintenance.html: "<!DOCTYPE html>\n<html>\n\n  <head>\n    <title>ZenHub Enterprise
+  maintenance.html: "<!DOCTYPE html>\n<html>\n\n  <head>\n    <title>Zenhub Enterprise
     Maintenance In Progress</title>\n    <style>\n      html {\n        height: 100%\n
     \     }\n      body {\n        background: rgb(15,14,29);\n        background:
     linear-gradient(315deg, rgba(15,14,29,1) 0%, rgba(29,28,57,1) 22%, rgba(48,65,150,1)
@@ -201,9 +201,9 @@ data:
     \       padding: 10px;\n      }\n      h1, h3 {\n          color: white;\n          font-family:
     'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode',
     Geneva, Verdana, sans-serif;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div
-    id=\"message\">\n      <h1>ZenHub (or GitHub) is down for maintenance</h1>\n      <h3>Your
-    ZenHub Enterprise administrators are performing scheduled maintenance. If you
-    have any questions, please contact your ZenHub administrator.</h3>\n    </div>\n
+    id=\"message\">\n      <h1>Zenhub (or GitHub) is down for maintenance</h1>\n      <h3>Your
+    Zenhub Enterprise administrators are performing scheduled maintenance. If you
+    have any questions, please contact your Zenhub administrator.</h3>\n    </div>\n
     \ </body>\n  \n</html>\n"
 kind: ConfigMap
 metadata:
@@ -218,7 +218,7 @@ data:
   ghe-maintenance-monitor.sh: |-
     #!/bin/bash
     # GitHub Enterprise Maintenance Monitor Service V2 - K8s
-    # ZenHub (c)
+    # Zenhub (c)
 
     DIR_FILE="/data/zhe-monitor/maintenance-status"
 

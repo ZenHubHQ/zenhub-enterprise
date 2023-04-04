@@ -232,7 +232,7 @@ spec:
                 secretKeyRef:
                   key: hubspot_api_key
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.5.1
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.5.2
           imagePullPolicy: Always
           name: data-migration
           resources:

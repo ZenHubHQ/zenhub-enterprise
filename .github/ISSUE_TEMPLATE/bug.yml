@@ -4,11 +4,11 @@ title: "[Bug]: "
 body:
   - type: markdown
     attributes:
-      value: ⚠️ Please note, that this repository is used to track bugs related to the configuration, documentation and installation of the ZenHub Enterprise On-Premise infrastructure. To report a bug with the ZenHub user-facing application itself, please email us at support@zenhub.com instead.
+      value: ⚠️ Please note, that this repository is used to track bugs related to the configuration, documentation and installation of the Zenhub Enterprise On-Premise infrastructure. To report a bug with the Zenhub user-facing application itself, please email us at support@zenhub.com instead.
 
   - type: dropdown
     attributes:
-      label: How are you deploying ZenHub Enterprise On-Premise?
+      label: How are you deploying Zenhub Enterprise On-Premise?
       options:
         - Kubernetes cluster
         - VM (VMWare)
@@ -19,7 +19,7 @@ body:
 
   - type: input
     attributes:
-      description: What version of ZenHub Enterprise On-Premise are you having an issue with?
+      description: What version of Zenhub Enterprise On-Premise are you having an issue with?
       placeholder: 3.2.0
     validations:
       required: true

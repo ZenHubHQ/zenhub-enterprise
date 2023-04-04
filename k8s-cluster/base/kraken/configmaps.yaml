@@ -118,7 +118,7 @@ data:
       "CABLE_URL": "wss://%%subdomain_suffix%%.%%domain_tld%%/cable/",
       "CAMO_HOST": "",
       "CAMO": "",
-      "companyDomain": "ZenHub",
+      "companyDomain": "Zenhub",
       "dashboardURL": "https://%%subdomain_suffix%%.%%domain_tld%%/dashboard",
       "ENV": "enterprise",
       "env": "enterprise",

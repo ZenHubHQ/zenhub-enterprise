@@ -45,7 +45,8 @@
   - [6.2 Setting the first Zenhub Admin (License Governance)](#62-setting-the-first-zenhub-admin-license-governance)
   - [6.3 Maintenance Mode](#63-maintenance-mode)
   - [6.4 Usage Report](#64-usage-report)
-- [7. Roadmap](#7-roadmap)
+- [7. Developer Site](#7-developer-site)
+- [8. Roadmap](#8-roadmap)
 
 ## 1. Getting Started
 
@@ -334,7 +335,7 @@ spec:
                 name: admin-ui
                 port:
                   number: 443
-     - host: "dev-zenhub.yourcompany.com"
+     - host: "developers-zenhub.yourcompany.com"
       http:
         paths:
           - pathType: Prefix
@@ -787,7 +788,15 @@ kubectl -n <namespace> set env deployment nginx-gateway -c monitor MAINTENANCE_M
 
 Since Zenhub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your Zenhub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<admin_ui_subdomain>.<domain_tld>/usage` and sent to enterprise@zenhub.com.
 
-## 7. Roadmap
+## 7. Developer Site
+
+Zenhub Enterprise for K8s comes with a static developer site that contains documentation for the GraphQL API that is available to developers who want to automate aspects of using Zenhub.
+
+Once you have configured and deployed Zenhub, the developer site is made available at `https://<graphiql_explorer_subdomain_prefix>-<subdomain_suffix>.<domain_tld>`, via ports `80` and `443`.
+
+_An example of what the developer site looks like and does can be found at: <https://developers.zenhub.com>_
+
+## 8. Roadmap
 
 ZHE3 is actively in development. We are planning to add the following features shortly:
 

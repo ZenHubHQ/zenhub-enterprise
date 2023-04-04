@@ -6,12 +6,12 @@ export `grep -ir "subdomain_suffix=" kustomization.yaml | awk '{print $3}'`
 export `grep -ir "admin_ui_subdomain=" kustomization.yaml | awk '{print $3}'`
 export `grep -ir "github_hostname=" kustomization.yaml | awk '{print $3}'`
 export `grep -ir "chrome_extension_webstore_url=" kustomization.yaml | awk '{print $3}'`
-export `grep -ir "graphiql_explorer_subdomain=" kustomization.yaml | awk '{print $3}'`
+export `grep -ir "graphiql_explorer_subdomain_prefix=" kustomization.yaml | awk '{print $3}'`
 
 zhe_hostname="$subdomain_suffix.$domain_tld"
 https_zhe_hostname="https://$zhe_hostname"
 admin_zhe_hostname="$admin_ui_subdomain.$domain_tld"
-devsite_zhe_hostname="$graphiql_explorer_subdomain.$zhe_hostname"
+devsite_zhe_hostname="$graphiql_explorer_subdomain_prefix-$zhe_hostname"
 https_admin_zhe_hostname="https://$admin_zhe_hostname"
 cable_allowed_origins="$https_zhe_hostname, $github_hostname, null"
 
