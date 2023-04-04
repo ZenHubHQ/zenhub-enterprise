@@ -1,0 +1,49 @@
+location /files/ {
+
+    if (-f /data/zhe-monitor/maintenance-status) {
+        return 503;
+    }
+
+    # Remove /download path to hit key in bucket directly
+    if ($request_uri ~* "/(.*)/download$") {
+        rewrite ^(/.*)/download$ $1 last;
+    }
+
+    proxy_cache my_file_cache;
+    proxy_cache_revalidate on;
+    proxy_cache_min_uses 3;
+    proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+    proxy_cache_background_update on;
+    proxy_cache_lock on;
+
+    proxy_pass https://bucket-files/;
+
+    proxy_http_version     1.1;
+    proxy_redirect         off;
+    proxy_set_header       Connection "";
+    proxy_set_header       Authorization '';
+    # proxy_set_header       Host $bucket;
+    proxy_set_header       Host ${FILES_BUCKET_NAME}.${BUCKET_DOMAIN};
+    proxy_set_header       X-Real-IP $remote_addr;
+    proxy_set_header       X-Forwarded-For $proxy_add_x_forwarded_for;
+    # proxy_hide_header      x-amz-id-2;
+    # proxy_hide_header      x-amz-request-id;
+    # proxy_hide_header      x-amz-meta-server-side-encryption;
+    # proxy_hide_header      x-amz-server-side-encryption;
+    proxy_hide_header      Set-Cookie;
+    proxy_ignore_headers   Set-Cookie;
+    proxy_intercept_errors on;
+    # add_header             Cache-Control max-age=31536000;
+
+    proxy_set_header        X-NginX-Proxy true;
+    proxy_set_header        Upgrade $http_upgrade;
+    proxy_set_header        Connection "upgrade";
+
+    # proxy_ssl               on;
+    proxy_ssl_verify        off;
+    proxy_ssl_server_name   on;
+}
+
+location = /files/ {
+  return 403;
+}

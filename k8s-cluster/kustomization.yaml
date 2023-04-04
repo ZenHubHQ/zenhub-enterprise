@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# [EDIT] Specify the Kubernetes namespace into which ZenHub will be deployed.
+# [EDIT] Specify the Kubernetes namespace into which Zenhub will be deployed.
 namespace: <a_dedicated_namespace>
 
 # [NOTE] You cannot set a `name_suffix` because the URLs would not match
@@ -14,7 +14,7 @@ resources:
 
   # Optional configurations
 patchesStrategicMerge:
-# - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from ZenHub's registry
+# - options/zenhub-registry/zenhub-registry.yaml #! Adds imagePullSecrets to pull images from Zenhub's registry
 # - options/pullpolicy/always.yaml #! Sets the image pull policy of deployments to Always
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
@@ -27,32 +27,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 3.5.1
+  app.kubernetes.io/version: 3.5.2
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-3.5.1
+    newTag: zhe-3.5.2
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-3.5.1
+    newTag: zhe-3.5.2
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-3.5.1
+    newTag: zhe-3.5.2
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-3.5.1
+    newTag: zhe-3.5.2
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-3.5.1
+    newTag: zhe-3.5.2
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-3.5.1
+    newTag: zhe-3.5.2
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-3.5.1
+    newTag: zhe-3.5.2
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -65,26 +65,26 @@ configMapGenerator:
   - name: configuration
     behavior: merge
     literals:
-      # [EDIT] Set your top-level domain where ZenHub will be served from. This
-      # is used to tell the ZenHub webapp how to reach the ZenHub APIs.
+      # [EDIT] Set your top-level domain where Zenhub will be served from. This
+      # is used to tell the Zenhub webapp how to reach the Zenhub APIs.
       - domain_tld=yourcompany.dev
 
-      # [EDIT] Set the subdomain that ZenHub will be served from, or leave as
+      # [EDIT] Set the subdomain that Zenhub will be served from, or leave as
       # default "zenhub" value.
       - subdomain_suffix=zenhub
 
-      # [EDIT] Set the subdomain that ZenHub Admin-UI will be served from, or leave as
+      # [EDIT] Set the subdomain that Zenhub Admin-UI will be served from, or leave as
       # default "admin-zenhub" value.
       - admin_ui_subdomain=admin-zenhub
 
-      # [EDIT] Set the subdomain that ZenHub GraphiQL Explorer will be served from, or leave as
-      # default "dev-zenhub" value.
-      - graphiql_explorer_subdomain=developers
+      # [EDIT] Set the subdomain that Zenhub GraphiQL Explorer will be served from, or leave as
+      # default "developers" value. The domain would then be https://developers-<subdomain_suffix>.<domain_tld>
+      - graphiql_explorer_subdomain_prefix=developers
 
       # [EDIT] NOTE: Make sure the value does not have a trailing slash.
       - github_hostname=https://<github_enterprise_host>
 
-      # [EDIT] Specify the OAuth App Client ID for the ZenHub application. See here
+      # [EDIT] Specify the OAuth App Client ID for the Zenhub application. See here
       # for instructions on how to setup an OAuth app on your GitHub server:
       # https://docs.github.com/en/developers/apps/creating-an-oauth-app
       # The secret value should be passed to `github_app_secret` below (in the
@@ -102,7 +102,7 @@ configMapGenerator:
       # If you are using AWS DocumentDB for your MongoDB, enable this and append ?retryWrites=false to mongo_url 
       # - mongo_is_documentdb=true
 
-      # [EDIT] Link to your Chome Extension download page. Obtained by configuring your Chrome Extension through the ZenHub Admin User Interface
+      # [EDIT] Link to your Chome Extension download page. Obtained by configuring your Chrome Extension through the Zenhub Admin User Interface
       - chrome_extension_webstore_url=<your_chrome_extension_url> # e.g. https://chrome.google.com/webstore/detail/your-extension-name/id
       #
       # [EDIT] Firefox extension UUID used to publish Firefox extensions.
@@ -179,11 +179,11 @@ secretGenerator:
     behavior: merge
     literals:
       # NOTE:
-      # => If you migrating from ZenHub Enterprise version 2, please recover
+      # => If you migrating from Zenhub Enterprise version 2, please recover
       # the values from your existing installation (see our ZHE2 to ZHE3 upgrade
       # instructions https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration,
       # you can get these values from variables.txt from zhe3-migration-cluster.sh)
-      # => If you are setting up a new ZenHub Enterprise, respect the regexp format
+      # => If you are setting up a new Zenhub Enterprise, respect the regexp format
       # on Linux, you can run the following to generate the secret as follows:
       # for most secrets
       # tr -dc '[:alnum:]' </dev/urandom | head -c ${1-38} ; echo ''

@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-ui
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: ssl-generator
+          image: nginx
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_NAME
+              value: "nginx-gw"
+            - name: TLS_DURATION
+              value: "1095"
+          command:
+            [
+              "/bin/bash",
+              "-c",
+              "openssl req -x509 -nodes -days $TLS_DURATION -newkey rsa:2048 -keyout /data/ssl/$TLS_NAME.key -subj '/C=CA/ST=BC/L=Vancouver/O=Zenhub, Inc./CN=*.${NAMESPACE}.svc.cluster.local' -out /data/ssl/$TLS_NAME.crt",
+            ]
+          volumeMounts:
+            - mountPath: /data/ssl/
+              name: crt-volume
+      containers:
+        - name: nginx-proxy
+          image: nginx
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              scheme: HTTPS
+              port: https
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /data/ssl/
+              name: crt-volume
+              readOnly: true
+            - name: proxy-conf-volume
+              mountPath: /etc/nginx/templates/default.conf.template
+              subPath: default.conf.template
+          resources:
+            limits:
+              cpu: 250m
+              memory: 200Mi
+            requests:
+              cpu: 250m
+              memory: 200Mi
+      volumes:
+        - name: crt-volume
+          emptyDir: {}
+        - name: proxy-conf-volume
+          configMap:
+            name: zhe-admin-proxy-conf
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-ui
+spec:
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443

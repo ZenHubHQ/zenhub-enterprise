@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../gateway
+  - ../../admin-ui
+
+patchesStrategicMerge:
+  - set-gateway-tls.yaml
+  - set-gateway-buckets-vars.yaml
+  - set-admin-tls.yaml
+
+configMapGenerator:
+  - name: zhe-gw-include-ssl
+    behavior: replace
+    files:
+      - include-ssl.conf
+  - name: zhe-gw-include-upstream-bucket
+    behavior: replace
+    files:
+      - include-upstream-bucket.conf.template
+  - name: zhe-gw-include-location-images
+    behavior: replace
+    files:
+      - include-location-images.conf.template
+  - name: zhe-gw-include-location-files
+    behavior: replace
+    files:
+      - include-location-files.conf.template
+  - name: zhe-admin-proxy-conf
+    files:
+      - default.conf.template
+  - name: zhe-gw-include-location-ff-extension
+    behavior: replace
+    files:
+      - include-location-ff-extension.conf.template
+
+generatorOptions:
+  disableNameSuffixHash: true

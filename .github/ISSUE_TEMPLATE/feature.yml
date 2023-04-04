@@ -1,10 +1,10 @@
 name: "🚀 Feature Request"
-description: "I have a specific suggestion for ZenHub Enterprise On-Premise!"
+description: "I have a specific suggestion for Zenhub Enterprise On-Premise!"
 title: "[Bug]: "
 body:
   - type: markdown
     attributes:
-      value: ⚠️ Please note, that this repository is used to track features related to the configuration, documentation and installation of the ZenHub Enterprise On-Premise infrastructure. To suggest a feature for the ZenHub user-facing application itself, please email us at support@zenhub.com instead.
+      value: ⚠️ Please note, that this repository is used to track features related to the configuration, documentation and installation of the Zenhub Enterprise On-Premise infrastructure. To suggest a feature for the Zenhub user-facing application itself, please email us at support@zenhub.com instead.
 
   - type: textarea
     attributes:

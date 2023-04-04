@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-gateway
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: ssl-generator
+          image: nginx
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: TLS_NAME
+              value: "nginx-gw"
+            - name: TLS_DURATION
+              value: "1095"
+          command:
+            [
+              "/bin/bash",
+              "-c",
+              "openssl req -x509 -nodes -days $TLS_DURATION -newkey rsa:2048 -keyout /data/ssl/$TLS_NAME.key -subj '/C=CA/ST=BC/L=Vancouver/O=Zenhub, Inc./CN=*.${NAMESPACE}.svc.cluster.local' -out /data/ssl/$TLS_NAME.crt",
+            ]
+          volumeMounts:
+            - mountPath: /data/ssl/
+              name: gw-crt-volume
+      containers:
+        - name: nginx-gateway
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /data/ssl/
+              name: gw-crt-volume
+              readOnly: true
+      volumes:
+        - name: gw-crt-volume
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-gateway
+spec:
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
