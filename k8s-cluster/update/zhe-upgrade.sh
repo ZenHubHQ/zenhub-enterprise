@@ -36,21 +36,14 @@ else
     REGISTRY=$2
 
     # Replace occurences of ZenHub registry in data migration manifests with the custom registry
-    sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_raptor-db-migrate.yaml
     sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_data_migration.yaml
-    sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
     # Remove imagePullSecrets for ZenHub registry
-    sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_raptor-db-migrate.yaml
     sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_data_migration.yaml
-    sed -i.bak "/remove-if-custom-registry/d" apps_v1_deployment_raptor-sidekiq-worker-for-toad-events.yaml
 
 fi
 
-IMAGE=raptor-backend
-TAG=zhe-3.4.1
 NAMESPACE=$1
-REPLICAS=0
 
 DEPLOYMENTS=(
 raptor-sidekiq-worker
@@ -133,7 +126,7 @@ echo "###############################################"
 
 for d in "${DEPLOYMENTS[@]}"
 do
-    kubectl -n $NAMESPACE scale deployments/$d --replicas=$REPLICAS
+    kubectl -n $NAMESPACE scale deployments/$d --replicas=0
 done
 
 echo "All Deployments Scaled to 0"
@@ -144,9 +137,7 @@ echo "###############################################"
 echo "         Starting Data Migration Job"
 echo "###############################################"
 
-echo "         Updating raptor-sidekiq-worker..."
-kubectl -n $NAMESPACE set image deployment/raptor-sidekiq-worker \
-    raptor-sidekiq-worker=$REGISTRY/$IMAGE:$TAG
+echo "         Scaling up raptor-sidekiq-workers..."
 kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
 
 kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
@@ -156,13 +147,6 @@ kubectl -n $NAMESPACE apply -f batch_v1_job_data_migration.yaml
 
 echo "         Waiting for Data Migration Job to be 'complete' (timeout 3000s)"
 kubectl -n $NAMESPACE wait --for=condition=complete job/data-migration --timeout=3000s
-
-# Now that migrations have run to cleanup data, run db schema updates
-echo "         Updating Databases"
-kubectl -n $NAMESPACE apply -f batch_v1_job_raptor-db-migrate.yaml
-
-echo "         Waiting DB Migration Job to be 'complete' (timeout 3000s)"
-kubectl -n $NAMESPACE wait --for=condition=complete job/db-migration --timeout=3000s
 
 echo "###############################################"
 echo "         Deleting Old Resources"
@@ -192,7 +176,7 @@ done
 echo ""
 echo ""
 echo "###############################################"
-echo "         Migration Completed Successfully"
-echo " Please update your kustomization.yaml"
-echo " with the new image tags and redeploy"
+echo "     Data Migration Completed Successfully"
+echo " Please follow the upgrade steps to"
+echo " redeploy your application"
 echo "###############################################"
