@@ -45,6 +45,7 @@
   - [6.2 Setting the first Zenhub Admin (License Governance)](#62-setting-the-first-zenhub-admin-license-governance)
   - [6.3 Maintenance Mode](#63-maintenance-mode)
   - [6.4 Usage Report](#64-usage-report)
+  - [6.5 Support Bundle](#65-support-bundle)
 - [7. Developer Site](#7-developer-site)
 - [8. Roadmap](#8-roadmap)
 
@@ -787,6 +788,10 @@ kubectl -n <namespace> set env deployment nginx-gateway -c monitor MAINTENANCE_M
 ### 6.4 Usage Report
 
 Since Zenhub Enterprise On-Premise is a completely self-contained system in your environment, we require a monthly usage report to be sent to us in order to ensure your Zenhub usage aligns with your billing. The usage report can be found in the Admin UI at `https://<admin_ui_subdomain>.<domain_tld>/usage` and sent to enterprise@zenhub.com.
+
+### 6.5 Support Bundle
+
+To help the Zenhub Enterprise support team diagnose issues, a support bundle can be created by following [these instructions](support_bundle/README.md).
 
 ## 7. Developer Site
 
