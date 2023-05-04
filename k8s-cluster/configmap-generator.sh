@@ -33,6 +33,7 @@ fi
 ## Replace placeholder
 sed_wrap "s/%%domain_tld%%/$domain_tld/g" base/kraken/configmaps.yaml
 sed_wrap "s/%%subdomain_suffix%%/$subdomain_suffix/g" base/kraken/configmaps.yaml
+sed_wrap "s/%%devsite_zhe_hostname%%/$devsite_zhe_hostname/g" base/kraken/configmaps.yaml
 sed_wrap "s/%%github_hostname%%/$(echo $github_hostname | sed 's_\/_\\/_g')/g" base/kraken/configmaps.yaml
 sed_wrap "s/%%chrome_extension_webstore_url%%/$(echo $chrome_extension_webstore_url | sed 's_\/_\\/_g')/g" base/kraken/configmaps.yaml
 

@@ -255,6 +255,11 @@ zenhub_configuration:
 # chrony:
 #   primary: 0.ubuntu.pool.ntp.org
 #   secondary:
+
+## Credentials to upload support bundles to a secure S3 bucket
+# upload_bundle_vars:
+#   SUPPORT_BUNDLE_ACCESS_KEY:
+#   SUPPORT_BUNDLE_SECRET_KEY:
 ```
 
 ### 3.3.1 Required Values
@@ -279,6 +284,9 @@ zenhub_configuration:
 - `ssh_keys`: SSH key(s) to be included as authorized_keys
 - `ip`: Configure the VM to use static IP
 - `chrony`: Configure the VM to use custom NTP servers for your environment
+- `upload_bundle_vars`: Configuration for uploading support bundles to a secure s3 bucket
+  - `SUPPORT_BUNDLE_ACCESS_KEY`: AWS access key provided by Zenhub Support
+  - `SUPPORT_BUNDLE_SECRET_KEY`: AWS secret key provided by Zenhub Support
 - `GRAPHQL_OPERATION_LIMIT`: Sets the rate limit for concurrent requests on the GraphQL API per token. Should be nested under zenhub_configuration.
 - `GRAPHQL_RUNTIME_LIMIT`: Sets the rate limit in milliseconds for the total amount of process time per minute per token for GraphQL API. Should be nested under zenhub_configuration.
 - `REST_API_REQUEST_LIMIT`: Sets the number of requests the legacy REST API will serve in a given **REST_API_TIME_LIMIT** before rate limiting. Should be nested under zenhub_configuration.
@@ -491,13 +499,20 @@ zhe-config --restore <snapshot_name>
 
 ### 6.4 Support Bundle
 
-To help our teams to troubleshoot issues you might have, a support bundle including logs and configuration can be generated with:
+To help our support team troubleshoot issues you might have, a support bundle including logs and configuration can be generated with:
 
 ```bash
 zhe-config --support-bundle
 ```
 
-It will generate an archive to be found under `${ZENHUB_HOME}/support-bundle`. Please send this to **enterprise@zenhub.com**
+It will generate an archive that can be found under `${ZENHUB_HOME}/support-bundle`.
+
+
+To send this bundle to Zenhub support, you can use our built-in bundle uploader. Before running this command, you must first configure AWS access keys as described in section [3.3 Configure Zenhub](#33-configure-zenhub)
+```bash
+zhe-config --upload-bundle <path_to_support_bundle>
+```
+
 
 ### 6.5 VM Size Changes
 > ⚠️ **NOTE:** For hard drive size changes, see section [6.7](#67-disk-management)
@@ -768,6 +783,7 @@ Options:
                                   and scale application based on hardware resources available
   --restore       BACKUP_NAME     Restore from a backup in /opt/snapshots
   --support-bundle                Generate a support bundle
+  --upload-bundle BUNDLE_PATH     Upload a support bundle to a secure AWS storage bucket for Zenhub support to access
   --sshkey                        Add an SSH key manually
   --staticip                      Configure VM to use static IP
   --update-tls                    Update Zenhub to use new TLS cert and key placed at:
@@ -867,7 +883,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=docker.io/fluent/fluentd:v1.15-debian-1`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-3.5.3`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site

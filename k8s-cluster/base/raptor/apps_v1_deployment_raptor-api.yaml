@@ -314,6 +314,12 @@ spec:
             secretKeyRef:
               key: stripe_webhook_secret
               name: raptor
+        - name: GLOBAL_GITHUB_ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: global_github_admin_token
+              name: global-github-admin-token-secret
+              optional: true
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:

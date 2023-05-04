@@ -147,6 +147,7 @@ data:
       "webappURL": "https://%%subdomain_suffix%%.%%domain_tld%%",
       "ZENHUB_SERVER_ADDRESS": "https://%%subdomain_suffix%%.%%domain_tld%%/api",
       "ZENHUB_WEBAPP_ADDRESS": "https://%%subdomain_suffix%%.%%domain_tld%%",
+      "ZENHUB_DEVSITE_ADDRESS": "https://%%devsite_zhe_hostname%%",
       "ZENHUB_CHROME_EXT_WEBSTORE_URL": "%%chrome_extension_webstore_url%%",
       "ZENHUB_FIREFOX_EXT_JSON_URL": "https://%%subdomain_suffix%%.%%domain_tld%%/zhe-public/ff-ext-signed/latest.json",
       "ZENHUB_FIREFOX_EXT_XPI_ROOT_URL": "https://%%subdomain_suffix%%.%%domain_tld%%/zhe-public/ff-ext-signed"
