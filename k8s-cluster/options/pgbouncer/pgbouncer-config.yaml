@@ -1,0 +1,26 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: pgbouncer
+    app.kubernetes.io/name: pgbouncer
+  name: pgbouncer
+spec:
+  template:
+    spec:
+      containers:
+        - name: pgbouncer
+          volumeMounts:
+            - mountPath: /etc/pgbouncer
+              name: pgbouncer-config-files
+              readOnly: true
+      volumes:
+        - name: pgbouncer-config-files
+          projected:
+            sources:
+            - secret:
+                name: pgbouncer-userlist
+            - secret:
+                name: pgbouncer-ini
+

@@ -18,6 +18,8 @@ patchesStrategicMerge:
 # - options/pullpolicy/always.yaml #! Sets the image pull policy of deployments to Always
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
+# - options/pgbouncer/pgbouncer-config.yaml #! Enable if custom configuration is required for pgbouncer (connection and pool limits, etc).
+                                            #! See documentation in options/pgbouncer/README.md to make configuration changes.
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
@@ -173,6 +175,21 @@ secretGenerator:
     behavior: replace
     files:
       - <some_path>/<some_pem>
+
+  # [EDIT] If you need admin access to PgBouncer to view pools, connections, etc. and the username that you use to connect to PostgreSQL is not named "postgres".
+  # [EDIT] Or if you just need to tune the default PgBouncer pool size and connection limits to better suit your database.
+  # [IMPORTANT NOTE] See documentation in options/pgbouncer/README.md to make configuration changes.
+  # - name: pgbouncer-userlist
+  #   files:
+  #     - options/pgbouncer/userlist.txt
+  #   options:
+  #     disableNameSuffixHash: true
+  # - name: pgbouncer-ini
+  #   files:
+  #     - options/pgbouncer/pgbouncer.ini
+  #   options:
+  #     disableNameSuffixHash: true
+
 
   - name: internal
     # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer
