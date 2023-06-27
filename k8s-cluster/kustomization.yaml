@@ -18,6 +18,8 @@ patchesStrategicMerge:
 # - options/pullpolicy/always.yaml #! Sets the image pull policy of deployments to Always
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
+# - options/pgbouncer/pgbouncer-config.yaml #! Enable if custom configuration is required for pgbouncer (connection and pool limits, etc).
+                                            #! See documentation in options/pgbouncer/README.md to make configuration changes.
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
@@ -27,32 +29,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 3.5.3
+  app.kubernetes.io/version: 3.5.4
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-3.5.3
+    newTag: zhe-3.5.4
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-3.5.3
+    newTag: zhe-3.5.4
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-3.5.3
+    newTag: zhe-3.5.4
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-3.5.3
+    newTag: zhe-3.5.4
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-3.5.3
+    newTag: zhe-3.5.4
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-3.5.3
+    newTag: zhe-3.5.4
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-3.5.3
+    newTag: zhe-3.5.4
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -124,14 +126,12 @@ configMapGenerator:
       # The default limits for the Legacy REST API are 100 requests per 60 seconds.
       - rest_api_request_limit=100
       - rest_api_time_limit=60
-
-      # These values will automatically be replaced by running the configmap-generator.sh script during the initial setup.
-      - %%zhe_hostname=%%
-      - %%https_zhe_hostname=%%
-      - %%admin_zhe_hostname=%%
-      - %%devsite_zhe_hostname=%%
-      - %%https_admin_zhe_hostname=%%
-      - %%cable_allowed_origins=%%
+  
+  # Do not create/edit the zhe-urls.env file. This is managed by the configmap-generator.sh script.
+  - name: configuration
+    behavior: merge
+    envs:
+      - zhe-urls.env
 
 secretGenerator:
   - name: configuration
@@ -173,6 +173,20 @@ secretGenerator:
     behavior: replace
     files:
       - <some_path>/<some_pem>
+
+  # [EDIT] If you need admin access to PgBouncer to view pools, connections, etc. and the username that you use to connect to PostgreSQL is not named "postgres".
+  # [EDIT] Or if you just need to tune the default PgBouncer pool size and connection limits to better suit your database.
+  # [IMPORTANT NOTE] See documentation in options/pgbouncer/README.md to make configuration changes.
+  # - name: pgbouncer-userlist
+  #   files:
+  #     - options/pgbouncer/userlist.txt
+  #   options:
+  #     disableNameSuffixHash: true
+  # - name: pgbouncer-ini
+  #   files:
+  #     - options/pgbouncer/pgbouncer.ini
+  #   options:
+  #     disableNameSuffixHash: true
 
   - name: internal
     # internal values are generated at random for new customer and taken from existing ZHE2 installation for migrating customer

@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Copy/create required template files
+rm base/kraken/configmaps.yaml 2> /dev/null || true
+rm zhe-urls.env 2> /dev/null || true
+touch zhe-urls.env
+rm base/kustomization.yaml 2> /dev/null || true
+cp template-files/kraken-configmaps.template base/kraken/configmaps.yaml
+cp template-files/base-kustomization.template base/kustomization.yaml
+
 ## Exports "configuration" configmap vars to this subshell
 export `grep -ir "domain_tld=" kustomization.yaml | awk '{print $3}'`
 export `grep -ir "subdomain_suffix=" kustomization.yaml | awk '{print $3}'`
@@ -40,11 +48,15 @@ sed_wrap "s/%%chrome_extension_webstore_url%%/$(echo $chrome_extension_webstore_
 # Replace malformed double quotes
 sed_wrap 's/""""/""/g' base/kraken/configmaps.yaml
 
-# Replace %%___%% in main kustomization.yaml
-sed_wrap "s/%%zhe_hostname=%%/zhe_hostname=$zhe_hostname/g" kustomization.yaml
-sed_wrap "s/%%https_zhe_hostname=%%/https_zhe_hostname=$(echo $https_zhe_hostname | sed 's_\/_\\/_g')/g" kustomization.yaml
-sed_wrap "s/%%admin_zhe_hostname=%%/admin_zhe_hostname=$admin_zhe_hostname/g" kustomization.yaml
-sed_wrap "s/%%devsite_zhe_hostname=%%/devsite_zhe_hostname=$devsite_zhe_hostname/g" kustomization.yaml
-sed_wrap "s/%%https_admin_zhe_hostname=%%/https_admin_zhe_hostname=$(echo $https_admin_zhe_hostname | sed 's_\/_\\/_g')/g" kustomization.yaml
-sed_wrap "s/%%cable_allowed_origins=%%/cable_allowed_origins=$(echo $cable_allowed_origins | sed 's_\/_\\/_g')/g" kustomization.yaml
+# Create zhe-urls.env for merging to "configuration" ConfigMap resource
+cat > zhe-urls.env << EOL
+zhe_hostname=$zhe_hostname
+https_zhe_hostname=$https_zhe_hostname
+admin_zhe_hostname=$admin_zhe_hostname
+devsite_zhe_hostname=$devsite_zhe_hostname
+https_admin_zhe_hostname=$https_admin_zhe_hostname
+cable_allowed_origins=$cable_allowed_origins
+EOL
+
+# Replace base/kustomization.yaml placeholder for zhe_hostname
 sed_wrap "s/%%zhe_hostname%%/$zhe_hostname/g" base/kustomization.yaml

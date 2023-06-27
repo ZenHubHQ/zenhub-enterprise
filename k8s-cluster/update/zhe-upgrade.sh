@@ -148,6 +148,11 @@ kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
 
 kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
 
+echo "         Scaling up pgbouncer..."
+kubectl -n $NAMESPACE scale deployments/pgbouncer --replicas=1
+
+kubectl -n $NAMESPACE wait --for=condition=available deployment/pgbouncer --timeout=300s
+
 echo "         Updating data..."
 kubectl -n $NAMESPACE apply -f batch_v1_job_data_migration.yaml
 

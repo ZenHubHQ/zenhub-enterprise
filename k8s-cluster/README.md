@@ -32,6 +32,7 @@
   - [3.7 Configuring API Rate Limits](#37-configuring-api-rate-limits)
     - [3.7.1 GraphQL API](#371-graphql-api)
     - [3.7.2 Legacy REST API](#372-legacy-rest-api)
+  - [3.8 PgBouncer](#38-pgbouncer)
 - [4. Deployment](#4-deployment)
   - [4.1 Sanity Check](#41-sanity-check)
   - [4.2 Application Check](#42-application-check)
@@ -518,6 +519,12 @@ kustomize build . | kubectl apply -f-
 ```bash
 kubectl rollout restart deployment toad-api -n <namespace>
 ```
+
+### 3.8 PgBouncer
+
+PgBouncer, the lightweight connection pooler for PostgreSQL, is enabled by default in Zenhub Enterprise v3.5.0 and later.
+
+If your Postgres database is relatively large and the [default PgBouncer configuration](https://www.pgbouncer.org/config.html) is not sufficient, you can customize the PgBouncer configuration by following the PgBouncer configuration section in the main [kustomization.yaml](kustomization.yaml). For example, if your database has a connection limit set to something well above 100, you may want to increase the PgBouncer client connection limit and pool size to suit. Reach out to Zenhub Enterprise Support if you need advice on PgBouncer configuration settings for your database size.
 
 ## 4. Deployment
 

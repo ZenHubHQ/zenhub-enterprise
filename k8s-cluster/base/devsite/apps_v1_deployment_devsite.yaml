@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    app.kubernetes.io/version: 3.5.3
+    app.kubernetes.io/version: 3.5.4
   generation: 1
   labels:
     app.kubernetes.io/component: devsite
@@ -21,7 +21,7 @@ spec:
   template:
     metadata:
       annotations:
-        app.kubernetes.io/version: 3.5.3
+        app.kubernetes.io/version: 3.5.4
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: devsite
