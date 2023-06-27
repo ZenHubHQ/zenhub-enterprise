@@ -22,7 +22,7 @@ We have prepared a Python script that you can use to send us your support bundle
 
 ### Prerequisites
 - Must have a support bundle already generated that you want to upload
-- Python and the boto3 package installed
+- Python 3 and the boto3 package installed
 - Contact Zenhub Support to request a set of access keys, then set them in the environment
 
 ```bash
@@ -40,7 +40,7 @@ From this directory, run the `upload_bundle.py` script like so:
 - Replace `<support_bundle_file_path>` with the full path to the tar you want to upload
 
 ```bash
-python upload_bundle.py <customer_identifier> <support_bundle_file_path>
+python3 upload_bundle.py <customer_identifier> <support_bundle_file_path>
 ```
 
 Then contact Zenhub Enterprise Support with a description of your problem and the name of your support bundle.

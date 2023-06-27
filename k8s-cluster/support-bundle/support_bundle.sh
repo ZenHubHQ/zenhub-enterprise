@@ -69,6 +69,10 @@ echo "### Zenhub Version:" >> $overview_file
 kubectl -n $namespace get deployment raptor-api -o=jsonpath='{.metadata.annotations.app\.kubernetes\.io\/version}' >> $overview_file
 echo "" >> $overview_file
 
+echo "### GitHub Version:" >> $overview_file
+github_hostname=$(kubectl get configmap configuration -n zenhub -o jsonpath='{.data.github_hostname}')
+curl -s $github_hostname/api/v3/meta | grep "installed_version" >> $overview_file
+
 echo "### Kubernetes Version:" >> $overview_file
 kubectl version --short >> $overview_file
 

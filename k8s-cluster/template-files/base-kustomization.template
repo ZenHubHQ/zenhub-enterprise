@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - caches
+  - configuration
+  # - gateway # disabled while offering the option to use local files  /options/gateway-buckets and options/gateway-local-files
+  - kraken
+  - raptor
+  - toad
+  # - admin-ui
+  - non-dynamic/tls
+  - pgbouncer
+  - devsite
+
+# temporary dirty hack, until https://app.zenhub.com/workspaces/devops-5b9af195dfeccd3433cd71b3/issues/zenhubhq/devops/663 is tackled
+# this should not be in enterprise/base (since ZHE vanilla doesn't need this)
+patchesStrategicMerge:
+  - non-dynamic/set-toad-buckets-vars.yaml
+  - non-dynamic/set-db-ca-mounts.yaml
+  - non-dynamic/set-var-mongo-shortindex.yaml
+  - non-dynamic/set-admin-ui-service.yaml
+  - non-dynamic/set-deployments-resources.yaml
+
+configMapGenerator:
+  - name: toad
+    behavior: merge
+    literals:
+      - user_image_host=%%zhe_hostname%%/images
+  - name: admin-ui
+    behavior: merge
+    literals:
+      - node_tls_reject_unauthorized="1"
+
+secretGenerator:
+  - name: postgres-ca-bundle
+    literals:
+      - postgres-ca.pem=""
+  - name: mongo-ca-bundle
+    literals:
+      - mongo-ca.pem=""
+
+generatorOptions:
+  disableNameSuffixHash: true
