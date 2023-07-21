@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: irrelevant
+spec:
+  template:
+    spec:
+      containers:
+        - name: stunnel-redis
+          image: us.gcr.io/zenhub-public/stunnel # can be replaced with your own stunnel image
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: stunnel-redis
+              mountPath: /etc/stunnel/stunnel.conf
+              subPath: stunnel.conf
+            - name: stunnel-redis
+              mountPath: /etc/stunnel/ca.crt
+              subPath: ca.crt
+      volumes:
+        - name: stunnel-redis
+          configMap:
+            name: stunnel-redis
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials # can be replaced with your own registry credentials if you host your own stunnel image

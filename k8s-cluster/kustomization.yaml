@@ -21,6 +21,17 @@ patchesStrategicMerge:
 # - options/pgbouncer/pgbouncer-config.yaml #! Enable if custom configuration is required for pgbouncer (connection and pool limits, etc).
                                             #! See documentation in options/pgbouncer/README.md to make configuration changes.
 
+# Adds stunnel container to raptor and toad pods
+patches:
+  - path: patches/stunnel.yaml
+    target:
+      kind: Deployment
+      name: "(raptor-|toad-).*"
+  - path: patches/stunnel.yaml
+    target:
+      kind: Job
+      name: "sanitycheck"
+
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
   app.kubernetes.io/part-of: zenhub-enterprise
@@ -133,6 +144,14 @@ configMapGenerator:
     envs:
       - zhe-urls.env
 
+  # stunnel configmap
+  - name: stunnel-redis
+    files:
+      - ca.crt=certs/redis-ca.pem
+      - stunnel.conf=config/stunnel-redis.conf
+    options:
+      disableNameSuffixHash: true
+
 secretGenerator:
   - name: configuration
     behavior: merge
@@ -144,11 +163,11 @@ secretGenerator:
       # [EDIT] The full standard full credentials URI for MongoDB
       - mongo_url=mongodb://<mongo_username>:<mongo_password>@<mongo_hostname>:<mongo_port>/zenhub
       # [EDIT] The full standard full credentials URI for Redis
-      - redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/0
+      - redis_url=redis://<redis_username>:<redis_password>@localhost:6380/0
       # [EDIT] The full standard full credentials URI for Redis
-      - cable_redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/1
+      - cable_redis_url=redis://<redis_username>:<redis_password>@localhost:6380/1
       # [EDIT] The full standard full credentials URI for Redis
-      - graphql_redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/2
+      - graphql_redis_url=redis://<redis_username>:<redis_password>@localhost:6380/2
       # [EDIT] The standard full credentials URI for RabbitMQ. Remove the 's' from amqps if not using TLS on RabbitMQ. Refer to https://www.rabbitmq.com/uri-spec.html for the proper syntax if using Virtual Hosts (vhosts).
       - rabbitmq_url=amqps://<rabbitmq_username>:<rabbitmq_password>@<rabbitmq_hostname>:<rabbitmq_port>
       # [EDIT] The secret for the GitHub OAuth app. See github_app_id above.
