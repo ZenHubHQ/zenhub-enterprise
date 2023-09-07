@@ -36,7 +36,6 @@
       kind: ConfigMap
       name: raptor
     fieldPaths:
-    - data.zenhub_webhook_domain_v1
     - data.zenhub_webhook_domain_v2
     - data.webapp_url
 - source:
@@ -49,7 +48,10 @@
       kind: ConfigMap
       name: raptor
     fieldPaths:
-    - data.webapp_url
+    - data.toad_public_url
+    options:
+      delimiter: '/'
+      index: 0
 - source:
    kind: ConfigMap
    name: configuration

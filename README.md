@@ -9,26 +9,30 @@
 ## Table of Contents
 
 - [1. About Zenhub Enterprise On-Premise](#1-about-zenhub-enterprise-on-premise)
-  - [1.1 What is Zenhub Enterprise On-Premise 3 (ZHE3)?](#11-what-is-zenhub-enterprise-on-premise-3-zhe3)
-  - [1.2 Why is ZHE3 important?](#12-why-is-zhe3-important)
-  - [1.3 How do we set up ZHE3?](#13-how-do-we-set-up-zhe3)
-  - [1.4 How do we migrate from ZHE2 to ZHE3?](#14-how-do-we-migrate-from-zhe2-to-zhe3)
+  - [1.1 What is Zenhub Enterprise On-Premise (ZHE)?](#11-what-is-zenhub-enterprise-on-premise-zhe)
+  - [1.2 How is ZHE deployed?](#12-how-is-zhe-deployed)
 - [2. Terms of Use](#2-terms-of-use)
 - [3. Architecture](#3-architecture)
 - [4. Next Steps](#4-next-steps)
 
 ## 1. About Zenhub Enterprise On-Premise
 
-### 1.1 What is Zenhub Enterprise On-Premise 3 (ZHE3)?
+### 1.1 What is Zenhub Enterprise On-Premise (ZHE)?
 
-ZHE3 is Zenhub's next-generation fully-containerized Zenhub Enterprise On-Prem infrastructure, built on a Kubernetes platform. ZHE3 replaces the outgoing VM-based ZHE2 architecture.
+ZHE is the ultimate project management platform designed for seamless integration with GitHub Enterprise Server. Host and manage your software development projects internally, while enjoying dynamic project visualization, streamlined teamwork, and top-notch security features.
 
-ZHE3 comes in two variants:
+ZHE comes in two variants:
 
 1. **Zenhub for Kubernetes**
 2. **Zenhub as a VM**
 
-Both variants ship the same application but the distribution and deployment strategy is different between the two. **Zenhub for Kubernetes** is deployed to your existing Kubernetes cluster and is typically recommended for customers with large amounts of data and users. This variant offers the best scalability and performance but requires a dedicated SRE team to manage. **Zenhub as a VM** is distributed as a VM image that can be deployed to a private or public cloud solution. The entire application will run from a single VM and be orchestrated by a lightweight Kubernetes binary, which makes it easy to set up, configure and manage. This variant is ideal for smaller teams who are just getting started with Zenhub. It is possible to upgrade the Zenhub as a VM variant to a Zenhub for Kubernetes down the road, however, moving from a Kubernetes deployment back to a VM is not supported at this time.
+Both variants ship the same application, but the distribution and deployment strategy is different between the two.
+
+**Zenhub for Kubernetes** is deployed to your existing Kubernetes cluster and is typically recommended for customers with large amounts of data and users. This variant offers the best scalability and performance but requires a dedicated SRE team to manage.
+
+**Zenhub as a VM** is distributed as a VM image that can be deployed to a private or public cloud solution. The entire application runs on a single virtual machine and is orchestrated by a lightweight Kubernetes binary, which makes it easy to set up, configure and manage. This variant is ideal for smaller teams who are just getting started with Zenhub.
+
+It is possible to upgrade the Zenhub as a VM variant to a Zenhub for Kubernetes down the road, however, moving from a Kubernetes deployment back to a VM is not supported at this time.
 
 Below is a table illustrating the main differences and our recommendations:
 
@@ -38,39 +42,20 @@ Below is a table illustrating the main differences and our recommendations:
 | **High Availability**         | ✅                         |                    |
 | **Configuration Flexibility** | ✅                         |                    |
 | **External Database Support** | ✅                         |                    |
-| **Easy To Install**           |                           | ✅                  |
+| **Ease Of Installation**      |                           | ✅                  |
 | **Built-in Logging**          |                           | ✅                  |
 | **Built-in File Storage**     |                           | ✅                  |
 
-### 1.2 Why is ZHE3 important?
-
-- Lay the groundwork for near-parity with the Zenhub Cloud release cycle ✅
-- Improved options for scalability ✅
-- Remove dependence on old infrastructure ✅
-- Deploy Zenhub in the same deployment paradigm as your other applications ✅
-
-### 1.3 How do we set up ZHE3?
+### 1.2 How is ZHE deployed?
 
 - For **Zenhub for Kubernetes**, please refer to the [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster) directory.
 - For **Zenhub as a VM**, please refer to the [**virtual-machine**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/virtual-machine) directory.
-
-### 1.4 How do we migrate from ZHE2 to ZHE3?
-
-The *basic* steps to migrate from your existing ZHE2 machine to ZHE3 are:
-
-1. Decide if you want to deploy **Zenhub for Kubernetes** or **Zenhub as a VM**.
-2. Deploy a ZHE3 "landing zone" to prepare for the migration.
-3. Gather data from the existing ZHE2 source instance.
-4. Move the data to a workstation/jump box.
-5. Upload the data to your ZHE3 landing zone.
-
-These steps are explained in much greater detail in [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/v3.1.2/k8s-cluster) and [**virtual-machine**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/v3.1.2/virtual-machine).
 
 ## 2. Terms of Use
 
 Please note that this repository is only provided for paying customers of **Zenhub Enterprise On-Premise**. If you have not yet purchased an Enterprise license of Zenhub please contact us via https://www.zenhub.com/enterprise.
 
-Please review the [LICENSE](/LICENSE) in this repository for additional details.
+Please review the [LICENSE](./LICENSE) in this repository for additional details.
 
 ## 3. Architecture
 
@@ -85,7 +70,7 @@ Please note the following:
 - Zenhub ships with two backend technologies we call **Raptor** and **Toad**.
 - Raptor and Toad are both made up of several microservices (eg. `raptor-admin`, `raptor-api`, `toad-webhook`, etc...)
 - Zenhub requires the use of two databases: **MongoDB** and **PostgreSQL**.
-- Zenhub requires the use of one instances of **Redis**. We recommend this instance is managed externally (internal for Zenhub as a VM) as it requires data persistence.
+- Zenhub requires the use of one instance of **Redis**. We recommend this instance is managed externally (internal for Zenhub as a VM) as it requires data persistence.
 - Zenhub requires the use of a message broker via **RabbitMQ**.
 - Zenhub services will require a persistent connection to your GitHub Enterprise Server.
 - Zenhub Enterprise On-Premise *cannot* be used with GitHub.com. For use with [GitHub.com](https://github.com), please visit [Zenhub.com](https://zenhub.com).

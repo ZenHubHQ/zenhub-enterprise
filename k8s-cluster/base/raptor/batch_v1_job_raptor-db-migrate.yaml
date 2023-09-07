@@ -39,6 +39,16 @@ spec:
               name: configuration
         - name: CABLE_URL
           value: raptor-cable
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: OTEL_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: otel_log_level
+              name: raptor
         - name: SAFETY_ASSURED
           value: "1"
         - name: RUBYOPT
@@ -98,6 +108,72 @@ spec:
             configMapKeyRef:
               key: new_relic_app_name
               name: raptor
+        - name: S3_ACCESS_KEY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: s3_access_key_id
+              name: raptor
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_bucket
+              name: raptor
+        - name: S3_PRIVATE_ACCESS_KEY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: s3_private_access_key_id
+              name: raptor
+        - name: S3_PRIVATE_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_private_bucket
+              name: raptor
+        - name: S3_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_region
+              name: raptor
+        - name: FILES_UPLOAD_PATH
+          valueFrom:
+            configMapKeyRef:
+              key: files_upload_path
+              name: raptor
+              optional: true
+        - name: IS_UPLOAD_FILE_TO_LOCAL
+          valueFrom:
+            configMapKeyRef:
+              key: is_upload_file_to_local
+              name: raptor
+        - name: WEBAPP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: webapp_url
+              name: raptor
+        - name: FILE_DOWNLOAD_URL
+          valueFrom:
+            configMapKeyRef:
+              key: file_download_url
+              name: raptor
+        - name: TOAD_PUBLIC_URL
+          valueFrom:
+            configMapKeyRef:
+              key: toad_public_url
+              name: raptor
+        - name: OPENAI_ORGANIZATION_ID
+          valueFrom:
+            configMapKeyRef:
+              key: openai_organization_id
+              name: raptor
+        - name: GOOGLE_OAUTH2_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              key: google_oauth2_client_id
+              name: raptor
+        - name: NOTION_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              key: notion_client_id
+              name: raptor
         - name: LD_OFFLINE
           valueFrom:
             configMapKeyRef:
@@ -112,6 +188,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: redis_url
+              name: configuration
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
               name: configuration
         - name: GRAPHQL_REDIS_URL
           valueFrom:
@@ -192,6 +273,36 @@ spec:
             configMapKeyRef:
               key: web_concurrency
               name: raptor-migrate
+        - name: HUBSPOT_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: hubspot_access_token
+              name: raptor
+        - name: S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: s3_secret_access_key
+              name: raptor
+        - name: S3_PRIVATE_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: s3_private_secret_access_key
+              name: raptor
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: openai_api_key
+              name: raptor
+        - name: GOOGLE_OAUTH2_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: google_oauth2_client_secret
+              name: raptor
+        - name: NOTION_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: notion_client_secret
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         name: raptor-db-migrate

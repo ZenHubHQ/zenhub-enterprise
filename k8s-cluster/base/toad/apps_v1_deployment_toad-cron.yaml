@@ -168,15 +168,21 @@ spec:
             configMapKeyRef:
               key: newrelic_app_name
               name: toad
-        - name: NODE_OPTIONS
-          valueFrom:
-            configMapKeyRef:
-              key: node_options
-              name: toad
         - name: NEWRELIC_TRACE
           valueFrom:
             configMapKeyRef:
               key: newrelic_trace
+              name: toad
+        - name: NEW_RELIC_LOG_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_log_enabled
+              name: toad
+              optional: true
+        - name: NODE_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              key: node_options
               name: toad
         - name: S3_USER_FILES_BUCKET
           valueFrom:
@@ -263,6 +269,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: internal_auth_token
+              name: internal
+        - name: RAPTOR_SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              key: secret_key_base
               name: internal
         - name: GITHUB_APP_SECRET
           valueFrom:

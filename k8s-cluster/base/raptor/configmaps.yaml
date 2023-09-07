@@ -66,30 +66,45 @@ data:
   action_cable_workers_pool_size: "2"
   auth_issuer_urls: ""
   auth_jwks_url: ""
+  auth0_db_connection_name: ""
   auth0_tenant: ""
   cable_allowed_origins: $(cable_allowed_origins)
   disable_prepare_db: "1"
+  file_download_url: ""
+  files_upload_path: ""
   github_api_url: $(github_hostname)/api/v3
   github_graphql_url: $(github_hostname)/api/graphql
   github_html_url: $(github_hostname)
   github_webhook_enabled: "true"
+  google_oauth2_client_id: ""
+  hubspot_paid_user_form_guid: ""
   hubspot_platform_signup_form_guid: ""
   hubspot_portal_id: ""
   is_enterprise: "true"
+  is_upload_file_to_local: "false"
   ld_offline: "1"
   log_json: "1"
   mailgun_domain: ""
+  mixpanel_project_id: ""
   new_relic_agent_enabled: "false"
   new_relic_app_name: ""
+  notion_client_id: ""
+  openai_organization_id: ""
+  otel_log_level: FATAL
   rails_env: production
   rails_log_to_stdout: "1"
+  s3_access_key_id: ""
+  s3_bucket: ""
+  s3_private_access_key_id: ""
+  s3_private_bucket: ""
+  s3_region: ""
   sentry_dsn: ""
   sentry_environment: ""
   stripe_monthly_price_id: ""
   stripe_trial_price_id: ""
   stripe_yearly_price_id: ""
+  toad_public_url: $(https_zhe_hostname)/api
   webapp_url: $(https_zhe_hostname)
-  zenhub_webhook_domain_v1: $(https_zhe_hostname)
   zenhub_webhook_domain_v2: $(https_zhe_hostname)
 kind: ConfigMap
 metadata:

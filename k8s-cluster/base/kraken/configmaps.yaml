@@ -131,7 +131,7 @@ data:
       "isEnterprise": true,
       "isLicenseGovernanceEnabled": false,
       "isTrackerEnabled": false,
-      "isUploadFileToLocal": false,
+      "isUploadFileToLocal": true,
       "loginURL": "https://%%subdomain_suffix%%.%%domain_tld%%/api/auth/github",
       "marketplaceURL": "",
       "maxFileUpload": 15728640,
@@ -150,7 +150,15 @@ data:
       "ZENHUB_DEVSITE_ADDRESS": "https://%%devsite_zhe_hostname%%",
       "ZENHUB_CHROME_EXT_WEBSTORE_URL": "%%chrome_extension_webstore_url%%",
       "ZENHUB_FIREFOX_EXT_JSON_URL": "https://%%subdomain_suffix%%.%%domain_tld%%/zhe-public/ff-ext-signed/latest.json",
-      "ZENHUB_FIREFOX_EXT_XPI_ROOT_URL": "https://%%subdomain_suffix%%.%%domain_tld%%/zhe-public/ff-ext-signed"
+      "ZENHUB_FIREFOX_EXT_XPI_ROOT_URL": "https://%%subdomain_suffix%%.%%domain_tld%%/zhe-public/ff-ext-signed",
+      "authOptions": {
+        "GitHub": true,
+        "Google": false,
+        "W3ID": false,
+        "AzureAD": false,
+        "LDAP": false,
+        "Zenhub": false,
+      }
     }
 kind: ConfigMap
 metadata:

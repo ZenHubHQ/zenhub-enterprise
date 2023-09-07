@@ -17,6 +17,7 @@ resources:
 # this should not be in enterprise/base (since ZHE vanilla doesn't need this)
 patchesStrategicMerge:
   - non-dynamic/set-toad-buckets-vars.yaml
+  - non-dynamic/set-raptor-buckets-vars.yaml
   - non-dynamic/set-db-ca-mounts.yaml
   - non-dynamic/set-var-mongo-shortindex.yaml
   - non-dynamic/set-admin-ui-service.yaml

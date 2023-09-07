@@ -1,4 +1,4 @@
-# Zenhub Enterprise 3 Deployment Checklist:
+# Zenhub Enterprise Deployment Checklist:
 
 <!-- You can use this template to keep track of your deployment, to help you stay organized. -->
 
@@ -14,7 +14,7 @@
 - [ ] Obtain access to a Kubernetes cluster running K8s v1.22 or greater
 - [ ] Install `kubectl` locally
 - [ ] Install `kustomize` v4.5.3 or greater locally
-- [ ] Create dedicated namespace in my cluster for Zenhub
+- [ ] Create a dedicated namespace in the cluster for Zenhub
 - [ ] Have the capability to pull the Docker images from Zenhub's public Docker registry or have access to a private Docker registry where you can push images (and the cluster should have the ability to pull from that private registry)
 
 #### PostgreSQL Requirement
@@ -52,6 +52,3 @@
 - [ ] Verify that the application is working
 - [ ] Publish your Zenhub Enterprise Chrome Extension
 - [ ] Publish your Zenhub Enterprise Firefox Extension
-
-## Are you migrating from Zenhub Enterprise 2?
-- [ ] Check out the [zhe3-migration/README.md](https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration)

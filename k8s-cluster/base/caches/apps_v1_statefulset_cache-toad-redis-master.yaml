@@ -6,10 +6,11 @@ metadata:
     app.kubernetes.io/instance: cache
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-14.6.2
+    helm.sh/chart: toadRedis-17.3.15
   name: cache-toad-redis-master
   namespace: default
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: master
@@ -19,16 +20,16 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: c1e6f409a87b266d74f0817ed73516bf2b2bdc40146772fee1455d9e5363cd07
-        checksum/health: a1c52788569fa970aa278ce4807a28cc89f81135156ea2879185b70e2f5def38
-        checksum/scripts: 838a4296198204891fcb7ae6bba6da5497ba05dc8b7e79592cff2cce156e7ec8
-        checksum/secret: 19db902854d2b5659c65548f221fca0bfa83fa1a571661fddc983dddd8084610
+        checksum/configmap: e65b08c758c5dc7bb5c468a1252ea47bfdddc1a54ba90406a910b3436b9a004b
+        checksum/health: 3165cebd38e03af06afc2fa0554f1d4a1f12755e245cecb2cd335a6cdfbe2122
+        checksum/scripts: 34cbe0dbb446ad168a8650f03168725889212a1cf48a0a4d3c1e26fbc60f84a4
+        checksum/secret: 8802c316a4012a7af31fab6cecefdd6e6f11d8ee778ee64054fd94b522ae0e96
       labels:
         app.kubernetes.io/component: master
         app.kubernetes.io/instance: cache
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: toad-redis
-        helm.sh/chart: toadRedis-14.6.2
+        helm.sh/chart: toadRedis-17.3.15
     spec:
       affinity:
         podAntiAffinity:
@@ -39,8 +40,6 @@ spec:
                   app.kubernetes.io/component: master
                   app.kubernetes.io/instance: cache
                   app.kubernetes.io/name: toad-redis
-              namespaces:
-              - default
               topologyKey: kubernetes.io/hostname
             weight: 1
       containers:
@@ -65,7 +64,7 @@ spec:
           value: "no"
         - name: REDIS_PORT
           value: "6379"
-        image: docker.io/bitnami/redis:6.2
+        image: docker.io/bitnami/redis:7.0.5
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -74,7 +73,7 @@ spec:
             - -c
             - /health/ping_liveness_local.sh 5
           failureThreshold: 5
-          initialDelaySeconds: 5
+          initialDelaySeconds: 20
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 6
@@ -89,7 +88,7 @@ spec:
             - -c
             - /health/ping_readiness_local.sh 1
           failureThreshold: 5
-          initialDelaySeconds: 5
+          initialDelaySeconds: 20
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 2
@@ -134,6 +133,5 @@ spec:
       - emptyDir: {}
         name: redis-data
   updateStrategy:
-    rollingUpdate: {}
     type: RollingUpdate
   volumeClaimTemplates: []

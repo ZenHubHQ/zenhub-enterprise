@@ -15,7 +15,6 @@ data:
     # End of common configuration
   replica.conf: |-
     dir /data
-    slave-read-only yes
     # User-supplied replica configuration:
     rename-command FLUSHDB ""
     rename-command FLUSHALL ""
@@ -26,7 +25,7 @@ metadata:
     app.kubernetes.io/instance: cache
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: raptor-redis
-    helm.sh/chart: raptorCacheRedis-14.6.2
+    helm.sh/chart: raptorCacheRedis-17.3.15
   name: cache-raptor-redis-configuration
   namespace: default
 ---
@@ -36,7 +35,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_PASSWORD_FILE ]] && export REDIS_PASSWORD="$(< "${REDIS_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_PASSWORD"
+    [[ -n "$REDIS_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -44,7 +43,12 @@ data:
         -p $REDIS_PORT \
         ping
     )
-    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
+    responseFirstWord=$(echo $response | head -n1 | awk '{print $1;}')
+    if [ "$response" != "PONG" ] && [ "$responseFirstWord" != "LOADING" ] && [ "$responseFirstWord" != "MASTERDOWN" ]; then
       echo "$response"
       exit 1
     fi
@@ -58,7 +62,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_MASTER_PASSWORD_FILE ]] && export REDIS_MASTER_PASSWORD="$(< "${REDIS_MASTER_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
+    [[ -n "$REDIS_MASTER_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -66,7 +70,12 @@ data:
         -p $REDIS_MASTER_PORT_NUMBER \
         ping
     )
-    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
+    responseFirstWord=$(echo $response | head -n1 | awk '{print $1;}')
+    if [ "$response" != "PONG" ] && [ "$responseFirstWord" != "LOADING" ]; then
       echo "$response"
       exit 1
     fi
@@ -74,7 +83,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_PASSWORD_FILE ]] && export REDIS_PASSWORD="$(< "${REDIS_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_PASSWORD"
+    [[ -n "$REDIS_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -82,6 +91,10 @@ data:
         -p $REDIS_PORT \
         ping
     )
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
     if [ "$response" != "PONG" ]; then
       echo "$response"
       exit 1
@@ -96,7 +109,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_MASTER_PASSWORD_FILE ]] && export REDIS_MASTER_PASSWORD="$(< "${REDIS_MASTER_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
+    [[ -n "$REDIS_MASTER_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -104,6 +117,10 @@ data:
         -p $REDIS_MASTER_PORT_NUMBER \
         ping
     )
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
     if [ "$response" != "PONG" ]; then
       echo "$response"
       exit 1
@@ -114,7 +131,7 @@ metadata:
     app.kubernetes.io/instance: cache
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: raptor-redis
-    helm.sh/chart: raptorCacheRedis-14.6.2
+    helm.sh/chart: raptorCacheRedis-17.3.15
   name: cache-raptor-redis-health
   namespace: default
 ---
@@ -124,10 +141,10 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_PASSWORD_FILE ]] && export REDIS_PASSWORD="$(< "${REDIS_PASSWORD_FILE}")"
-    if [[ ! -f /opt/bitnami/redis/etc/master.conf ]];then
+    if [[ -f /opt/bitnami/redis/mounted-etc/master.conf ]];then
         cp /opt/bitnami/redis/mounted-etc/master.conf /opt/bitnami/redis/etc/master.conf
     fi
-    if [[ ! -f /opt/bitnami/redis/etc/redis.conf ]];then
+    if [[ -f /opt/bitnami/redis/mounted-etc/redis.conf ]];then
         cp /opt/bitnami/redis/mounted-etc/redis.conf /opt/bitnami/redis/etc/redis.conf
     fi
     ARGS=("--port" "${REDIS_PORT}")
@@ -143,7 +160,7 @@ metadata:
     app.kubernetes.io/instance: cache
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: raptor-redis
-    helm.sh/chart: raptorCacheRedis-14.6.2
+    helm.sh/chart: raptorCacheRedis-17.3.15
   name: cache-raptor-redis-scripts
   namespace: default
 ---
@@ -164,7 +181,6 @@ data:
     # End of common configuration
   replica.conf: |-
     dir /data
-    slave-read-only yes
     # User-supplied replica configuration:
     rename-command FLUSHDB ""
     rename-command FLUSHALL ""
@@ -175,7 +191,7 @@ metadata:
     app.kubernetes.io/instance: cache
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-14.6.2
+    helm.sh/chart: toadRedis-17.3.15
   name: cache-toad-redis-configuration
   namespace: default
 ---
@@ -185,7 +201,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_PASSWORD_FILE ]] && export REDIS_PASSWORD="$(< "${REDIS_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_PASSWORD"
+    [[ -n "$REDIS_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -193,7 +209,12 @@ data:
         -p $REDIS_PORT \
         ping
     )
-    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
+    responseFirstWord=$(echo $response | head -n1 | awk '{print $1;}')
+    if [ "$response" != "PONG" ] && [ "$responseFirstWord" != "LOADING" ] && [ "$responseFirstWord" != "MASTERDOWN" ]; then
       echo "$response"
       exit 1
     fi
@@ -207,7 +228,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_MASTER_PASSWORD_FILE ]] && export REDIS_MASTER_PASSWORD="$(< "${REDIS_MASTER_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
+    [[ -n "$REDIS_MASTER_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -215,7 +236,12 @@ data:
         -p $REDIS_MASTER_PORT_NUMBER \
         ping
     )
-    if [ "$response" != "PONG" ] && [ "$response" != "LOADING Redis is loading the dataset in memory" ]; then
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
+    responseFirstWord=$(echo $response | head -n1 | awk '{print $1;}')
+    if [ "$response" != "PONG" ] && [ "$responseFirstWord" != "LOADING" ]; then
       echo "$response"
       exit 1
     fi
@@ -223,7 +249,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_PASSWORD_FILE ]] && export REDIS_PASSWORD="$(< "${REDIS_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_PASSWORD"
+    [[ -n "$REDIS_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -231,6 +257,10 @@ data:
         -p $REDIS_PORT \
         ping
     )
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
     if [ "$response" != "PONG" ]; then
       echo "$response"
       exit 1
@@ -245,7 +275,7 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_MASTER_PASSWORD_FILE ]] && export REDIS_MASTER_PASSWORD="$(< "${REDIS_MASTER_PASSWORD_FILE}")"
-    export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
+    [[ -n "$REDIS_MASTER_PASSWORD" ]] && export REDISCLI_AUTH="$REDIS_MASTER_PASSWORD"
     response=$(
       timeout -s 3 $1 \
       redis-cli \
@@ -253,6 +283,10 @@ data:
         -p $REDIS_MASTER_PORT_NUMBER \
         ping
     )
+    if [ "$?" -eq "124" ]; then
+      echo "Timed out"
+      exit 1
+    fi
     if [ "$response" != "PONG" ]; then
       echo "$response"
       exit 1
@@ -263,7 +297,7 @@ metadata:
     app.kubernetes.io/instance: cache
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-14.6.2
+    helm.sh/chart: toadRedis-17.3.15
   name: cache-toad-redis-health
   namespace: default
 ---
@@ -273,10 +307,10 @@ data:
     #!/bin/bash
 
     [[ -f $REDIS_PASSWORD_FILE ]] && export REDIS_PASSWORD="$(< "${REDIS_PASSWORD_FILE}")"
-    if [[ ! -f /opt/bitnami/redis/etc/master.conf ]];then
+    if [[ -f /opt/bitnami/redis/mounted-etc/master.conf ]];then
         cp /opt/bitnami/redis/mounted-etc/master.conf /opt/bitnami/redis/etc/master.conf
     fi
-    if [[ ! -f /opt/bitnami/redis/etc/redis.conf ]];then
+    if [[ -f /opt/bitnami/redis/mounted-etc/redis.conf ]];then
         cp /opt/bitnami/redis/mounted-etc/redis.conf /opt/bitnami/redis/etc/redis.conf
     fi
     ARGS=("--port" "${REDIS_PORT}")
@@ -291,7 +325,7 @@ metadata:
     app.kubernetes.io/instance: cache
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-14.6.2
+    helm.sh/chart: toadRedis-17.3.15
   name: cache-toad-redis-scripts
   namespace: default
 ---

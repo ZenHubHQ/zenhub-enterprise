@@ -38,7 +38,6 @@
   - [5.1 Application Updates](#51-application-updates)
     - [5.1.1 Update](#511-update)
     - [5.1.2 Rollback](#512-rollback)
-  - [5.2 OS (Ubuntu) Updates](#52-os-ubuntu-updates)
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
   - [6.1 Tasks in the Admin UI](#61-tasks-in-the-admin-ui)
     - [6.1.1 Publishing the Chrome and Firefox Extensions](#611-publishing-the-chrome-and-firefox-extensions)
@@ -63,6 +62,7 @@
     - [6.12.1 Zenhub Application TLS](#6121-zenhub-application-tls)
     - [6.12.2 Developer Site TLS](#6122-developer-site-tls)
   - [6.13 API Rate Limits](#613-api-rate-limits)
+  - [6.14 OS Update](#614-os-update)
 - [7. `zhe-config` Specification](#7-zhe-config-specification)
 - [8. Logs](#8-logs)
   - [8.1 Sending Logs to an External Log Aggregator](#81-sending-logs-to-an-external-log-aggregator)
@@ -72,7 +72,12 @@
     - [8.1.4 Restart the Fluentd DaemonSet](#814-restart-the-fluentd-daemonset)
   - [8.2 Reverting to the Default Log Configuration](#82-reverting-to-the-default-log-configuration)
 - [9. Developer Site](#9-developer-site)
-
+- [10. Platform Authentication](#10-platform-authentication)
+  - [10.1 Email/Password](#101-emailpassword)
+  - [10.2 GitHub](#102-github)
+  - [10.3 IBM W3ID](#103-ibm-w3id)
+  - [10.4 Azure Active Directory](#104-azure-active-directory)
+  - [10.5 LDAP](#105-ldap)
 ## 1. Getting Started
 
 This README will be your guide to setting up Zenhub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set Zenhub up there, please go back to the [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using Zenhub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
@@ -84,6 +89,9 @@ Thank you for your interest in Zenhub!
 ### 2.1 Systems Administration Skills
 
 Basic systems administration skills are required for set-up. Those deploying the VM should be comfortable with deploying a virtual machine to their chosen hypervisor, making an SSH connection, and using a Linux command line and text editor.
+
+Linux OS upgrades may be performed by the system administrator. Please note that it is the responsibility of the system administrator to determine whether to upgrade.
+Please refer to [6.14 OS Update](#614-os-update) for details.
 
 ### 2.2 GitHub Enterprise Server
 
@@ -142,6 +150,7 @@ When deploying Zenhub on your VM, Zenhub will check the available hardware resou
 | 5000+           | [Contact us](enterprise@zenhub.com) |        |              |
 
 > ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to Zenhub, as well as how many backups you are storing on the VM. At 95% disk utilization, container images will start being removed from containerd, with the least recently used images being removed first. Eventually, if disk space is not increased, the kubelet will be forced to remove images that are essential to the running of Zenhub and you will see pods in the **Evicted** state. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
+
 > ⚠️ **NOTE:** The Zenhub Enterprise OVA for VMware is pre-configured with a 60GB data filesystem and a 20GB root filesystem on ZHE 3.1 and 3.2. ZHE 3.3 and greater is pre-configured with a 30GB root volume. If you launch a VM with a 500GB volume, you will need to [expand the filesystems](#67-disk-management) to occupy the extra space.
 
 #### 3.1.3 Ports
@@ -195,7 +204,7 @@ ssh-copy-id -o PreferredAuthentications=password -o PubkeyAuthentication=no -i <
 
 #### 3.2.4 Configure a Static IP
 
-By default, Zenhub Enterprise 3 uses the dynamic host configuration protocol (DHCP) for DNS settings when DHCP leases provide nameservers.
+By default, Zenhub Enterprise uses the dynamic host configuration protocol (DHCP) for DNS settings when DHCP leases provide nameservers.
 
 > Your nameservers must resolve your Zenhub Enterprise instance's hostname.
 
@@ -234,8 +243,35 @@ zenhub_configuration:
   ADMIN_UI_PASS:
   CHROME_EXTENSION_WEBSTORE_URL:
   MANIFEST_FIREFOX_ID: zenhub-enterprise@<your-company-domain.com>
+## (Optional) Configure API Rate Limits
+  # GRAPHQL_OPERATION_LIMIT:
+  # GRAPHQL_RUNTIME_LIMIT:
+  # REST_API_REQUEST_LIMIT:
+  # REST_API_TIME_LIMIT:
+## (Optional) Configure built-in email/password authentication
+  # AUTHV2_EMAIL_PW_ENABLED: true
+## (Optional) Configure W3ID as an authentication provider
+  # AUTHV2_W3ID_ENABLED: true
+  # AUTHV2_W3ID_CLIENT_ID:
+  # AUTHV2_W3ID_CLIENT_SECRET:
+  # AUTHV2_W3ID_DEFAULT_ENDPOINT_URL:
+  # AUTHV2_W3ID_ISSUER_URL:
+## (Optional) Configure Azure AD as an authentication provider
+  # AUTHV2_AZURE_AD_ENABLED: true
+  # AUTHV2_AZURE_AD_CLIENT_ID:
+  # AUTHV2_AZURE_AD_CLIENT_SECRET:
+  # AUTHV2_AZURE_AD_TENANT_ID:
+## (Optional) Configure LDAP as an authentication provider
+  # AUTHV2_LDAP_ENABLED: true
+  # AUTHV2_LDAP_HOST:
+  # AUTHV2_LDAP_PORT:
+  # AUTHV2_LDAP_METHOD:
+  # AUTHV2_LDAP_BASE:
+  # AUTHV2_LDAP_BIND_DN:
+  # AUTHV2_LDAP_BIND_PASSWORD:
+  # AUTHV2_LDAP_USER_FILTER:
 
-## Optional configurations
+## Optional VM configurations
 
 # ssl_self_signed: true
 
@@ -280,6 +316,55 @@ zenhub_configuration:
 
 ### 3.3.2 Optional Values
 
+#### Application Configuration
+
+These should be nested under zenhub_configuration along with the "Required Values".
+
+##### API Rate Limits
+
+- `GRAPHQL_OPERATION_LIMIT`: Sets the rate limit for concurrent requests on the GraphQL API per token.
+- `GRAPHQL_RUNTIME_LIMIT`: Sets the rate limit in milliseconds for the total amount of process time per minute per token for GraphQL API.
+- `REST_API_REQUEST_LIMIT`: Sets the number of requests the legacy REST API will serve in a given **REST_API_TIME_LIMIT** before rate limiting.
+- `REST_API_TIME_LIMIT`: Sets the timespan in seconds that the legacy REST API will use to calculate rate limiting.
+
+##### Authentication Providers
+
+Zenhub Enterprise 4.0 and greater has an optional built-in email/password authentication feature and also supports several external authentication methods. You can enable one or more of these authentication methods by setting the corresponding environment variables.
+
+###### Built-in Email/Password
+
+- `AUTHV2_EMAIL_PW_ENABLED`: Enables built-in email/password authentication. Should be used with caution if Zenhub is publicly accessible to the internet as it will allow anyone with the URL to sign up.
+
+###### W3ID
+
+- `AUTHV2_W3ID_ENABLED`: Enables W3ID as an authentication provider
+- `AUTHV2_W3ID_CLIENT_ID`: W3ID client ID. Example: `hgfedcba-1234-abcd-1234-4321abcdefgh`
+- `AUTHV2_W3ID_CLIENT_SECRET`: W3ID client secret. Example: `U75zD5Zet4`
+- `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL`: W3ID default endpoint URL. Example: `https://acme.verify.ibm.com/v1.0/endpoint/default`
+- `AUTHV2_W3ID_ISSUER_URL`: W3ID issuer URL. Example: `https://acme.verify.ibm.com/oidc/endpoint/default`
+
+###### Azure AD
+
+- `AUTHV2_AZURE_AD_ENABLED`: Enables Azure AD as an authentication provider
+- `AUTHV2_AZURE_AD_CLIENT_ID`: Azure AD client ID. Example: `12345678-abcd-1234-abcd-1234567890ab`
+- `AUTHV2_AZURE_AD_CLIENT_SECRET`: Azure AD client secret. Example: `U75zD5Zet4`
+- `AUTHV2_AZURE_AD_TENANT_ID`: Azure AD tenant ID. Example: `abcdefgh-4321-abcd-4321-abcdefgh1234`
+
+###### LDAP
+
+- `AUTHV2_LDAP_ENABLED`: Enables LDAP as an authentication provider
+- `AUTHV2_LDAP_HOST`: LDAP host. Example: `ldap.example.com`
+- `AUTHV2_LDAP_PORT`: LDAP port. Example: `389` for plain or `636` for ssl
+- `AUTHV2_LDAP_METHOD`: LDAP method. Example: `plain` or `ssl`
+- `AUTHV2_LDAP_BASE`: LDAP base. Example: `dc=example,dc=com`
+- `AUTHV2_LDAP_BIND_DN`: LDAP bind DN. Example: `cn=admin,dc=example,dc=com`
+- `AUTHV2_LDAP_BIND_PASSWORD`: LDAP bind password.
+- `AUTHV2_LDAP_USER_FILTER`: LDAP user filter. Example: `(&(objectclass=inetOrgPerson)(uid=%<username>s))`
+
+#### VM Configuration
+
+These should be in their own sections, not nested under zenhub_configuration. Commented examples are present in the file example above.
+
 - `ssl_self_signed`: To deploy Zenhub with a self-signed SSL certificate
 - `ssh_keys`: SSH key(s) to be included as authorized_keys
 - `ip`: Configure the VM to use static IP
@@ -287,10 +372,6 @@ zenhub_configuration:
 - `upload_bundle_vars`: Configuration for uploading support bundles to a secure s3 bucket
   - `SUPPORT_BUNDLE_ACCESS_KEY`: AWS access key provided by Zenhub Support
   - `SUPPORT_BUNDLE_SECRET_KEY`: AWS secret key provided by Zenhub Support
-- `GRAPHQL_OPERATION_LIMIT`: Sets the rate limit for concurrent requests on the GraphQL API per token. Should be nested under zenhub_configuration.
-- `GRAPHQL_RUNTIME_LIMIT`: Sets the rate limit in milliseconds for the total amount of process time per minute per token for GraphQL API. Should be nested under zenhub_configuration.
-- `REST_API_REQUEST_LIMIT`: Sets the number of requests the legacy REST API will serve in a given **REST_API_TIME_LIMIT** before rate limiting. Should be nested under zenhub_configuration.
-- `REST_API_TIME_LIMIT`: Sets the timespan in seconds that the legacy REST API will use to calculate rate limiting. Should be nested under zenhub_configuration.
 
 ### 3.4 SSL/TLS Ingress Certificates
 
@@ -308,7 +389,7 @@ Copy the certificate and key pair to the following path:
 
 `${ZENHUB_HOME}/configuration/ssl/tls.crt` - certificate
 
-⚠️ NOTE: The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
+> ⚠️ **NOTE:** The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
 
 A self-signed certificate can be generated by enabling the `ssl_self_signed` option in the configuration file.
 
@@ -322,7 +403,7 @@ Copy the certificate and key pair to the following path:
 
 `${ZENHUB_HOME}/configuration/ssl/developer-site/tls.crt` - certificate
 
-⚠️ NOTE: The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
+> ⚠️ **NOTE:** The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
 
 ## 4. Application Deployment
 
@@ -364,7 +445,9 @@ Upgrading Zenhub is important for both stability and security. We suggest updati
 
 #### 5.1.1 Update
 
-Update Docker images, Kubernetes manifests, and install system-wide updates for the Zenhub application.
+Update Docker images and Kubernetes manifests for the Zenhub application.
+
+> ⚠️ **NOTE:** It is strongly encouraged to take a machine-level snapshot before updating ZHE
 
 > Before updating, perform a data backup `zhe-config --backup`
 
@@ -385,15 +468,13 @@ bash zhe_upgrade.run
 ```
 > ⚠️ **NOTE:** To protect the upgrade from SSH disconnects, you may want to run the upgrade inside `tmux` or `screen`, e.g. `tmux new-session -s "upgrade" "bash zhe_upgrade.run"`
 
-4. Answer the update prompts. If you would like to install available OS updates, answer 'y' to `Proceed with OS and system-wide updates?`
+4. Wait for Zenhub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with Zenhub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
 
-5. Wait for Zenhub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with Zenhub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
-
-6. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
+5. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
 
 #### 5.1.2 Rollback
 
-If you have any problems with Zenhub after installing an update, you can quickly roll back to your most recent application version using the automated application backup taken at the start of your upgrade.
+If you have any problems with Zenhub after installing an update, you can quickly roll back to your most recent application version using the automated application backup taken at the start of your upgrade or to a machine-level snapshot if one was taken.
 
 > ⚠️ **NOTE:** If you have already published the extensions after updating, rolling back the application may break your extensions.
 
@@ -403,14 +484,6 @@ If you have any problems with Zenhub after installing an update, you can quickly
 ```bash
 bash zhe_upgrade.run rollback /opt/zenhub/upgrade_backup/<your-backup-name>.tar.gz
 ```
-
-### 5.2 OS (Ubuntu) Updates
-
-The host is currently based on Ubuntu 20-04 LTS and the cluster (Kubernetes) is managed by a systemd service (`k3s`) with its own upgrade mechanism.
-
-All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
-
-The Debian utility `unattended-upgrades` is enabled and set up to automatically apply _security updates_ (only) once per day.
 
 ## 6. Maintenance and Operational Tasks
 
@@ -423,7 +496,7 @@ Zenhub Enterprise comes with an Admin UI that is used for a number of administra
 There are two methods to interact with the Zenhub UI:
 
 - The Zenhub web app
-- The Zenhub browser extensions for Chrome and Firefox, which allows users access to the power of Zenhub from within the UI of GitHub Enterprise
+- The Zenhub browser extensions for Chrome and Firefox, which allow users access to the power of Zenhub from within the UI of GitHub Enterprise
 
 To use the extensions with GitHub Enterprise, you must publish your own versions of them. The first time you publish the extensions, you will need to set up a Chrome Developer account and a Mozilla Developer account before creating a new extension in each platform. When application updates are applied, you will publish updates to the _existing_ extension on each platform.
 
@@ -445,7 +518,7 @@ Since Zenhub Enterprise On-Premise is a completely self-contained system in your
 
 ### 6.2 Maintenance Mode
 
-When operating a ZHE3 deployment, you may face situations in which you would like to prevent users from accessing the application (such as restoring a database backup). For this purpose, we have included a **maintenance mode** in the `zhe-config` script.
+When operating a ZHE deployment, you may face situations in which you would like to prevent users from accessing the application (such as restoring a database backup). For this purpose, we have included a **maintenance mode** in the `zhe-config` script.
 
 Maintenance mode can be enabled in two ways:
 
@@ -551,7 +624,7 @@ Repeat the backup and restore steps as regularly as desired to keep your seconda
 
 ### 6.7 Disk Management
 
-Zenhub Enterprise for VM makes use of local storage for databases, files, pictures, application images, a local registry, etc. It is important that your disk usage is kept below 90% to keep the OS and application running smoothly.
+Zenhub Enterprise for VM makes use of local storage for databases, files, pictures, application images, a local registry, etc. Your disk usage must be kept below 90% to keep the OS and application running smoothly.
 
 Disk management varies between different hosts, and you are responsible for managing your disk usage. We have provided some tools and documentation to assist you.
 
@@ -673,7 +746,7 @@ vim configuration.yaml
 zhe-config --update-license $(pwd)/configuration.yaml
 ```
 
-⚠️ NOTE: If you have misplaced your `configuration.yaml` file, you can find a backup of the current running configuration at `$ZENHUB_HOME/configuration/configuration.yaml`.
+> ⚠️ **NOTE:** If you have misplaced your `configuration.yaml` file, you can find a backup of the current running configuration at `$ZENHUB_HOME/configuration/configuration.yaml`.
 
 ### 6.9 K3s Certificate Rotation (401 Unauthorized)
 
@@ -722,6 +795,7 @@ Health check does the following:
 2. Checks if K3S service is up and running.
 3. Checks if your Zenhub Enterprise license will expire in 30 days.
 4. Checks if the root disk space is above 90% utilized.
+5. Checks if ZHE has any issues that will prevent an upgrade
 
 To run:
 
@@ -751,6 +825,45 @@ The [Optional Values](#332-optional-values) section outlines what to add to your
 
 Apply the updated configuration to the app as per section [4.1 Run the Configuration Tool](#41-run-the-configuration-tool). Please note that running the configuration tool will cause a brief downtime while the application restarts.
 
+### 6.14 OS (Ubuntu) Updates
+
+The host is currently based on Ubuntu 22-04 LTS and the cluster (Kubernetes) is managed by a systemd service (`k3s`) with its own upgrade mechanism.
+
+All the workloads are running in the cluster, as containers (`containerd`) are updated as such.
+
+The Debian utility `unattended-upgrades` is enabled and set up to automatically apply _security updates_ (only) once per day.
+
+
+It is the responsibility of the system administrator to determine the scheduling and running of other package upgrades on the linux OS.
+Outlined below are the steps a system administrator is recommended to take:
+ 
+1. SSH onto your Zenhub VM and put Zenhub into maintenance mode
+
+```bash
+zhe-config --maintenance enable
+```
+
+2. Create a VM snapshot according to your hosting provider's instructions (strongly recommended)
+
+3. Perform the upgrade
+```bash
+sudo apt-get update
+sudo apt-get dist-upgrade
+```
+
+4. Restore the ZHE service
+
+```bash
+zhe-config --maintenance disable
+```
+
+5. Verify that the service is up and running
+
+```bash
+zhe-config --health-check
+```
+
+
 ## 7. `zhe-config` Specification
 
 The configuration tool `zhe-config` has been included to help with various administration tasks, as you have likely already seen throughout the documentation. This is a full list of the options available for the `zhe-config` tool.
@@ -767,30 +880,32 @@ Usage:
 
 Examples:
   zhe-config --config-file /your/path/config.yaml
-  zhe-config --restore 2021-04-28T04-15
+  zhe-config --restore 2023-05-17T21-37
+  zhe-config --maintenance enable
+  zhe-config --upload-bundle /opt/zenhub/support-bundle/support_bundle_2023-05-17-T213724-UTC.tar
 
 Options:
   --backup                        Create a backup of databases and files
   --chrony-ntp                    Set custom NTP servers in chrony
   --config-example                Show a configuration file example
-  --config-file   FILE_PATH       Deploy Zenhub from a configuration file
-  --dhcp                          Configure VM to use DHCP
-  --health-check                  Run a health check to validate the status of your enterprise appliance
+  --config-file    FILE_PATH      Deploy Zenhub from a configuration file
+  --dhcp                          Configure the VM to use DHCP
+  --health-check                  Run a health check to validate the status of Zenhub Enterprise
   --help                          Show this help message
-  --images-import                 Re import container images
-  --maintenance   enable|disable  Enable or disable maintenance mode
-  --reload                        Redeploys Zenhub using last configuration
-                                  and scale application based on hardware resources available
-  --restore       BACKUP_NAME     Restore from a backup in /opt/snapshots
-  --support-bundle                Generate a support bundle
-  --upload-bundle BUNDLE_PATH     Upload a support bundle to a secure AWS storage bucket for Zenhub support to access
+  --images-import                 Re-import container images
+  --maintenance    enable|disable Enable or disable maintenance mode
+  --reload                        Redeploy Zenhub using the last applied configuration
+                                  and scale the application based on hardware resources available
+  --restore        BACKUP_NAME    Restore from a backup in /opt/snapshots
   --sshkey                        Add an SSH key manually
-  --staticip                      Configure VM to use static IP
+  --staticip                      Configure the VM to use static IP
+  --support-bundle                Generate a support bundle in /opt/zenhub/support-bundle
+  --update-license FILE_PATH      Update license from configuration file with updated ENTERPRISE_LICENSE_TOKEN
   --update-tls                    Update Zenhub to use new TLS cert and key placed at:
                                   /opt/zenhub/configuration/ssl/tls.crt
                                   /opt/zenhub/configuration/ssl/tls.key
-  --update-license  FILE_PATH     Update license from configuration file with updated ENTERPRISE_LICENSE_TOKEN
-  --version                       Display Zenhub Version
+  --upload-bundle  BUNDLE_PATH    Upload a support bundle to a secure AWS storage bucket for Zenhub Support to access
+  --version                       Display the current Zenhub Version
 
 More details about Zenhub configuration can be found at:
 https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/virtual-machine
@@ -883,7 +998,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-3.5.4`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.0.0`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
@@ -897,3 +1012,44 @@ Once you have [configured](#3-configuration) and [deployed](#4-application-deplo
 **To update existing TLS certificates for the developer site**, see section [6.12.2 Developer Site TLS](#6122-developer-site-tls)
 
 _An example of what the developer site looks like and does can be found at: <https://developers.zenhub.com>_
+
+## 10. Platform Authentication
+
+To better support non-technical team members, Zenhub provides a range of authentication options other than connecting through GitHub. This allows team members without a GitHub account to sign up and use Zenhub, saving your organization money on unnecessary GitHub licenses.
+
+These authentication options can be enabled/disabled depending on your organization's needs. You can enable none, one, or multiple authentication options.
+
+Users who sign up using these authentication methods that do not connect their GitHub account cannot view or modify any GitHub issues by default, they are only able to view and use Zenhub Issues. The admins of a GitHub repository can make their repository's issues visible to non GitHub-connected Zenhub users in their Zenhub Workspace settings.
+
+These users can choose to connect their GitHub account at any time which will provide them with full Zenhub functionality. Existing users can also disconnect their GitHub account if they only want to use the Zenhub platform and don't require a GitHub license.
+
+Of the authentication methods listed below, the only one that is enabled by default is GitHub.
+
+### 10.1 Email/Password
+
+- This built-in authentication option allows users to sign up with an email and password. These user accounts are stored in Zenhub
+- It can be enabled by setting the [Built-in Email/Password](#built-in-emailpassword) optional configuration
+- Be very cautious about enabling this option if your Zenhub instance is publicly accessible to the internet as it would allow anyone with access to sign up and possibly consume a license if the "Auto Assign License" setting is enabled
+
+### 10.2 GitHub
+
+- This classic authentication option allows users to sign in via their GitHub account
+- This is the default authentication method for Zenhub and cannot be disabled
+
+### 10.3 IBM W3ID
+
+- This authentication option allows users to sign in through IBM W3ID
+- An IBM Security Verify tenant is required to use this form of authentication
+- It can be enabled by setting the [W3ID](#w3id) optional configuration
+
+### 10.4 Azure Active Directory
+
+- This authentication option allows users to sign in through Microsoft Azure Active Directory
+- An Azure Active Directory tenant is required to use this form of authentication
+- It can be enabled by setting the [Azure AD](#azure-ad) optional configuration
+
+### 10.5 LDAP
+
+- This authentication option allows users to sign in using LDAP
+- An existing LDAP server is required to use this form of authentication
+- It can be enabled by setting the [LDAP](#ldap) optional configuration

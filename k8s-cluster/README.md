@@ -48,7 +48,12 @@
   - [6.4 Support Bundle](#64-support-bundle)
   - [6.5 Usage Report](#65-usage-report)
 - [7. Developer Site](#7-developer-site)
-- [8. Roadmap](#8-roadmap)
+- [8. Platform Authentication](#8-platform-authentication)
+  - [8.1 Email/Password](#81-emailpassword)
+  - [8.2 GitHub](#82-github)
+  - [8.3 IBM W3ID](#83-ibm-w3id)
+  - [8.4 Azure Active Directory](#84-azure-active-directory)
+  - [8.5 LDAP](#85-ldap)
 
 ## 1. Getting Started
 
@@ -97,7 +102,7 @@ To get started with Zenhub, you must have an existing Kubernetes cluster set up.
 
 ### 2.4 PostgreSQL
 
-Zenhub will require a connection to a PostgreSQL 11 database. We recommend the latest 11.x version. At the moment Zenhub does **not** support PostgreSQL 12.0 or greater.
+Zenhub will require a connection to a PostgreSQL 11 database. We recommend the latest 11.x version. At the moment Zenhub supports up to PostgreSQL 13.x and does **not** support PostgreSQL 14.0 or greater.
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
 
@@ -117,7 +122,7 @@ Zenhub will require a connection to RabbitMQ. We recommend the latest 3.x versio
 
 ### 2.7 Redis
 
-Zenhub makes use of 1 externally managed Redis instance. This Redis instance is used by our `raptor-sidekiq-worker` service requires data persistence. We recommend the latest 5.x version.
+Zenhub makes use of 1 externally managed Redis instance. This Redis instance is used by our `raptor-sidekiq-worker` service requires data persistence. We recommend the latest 7.x version.
 
 > There are two additional Redis instances that will run inside the cluster via our configuration. You do not need to manage these.
 
@@ -178,7 +183,7 @@ docker login -u _json_key -p "$(cat dockerpassword | base64 --decode)" https://u
 # Push, tag and pull Zenhub images into your registry
 your_registry=<your_own_registry_without_trailing_slash>
 tag=zhe-<version>
-images="kraken-webapp toad-backend raptor-backend kraken-extension"
+images="kraken-webapp toad-backend raptor-backend kraken-extension devsite kraken-zhe-admin sanitycheck"
 for i in $(echo $images); do docker pull us.gcr.io/zenhub-public/${i}:${tag} && docker tag us.gcr.io/zenhub-public/${i}:master ${your_registry}/${i}:${tag} && docker push ${your_registry}/${i}:${tag}; done
 ```
 
@@ -186,24 +191,33 @@ Finally you need to edit your `kustomization.yaml` file to configure all the dep
 
 ```yaml
 images:
-- name: kraken-webapp
-  newName: <your_own_registry>/kraken-webapp
-  newTag: zhe-<version>
-- name: raptor-backend
-  newName: <your_own_registry>/raptor-backend
-  newTag: zhe-<version>
-- name: toad-backend
-  newName: <your_own_registry>/toad-backend
-  newTag: zhe-<version>
-- name: kraken-extension
-  newName: <your_own_registry>/kraken-extension
-  newTag: zhe-<version>
-- name: kraken-zhe-admin
-  newName: <your_own_registry>/kraken-zhe-admin
-  newTag: zhe-<version>
-- name: sanitycheck
-  newName: <your_own_registry>/sanitycheck
-  newTag: <version>
+  - name: kraken-webapp
+    newName: <your_own_registry>/kraken-webapp
+    newTag: zhe-<version>
+  - name: kraken-extension
+    newName: <your_own_registry>/kraken-extension
+    newTag: zhe-<version>
+  - name: kraken-zhe-admin
+    newName: <your_own_registry>/kraken-zhe-admin
+    newTag: zhe-<version>
+  - name: raptor-backend
+    newName: <your_own_registry>/raptor-backend
+    newTag: zhe-<version>
+  - name: toad-backend
+    newName: <your_own_registry>/toad-backend
+    newTag: zhe-<version>
+  - name: sanitycheck
+    newName: <your_own_registry>/sanitycheck
+    newTag: zhe-<version>
+  - name: devsite
+    newName: <your_own_registry>/devsite
+    newTag: zhe-<version>
+  - name: busybox
+    newName: docker.io/library/busybox
+    newTag: latest
+  - name: nginx
+    newName: docker.io/library/nginx
+    newTag: latest
 ```
 
 #### 3.1.2 Using Zenhub's public registry
@@ -212,7 +226,7 @@ If your cluster is allowed to pull docker images from our public registry locate
 
 To pull images you will need to authenticate.
 
-- A `dockerpassword` file that contains a base64 encoded password is needed—reach out to enterprise@zenhub.com.
+- A `dockerpassword` file that contains a base64 encoded password is needed, reach out to enterprise@zenhub.com.
 - You will need to generate a `kubernetes.io/dockerconfigjson` secret with the following command (where `<namespace>` is the name of the Kubernetes namespace you will be deploying to):
 
   ```bash
@@ -234,7 +248,7 @@ Finally, uncomment the following lines in your `kustomization.yaml`:
 
 ### 3.2 Resource Scaling
 
-The default configuration ships with the minimum resources applied for all Kubernetes components. If your Zenhub instance will be handling a large amount of traffic, you will want to modify the resources accordingly. Most of the deployments have autoscaling based on CPU usage, but you might want to scale a deployment to a specific value. Here how to do this using `kustomize`:
+The default configuration ships with the minimum resources applied for all Kubernetes components. If your Zenhub instance will be handling a large amount of traffic, you will want to modify the resources accordingly. Most of the deployments have autoscaling based on CPU usage, but you might want to scale a deployment to a specific value. Here is how to do this using `kustomize`:
 
 1. Edit the file `options/scaling/deployments-scaling.yaml` with the desired number of replicas.
 
@@ -247,12 +261,12 @@ The default configuration ships with the minimum resources applied for all Kuber
 
 Let's say you want to allow `raptor-api` to scale up to 30 replicas:
 
-options/scaling/deployments-scaling.yaml:
+`options/scaling/deployments-scaling.yaml`:
 
 ```yaml
 ---
 # raptor-api
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: raptor-api
@@ -263,7 +277,7 @@ spec:
 
 Or, you can modify the number of Sidekiq workers to allow for more parallel data processing:
 
-options/scaling/deployments-scaling.yaml:
+`options/scaling/deployments-scaling.yaml`:
 
 ```yaml
 ---
@@ -278,7 +292,7 @@ spec:
 
 ### 3.3 Ingress
 
-We highly recommend the use of NGINX Ingress Controller in your cluster. We provide an example configuration for an AWS EKS cluster in[k8s-cluster/options/ingress/](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster/options/ingress), but this will likely need tweaks for your specific environment.
+We highly recommend the use of NGINX Ingress Controller in your cluster. We provide an example configuration for an AWS EKS cluster in [k8s-cluster/options/ingress/](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster/options/ingress), but this will likely need tweaks for your specific environment.
 
 The main requirement from the application side is:
 
@@ -426,7 +440,7 @@ TLS connection with Postgres utilizes the `secretGenerator` near the end of the 
 
 ### 3.5 Buckets
 
-To configure Zenhub to store uploaded images and files as objects in buckets, the following variables need to provided in `kustomization.yaml`
+To configure Zenhub to store uploaded images and files as objects in buckets, the following variables need to be provided in `kustomization`.yaml`
 
 ```yaml
 configMap:
@@ -705,13 +719,16 @@ images:
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
     newTag: <version>
+  - name: devsite
+    newName: us.gcr.io/zenhub-public/devsite
+    newTag: <version>
 ```
 
 * Next, modify the version to match the `<version>` of the release. Example:
 
 ```txt
 commonAnnotations:
-  app.kubernetes.io/version: 3.2.0
+  app.kubernetes.io/version: 3.5.4
 ```
 
 * Save the file and continue to the next step of the upgrade below.
@@ -755,7 +772,7 @@ While application updates will be immediately applied to the Zenhub web app, an 
 There are two methods to interact with the Zenhub UI:
 
 - The Zenhub web app
-- The Zenhub browser extensions for Chrome and Firefox, which allows users access to the power of Zenhub from within the UI of GitHub Enterprise
+- The Zenhub browser extensions for Chrome and Firefox, which allow users access to the power of Zenhub from within the UI of GitHub Enterprise
 
 To use the extensions with GitHub Enterprise, you must publish your own versions of them. The first time you publish the extensions, you will need to set up a Chrome Developer account and a Mozilla Developer account before creating a new extension in each platform. When application updates are applied, you will publish updates to the _existing_ extension on each platform.
 
@@ -773,7 +790,7 @@ For more information on License Governance, please view [this article](https://h
 
 ### 6.3 Maintenance Mode
 
-When operating a ZHE3 deployment on Kubernetes, you may face situations in which you would like to prevent users from accessing the application (such as restoring a database backup). For this purpose, we have included a **maintenance mode** in the `nginx-gateway` pod.
+When operating a ZHE deployment on Kubernetes, you may face situations in which you would like to prevent users from accessing the application (such as restoring a database backup). For this purpose, we have included a **maintenance mode** in the `nginx-gateway` pod.
 
 Maintenance mode can be enabled in two ways:
 
@@ -808,8 +825,43 @@ Once you have configured and deployed Zenhub, the developer site is made availab
 
 _An example of what the developer site looks like and does can be found at: <https://developers.zenhub.com>_
 
-## 8. Roadmap
+## 8. Platform Authentication
 
-ZHE3 is actively in development. We are planning to add the following features shortly:
+To better support non-technical team members, Zenhub provides a range of authentication options other than connecting through GitHub. This allows team members without a GitHub account to sign up and use Zenhub, saving your organization money on unnecessary GitHub licenses.
 
-- Support for IAM role authorization when writing objects to S3 buckets
+These authentication options can be enabled/disabled depending on your organization's needs. You can enable none, one, or multiple authentication options.
+
+Users who sign up using these authentication methods that do not connect their GitHub account cannot view or modify any GitHub issues by default, they are only able to view and use Zenhub Issues. The admins of a GitHub repository can make their repository's issues visible to non GitHub-connected Zenhub users in their Zenhub Workspace settings.
+
+These users can choose to connect their GitHub account at any time which will provide them with full Zenhub functionality. Existing users can also disconnect their GitHub account if they only want to use the Zenhub platform and don't require a GitHub license.
+
+Of the authentication methods listed below, the only one that is enabled by default is GitHub.
+
+### 8.1 Email/Password
+
+- This built-in authentication option allows users to sign up with an email and password. These user accounts are stored in Zenhub
+- It can be enabled by following instructions for `email_pw_enabled` in the main `kustomization.yaml`
+- Be very cautious about enabling this option if your Zenhub instance is publicly accessible to the internet as it would allow anyone with access to sign up and possibly consume a license if the "Auto Assign License" setting is enabled
+
+### 8.2 GitHub
+
+- This classic authentication option allows users to sign in via their GitHub account
+- This is the default authentication method for Zenhub and cannot be disabled
+
+### 8.3 IBM W3ID
+
+- This authentication option allows users to sign in through IBM W3ID
+- An IBM Security Verify tenant is required to use this form of authentication
+- It can be enabled by following instructions for `w3id_enabled` in the main `kustomization.yaml`
+
+### 8.4 Azure Active Directory
+
+- This authentication option allows users to sign in through Microsoft Azure Active Directory
+- An Azure Active Directory tenant is required to use this form of authentication
+- It can be enabled by following instructions for `azure_ad_enabled` in the main `kustomization.yaml`
+
+### 8.5 LDAP
+
+- This authentication option allows users to sign in using LDAP
+- An existing LDAP server is required to use this form of authentication
+- It can be enabled by following instructions for `ldap_enabled` in the main `kustomization.yaml`
