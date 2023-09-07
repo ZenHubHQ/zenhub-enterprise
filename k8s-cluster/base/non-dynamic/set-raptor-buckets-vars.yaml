@@ -10,7 +10,6 @@ spec:
       containers:
         - name: raptor-admin
           env:
-            # FIXME - Using this hack from the past until we implement a better way. See base/non-dynamic/set-toad-buckets-vars.yaml
             - name: GITHUB_APP_SECRET
               valueFrom:
                 secretKeyRef:
@@ -19,24 +18,18 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key # Using the existing files bucket that toad used before - file upload/download move to raptor is in progress on Cloud still
+                  key: bucket_secret_access_key
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad # Until we add this to the configuration secret - file upload/download move to raptor is in progress on Cloud still
+                  name: toad
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
                   name: configuration
                   key: local_files
-            # - name: FILES_UPLOAD_PATH # TODO - Determine what this needs to be with Backend team help
-            #   valueFrom:
-            #     configMapKeyRef:
-            #       key: files_upload_path
-            #       name: raptor
-            #       optional: true
             - name: S3_REGION
               valueFrom:
                 configMapKeyRef:
@@ -73,24 +66,18 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key # Using the existing files bucket that toad used before - file upload/download move to raptor is in progress on Cloud still
+                  key: bucket_secret_access_key
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad # Until we add this to the configuration secret - file upload/download move to raptor is in progress on Cloud still
+                  name: toad
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
                   name: configuration
                   key: local_files
-            # - name: FILES_UPLOAD_PATH - file upload/download move to raptor is in progress on Cloud still
-            #   valueFrom:
-            #     configMapKeyRef:
-            #       key: files_upload_path
-            #       name: raptor
-            #       optional: true
             - name: S3_REGION
               valueFrom:
                 configMapKeyRef:
@@ -127,24 +114,18 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key # Using the existing files bucket that toad used before - file upload/download move to raptor is in progress on Cloud still
+                  key: bucket_secret_access_key
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad # Until we add this to the configuration secret - file upload/download move to raptor is in progress on Cloud still
+                  name: toad
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
                   name: configuration
                   key: local_files
-            # - name: FILES_UPLOAD_PATH - file upload/download move to raptor is in progress on Cloud still
-            #   valueFrom:
-            #     configMapKeyRef:
-            #       key: files_upload_path
-            #       name: raptor
-            #       optional: true
             - name: S3_REGION
               valueFrom:
                 configMapKeyRef:
@@ -181,24 +162,18 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key # Using the existing files bucket that toad used before - file upload/download move to raptor is in progress on Cloud still
+                  key: bucket_secret_access_key
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad # Until we add this to the configuration secret - file upload/download move to raptor is in progress on Cloud still
+                  name: toad
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
                   name: configuration
                   key: local_files
-            # - name: FILES_UPLOAD_PATH - file upload/download move to raptor is in progress on Cloud still
-            #   valueFrom:
-            #     configMapKeyRef:
-            #       key: files_upload_path
-            #       name: raptor
-            #       optional: true
             - name: S3_REGION
               valueFrom:
                 configMapKeyRef:
@@ -235,24 +210,18 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key # Using the existing files bucket that toad used before - file upload/download move to raptor is in progress on Cloud still
+                  key: bucket_secret_access_key
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad # Until we add this to the configuration secret - file upload/download move to raptor is in progress on Cloud still
+                  name: toad
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
                   name: configuration
                   key: local_files
-            # - name: FILES_UPLOAD_PATH - file upload/download move to raptor is in progress on Cloud still
-            #   valueFrom:
-            #     configMapKeyRef:
-            #       key: files_upload_path
-            #       name: raptor
-            #       optional: true
             - name: S3_REGION
               valueFrom:
                 configMapKeyRef:
@@ -289,24 +258,18 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key # Using the existing files bucket that toad used before - file upload/download move to raptor is in progress on Cloud still
+                  key: bucket_secret_access_key
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad # Until we add this to the configuration secret - file upload/download move to raptor is in progress on Cloud still
+                  name: toad
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
                   name: configuration
                   key: local_files
-            # - name: FILES_UPLOAD_PATH - file upload/download move to raptor is in progress on Cloud still
-            #   valueFrom:
-            #     configMapKeyRef:
-            #       key: files_upload_path
-            #       name: raptor
-            #       optional: true
             - name: S3_REGION
               valueFrom:
                 configMapKeyRef:
@@ -341,24 +304,18 @@ spec:
           - name: S3_PRIVATE_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                key: bucket_secret_access_key # Using the existing files bucket that toad used before - file upload/download move to raptor is in progress on Cloud still
+                key: bucket_secret_access_key
                 name: configuration
           - name: FILE_DOWNLOAD_URL
             valueFrom:
               configMapKeyRef:
                 key: zenhub_server_address
-                name: toad # Until we add this to the configuration secret - file upload/download move to raptor is in progress on Cloud still
+                name: toad
           - name: IS_UPLOAD_FILE_TO_LOCAL
             valueFrom:
               configMapKeyRef:
                 name: configuration
                 key: local_files
-          # - name: FILES_UPLOAD_PATH - file upload/download move to raptor is in progress on Cloud still
-          #   valueFrom:
-          #     configMapKeyRef:
-          #       key: files_upload_path
-          #       name: raptor
-          #       optional: true
           - name: S3_REGION
             valueFrom:
               configMapKeyRef:
