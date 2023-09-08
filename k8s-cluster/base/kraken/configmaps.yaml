@@ -131,7 +131,7 @@ data:
       "isEnterprise": true,
       "isLicenseGovernanceEnabled": false,
       "isTrackerEnabled": false,
-      "isUploadFileToLocal": true,
+      "isUploadFileToLocal": false,
       "loginURL": "https://%%subdomain_suffix%%.%%domain_tld%%/api/auth/github",
       "marketplaceURL": "",
       "maxFileUpload": 15728640,
