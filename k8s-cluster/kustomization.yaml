@@ -29,32 +29,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 3.5.4
+  app.kubernetes.io/version: 4.0.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-3.5.4
+    newTag: zhe-4.0.0
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-3.5.4
+    newTag: zhe-4.0.0
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-3.5.4
+    newTag: zhe-4.0.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-3.5.4
+    newTag: zhe-4.0.0
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-3.5.4
+    newTag: zhe-4.0.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-3.5.4
+    newTag: zhe-4.0.0
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-3.5.4
+    newTag: zhe-4.0.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -126,8 +126,36 @@ configMapGenerator:
       # The default limits for the Legacy REST API are 100 requests per 60 seconds.
       - rest_api_request_limit=100
       - rest_api_time_limit=60
+
+      # Built-in Zenhub email and password authentication configuration
+      # [EDIT] (optional) Change email_pw_enabled to true to enable. 
+      # Should be used with caution if Zenhub is publicly accessible to the internet as it will allow anyone with the URL to sign up.
+      - email_pw_enabled=false
+
+      # W3ID authentication configuration
+      # [EDIT] (optional) Change w3id_enabled to true, then uncomment and fill out the rest of the options to enable
+      - w3id_enabled=false
+      # - w3id_client_id=<your_client_id> # e.g. hgfedcba-1234-abcd-1234-4321abcdefgh
+      # - w3id_default_endpoint_url=<your_default_endpoint> # e.g. https://acme.verify.ibm.com/v1.0/endpoint/default
+      # - w3id_issuer_url=<your_issuer_url> # e.g. https://acme.verify.ibm.com/oidc/endpoint/default
+
+      # Azure AD authentication configuration
+      # [EDIT] (optional) Change azure_ad_enabled to true, then uncomment and fill out the rest of the options to enable
+      - azure_ad_enabled=false
+      # - azure_ad_client_id=<your_client_id> # e.g. 12345678-abcd-1234-abcd-1234567890ab
+      # - azure_ad_tenant_id=<your_tenant_id> # e.g. abcdefgh-4321-abcd-4321-abcdefgh1234
+
+      # LDAP authentication configuration
+      # [EDIT] (optional) Change ldap_enabled to true, then uncomment and fill out the rest of the options to enable
+      - ldap_enabled=false
+      # - ldap_host=<your_ldap_host> # e.g. ldap.example.com
+      # - ldap_port=<your_ldap_port> # e.g. 389 for plain or 636 for ssl
+      # - ldap_method=<your_ldap_method> # e.g. plain or ssl
+      # - ldap_base=<your_ldap_base> # e.g. dc=example,dc=com
+      # - ldap_bind_dn=<your_ldap_bind_dn> # e.g. cn=admin,dc=example,dc=com
+      # - ldap_user_filter=<your_ldap_user_filter> # e.g. (&(objectclass=inetOrgPerson)(uid=%<username>s))
   
-  # Do not create/edit the zhe-urls.env file. This is managed by the configmap-generator.sh script.
+  # Do not create/edit zhe-urls.env file. This is managed by the configmap-generator.sh script.
   - name: configuration
     behavior: merge
     envs:
@@ -159,6 +187,12 @@ secretGenerator:
       - enterprise_license_token=<zhe-license-jwt>
       # [EDIT] Admin-UI password
       - admin_ui_pass=<some_pass>
+      # [EDIT] (optional) Uncomment and fill to enable W3ID authentication
+      # - w3id_client_secret=<your_client_secret> # e.g. U75zD5Zet4
+      # [EDIT] (optional) Uncomment and fill to enable Azure AD authentication
+      # - azure_ad_client_secret=<your_client_secret> # e.g. abcd12~efgh567ijkl890mnopq123rstu456vwxyz
+      # [EDIT] (optional) Uncomment and fill to enable LDAP authentication
+      # - ldap_bind_password=<your_ldap_bind_password>
       
   # [EDIT] Required certificate for Postgres DB SSL/TLS.
   # [NOTE] Your provided certificate must be named postgres-ca.pem
@@ -193,10 +227,6 @@ secretGenerator:
     behavior: merge
     literals:
       # NOTE:
-      # => If you migrating from Zenhub Enterprise version 2, please recover
-      # the values from your existing installation (see our ZHE2 to ZHE3 upgrade
-      # instructions https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration,
-      # you can get these values from variables.txt from zhe3-migration-cluster.sh)
       # => If you are setting up a new Zenhub Enterprise, respect the regexp format
       # on Linux, you can run the following to generate the secret as follows:
       # for most secrets
@@ -218,17 +248,13 @@ secretGenerator:
       - lockbox_master_key=<[:xdigit:]{64}>
       # [EDIT] A random string used to seed the encryption of sensitive data in
       # the Raptor database.
-      - secret_key_base=<[:alnum:]{38}>
+      - secret_key_base=<[:alnum:]{42}>
       # [EDIT] Private key used to encrypt GitHub token retrieved and cached in
       # the database.
       - github_token_value_key=<[:xdigit:]{64}>
       # [EDIT] Secret for authenticating GitHub webhooks from Toad. This is set in your
-      # GitHub Enterprise instance. If migrating from ZHE2, use your existing value! Check variables.txt:
-      # https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance
       - ghwebhook_secret=<[:alnum:]{38}>
       # [EDIT] Encrypt repository ID. Part of the GitHub webhook callback URL.
-      # If migrating from ZHE2, use your existing value! Check variables.txt:
-      # https://github.com/ZenHubHQ/zenhub-enterprise/tree/master/k8s-cluster/zhe3-migration#gather-the-data-from-your-existing-zhe2-source-instance
       - ghwebhook_pass=<[:alnum:]{38}>
       # [EDIT] Should be the same value as `ghwebhook_secret` above. This
       # one is used by the Raptor services.

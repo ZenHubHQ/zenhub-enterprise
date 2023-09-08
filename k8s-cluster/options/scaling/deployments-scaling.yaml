@@ -1,6 +1,6 @@
 ---
 # raptor-api
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: raptor-api
@@ -10,7 +10,7 @@ spec:
 
 ---
 # raptor-api
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: raptor-api-public
@@ -20,7 +20,7 @@ spec:
 
 ---
 # raptor-cable
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: raptor-cable
@@ -30,7 +30,7 @@ spec:
 
 ---
 #toad-api
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: toad-api
@@ -40,7 +40,7 @@ spec:
 
 ---
 # toad-websocket
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: toad-websocket

@@ -41,6 +41,16 @@ spec:
         - -q
         - default
         env:
+        - name: GITHUB_APP_ID
+          valueFrom:
+            configMapKeyRef:
+              key: github_app_id
+              name: configuration
+        - name: OTEL_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: otel_log_level
+              name: raptor
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
@@ -77,6 +87,23 @@ spec:
               name: raptor-api
         - name: RUBYOPT
           value: -W0
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://$(HOST_IP):4318
+        - name: APP_SERVICE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['app.kubernetes.io/component']
+        - name: APP_DEPLOY_ENV
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['app.kubernetes.io/instance']
+        - name: OTEL_SERVICE_NAME
+          value: $(APP_DEPLOY_ENV)-$(APP_SERVICE)
         - name: RAILS_ENV
           valueFrom:
             configMapKeyRef:
@@ -93,6 +120,11 @@ spec:
               key: log_json
               name: raptor
         - name: GITHUB_HTML_URL
+          valueFrom:
+            configMapKeyRef:
+              key: github_html_url
+              name: raptor
+        - name: GITHUB_SERVER_ADDRESS
           valueFrom:
             configMapKeyRef:
               key: github_html_url
@@ -127,6 +159,18 @@ spec:
             configMapKeyRef:
               key: new_relic_app_name
               name: raptor
+        - name: NEW_RELIC_APPLICATION_LOGGING_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_application_logging_enabled
+              name: raptor
+              optional: true
+        - name: NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: new_relic_application_logging_forwarding_enabled
+              name: raptor
+              optional: true
         - name: DISABLE_PREPARE_DB
           valueFrom:
             configMapKeyRef:
@@ -136,11 +180,6 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: github_webhook_enabled
-              name: raptor
-        - name: ZENHUB_WEBHOOK_DOMAIN_V1
-          valueFrom:
-            configMapKeyRef:
-              key: zenhub_webhook_domain_v1
               name: raptor
         - name: ZENHUB_WEBHOOK_DOMAIN_V2
           valueFrom:
@@ -177,6 +216,16 @@ spec:
             configMapKeyRef:
               key: hubspot_platform_signup_form_guid
               name: raptor
+        - name: MIXPANEL_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              key: mixpanel_project_id
+              name: raptor
+        - name: HUBSPOT_PAID_USER_FORM_GUID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_paid_user_form_guid
+              name: raptor
         - name: AUTH_ISSUER_URLS
           valueFrom:
             configMapKeyRef:
@@ -191,6 +240,11 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: auth0_tenant
+              name: raptor
+        - name: AUTH0_DB_CONNECTION_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: auth0_db_connection_name
               name: raptor
         - name: MAILGUN_DOMAIN
           valueFrom:
@@ -217,6 +271,73 @@ spec:
             configMapKeyRef:
               key: stripe_yearly_price_id
               name: raptor
+        - name: S3_ACCESS_KEY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: s3_access_key_id
+              name: raptor
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_bucket
+              name: raptor
+        - name: S3_PRIVATE_ACCESS_KEY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: s3_private_access_key_id
+              name: raptor
+        - name: S3_PRIVATE_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_private_bucket
+              name: raptor
+        - name: S3_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_region
+              name: raptor
+        - name: FILES_UPLOAD_PATH
+          valueFrom:
+            configMapKeyRef:
+              key: files_upload_path
+              name: raptor
+              optional: true
+        - name: IS_UPLOAD_FILE_TO_LOCAL
+          valueFrom:
+            configMapKeyRef:
+              key: is_upload_file_to_local
+              name: raptor
+        - name: FILE_DOWNLOAD_URL
+          valueFrom:
+            configMapKeyRef:
+              key: file_download_url
+              name: raptor
+        - name: TOAD_PUBLIC_URL
+          valueFrom:
+            configMapKeyRef:
+              key: toad_public_url
+              name: raptor
+        - name: OPENAI_ORGANIZATION_ID
+          valueFrom:
+            configMapKeyRef:
+              key: openai_organization_id
+              name: raptor
+        - name: GOOGLE_OAUTH2_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              key: google_oauth2_client_id
+              name: raptor
+        - name: NOTION_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              key: notion_client_id
+              name: raptor
+        - name: X_FORWARDED_FOR_TRUSTED_PROXIES
+          valueFrom:
+            configMapKeyRef:
+              key: x_forwarded_for_trusted_proxies
+              name: raptor
+              optional: true
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
@@ -286,15 +407,40 @@ spec:
             secretKeyRef:
               key: mixpanel_token
               name: raptor
+        - name: MIXPANEL_SERVICE_ACCOUNT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_service_account_username
+              name: raptor
+        - name: MIXPANEL_SERVICE_ACCOUNT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: mixpanel_service_account_secret
+              name: raptor
+        - name: FRESHWORKS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: freshworks_api_key
+              name: raptor
+        - name: FRESH_SUCCESS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: fresh_success_api_key
+              name: raptor
         - name: PRODUCT_BOARD_KEY
           valueFrom:
             secretKeyRef:
               key: product_board_key
               name: raptor
-        - name: HUBSPOT_API_KEY
+        - name: HUBSPOT_ACCESS_TOKEN
           valueFrom:
             secretKeyRef:
-              key: hubspot_api_key
+              key: hubspot_access_token
+              name: raptor
+        - name: AUTH_ZENHUB_APP_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: auth_zenhub_app_client_id
               name: raptor
         - name: AUTH_MANAGEMENT_API_CLIENT_ID
           valueFrom:
@@ -321,12 +467,47 @@ spec:
             secretKeyRef:
               key: stripe_webhook_secret
               name: raptor
+        - name: DEVISE_JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: devise_jwt_secret_key
+              name: raptor
+        - name: S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: s3_secret_access_key
+              name: raptor
+        - name: S3_PRIVATE_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: s3_private_secret_access_key
+              name: raptor
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: openai_api_key
+              name: raptor
+        - name: GITHUB_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: github_app_secret
+              name: configuration
         - name: GLOBAL_GITHUB_ADMIN_TOKEN
           valueFrom:
             secretKeyRef:
               key: global_github_admin_token
               name: global-github-admin-token-secret
               optional: true
+        - name: GOOGLE_OAUTH2_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: google_oauth2_client_secret
+              name: raptor
+        - name: NOTION_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: notion_client_secret
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -338,7 +519,7 @@ spec:
         resources:
           limits:
             cpu: 550m
-            memory: 1750Mi
-          requests:
-            cpu: 400m
             memory: 1500Mi
+          requests:
+            cpu: 550m
+            memory: 1000Mi

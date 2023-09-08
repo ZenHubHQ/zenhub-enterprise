@@ -15,12 +15,17 @@ spec:
             - bundle
             - exec
             - rake
-            - zhe:migrate_3_5
+            - zhe:migrate_4_0
           env:
             - name: MONGO_IS_DOCUMENTDB
               valueFrom:
                 configMapKeyRef:
                   key: mongo_is_documentdb
+                  name: configuration
+            - name: MIGRATIONS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  key: postgres_url
                   name: configuration
             - name: DATABASE_URL
               valueFrom:
@@ -41,36 +46,13 @@ spec:
                   name: configuration
             - name: CABLE_URL
               value: raptor-cable
-            - name: RAILS_MAX_THREADS
+            - name: GITHUB_APP_ID
               valueFrom:
                 configMapKeyRef:
-                  key: rails_max_threads
-                  name: raptor-admin
-            - name: DATABASE_STATEMENT_TIMEOUT
-              valueFrom:
-                configMapKeyRef:
-                  key: database_statement_timeout
-                  name: raptor-admin
-            - name: ADMIN_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  key: admin_enabled
-                  name: raptor-admin
-            - name: ADMIN_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  key: admin_username
-                  name: raptor-admin
-            - name: ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: raptor_admin_password
-                  name: internal
-            - name: WEB_CONCURRENCY
-              valueFrom:
-                configMapKeyRef:
-                  key: web_concurrency
-                  name: raptor-admin
+                  key: github_app_id
+                  name: configuration
+            - name: SAFETY_ASSURED
+              value: "1"
             - name: RUBYOPT
               value: -W0
             - name: RAILS_ENV
@@ -83,6 +65,11 @@ spec:
                 configMapKeyRef:
                   key: rails_log_to_stdout
                   name: raptor
+            - name: DATABASE_STATEMENT_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  key: database_statement_timeout
+                  name: raptor-migrate
             - name: LOG_JSON
               valueFrom:
                 configMapKeyRef:
@@ -103,6 +90,16 @@ spec:
                 configMapKeyRef:
                   key: github_graphql_url
                   name: raptor
+            - name: SENTRY_DSN
+              valueFrom:
+                configMapKeyRef:
+                  key: sentry_dsn
+                  name: raptor
+            - name: SENTRY_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  key: sentry_environment
+                  name: raptor
             - name: NEW_RELIC_AGENT_ENABLED
               valueFrom:
                 configMapKeyRef:
@@ -113,25 +110,66 @@ spec:
                 configMapKeyRef:
                   key: new_relic_app_name
                   name: raptor
-            - name: DISABLE_PREPARE_DB
+            - name: S3_ACCESS_KEY_ID
               valueFrom:
                 configMapKeyRef:
-                  key: disable_prepare_db
+                  key: s3_access_key_id
                   name: raptor
-            - name: GITHUB_WEBHOOK_ENABLED
+            - name: S3_BUCKET
               valueFrom:
                 configMapKeyRef:
-                  key: github_webhook_enabled
+                  key: s3_bucket
                   name: raptor
-            - name: ZENHUB_WEBHOOK_DOMAIN_V1
+            - name: S3_PRIVATE_ACCESS_KEY_ID
               valueFrom:
                 configMapKeyRef:
-                  key: zenhub_webhook_domain_v1
+                  key: s3_private_access_key_id
                   name: raptor
-            - name: ZENHUB_WEBHOOK_DOMAIN_V2
+            - name: S3_PRIVATE_BUCKET
               valueFrom:
                 configMapKeyRef:
-                  key: zenhub_webhook_domain_v2
+                  key: s3_private_bucket
+                  name: raptor
+            - name: S3_REGION
+              valueFrom:
+                configMapKeyRef:
+                  key: s3_region
+                  name: raptor
+            - name: FILES_UPLOAD_PATH
+              valueFrom:
+                configMapKeyRef:
+                  key: files_upload_path
+                  name: raptor
+                  optional: true
+            - name: IS_UPLOAD_FILE_TO_LOCAL
+              valueFrom:
+                configMapKeyRef:
+                  key: is_upload_file_to_local
+                  name: raptor
+            - name: WEBAPP_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: webapp_url
+                  name: raptor
+            - name: FILE_DOWNLOAD_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: file_download_url
+                  name: raptor
+            - name: TOAD_PUBLIC_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: toad_public_url
+                  name: raptor
+            - name: OPENAI_ORGANIZATION_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: openai_organization_id
+                  name: raptor
+            - name: GOOGLE_OAUTH2_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: google_oauth2_client_id
                   name: raptor
             - name: LD_OFFLINE
               valueFrom:
@@ -143,25 +181,21 @@ spec:
                 configMapKeyRef:
                   key: is_enterprise
                   name: raptor
-            - name: CABLE_ALLOWED_ORIGINS
-              valueFrom:
-                configMapKeyRef:
-                  key: cable_allowed_origins
-                  name: raptor
-            - name: ACTION_CABLE_WORKERS_POOL_SIZE
-              valueFrom:
-                configMapKeyRef:
-                  key: action_cable_workers_pool_size
-                  name: raptor
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
             - name: SIDEKIQ_REDIS_URL
               valueFrom:
                 secretKeyRef:
                   key: redis_url
                   name: configuration
+            - name: GITHUB_APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: github_app_secret
+                  name: configuration
+            - name: GRAPHQL_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  key: graphql_redis_url
+                  name: raptor-migrate
             - name: SECRET_KEY_BASE
               valueFrom:
                 secretKeyRef:
@@ -207,32 +241,61 @@ spec:
                 secretKeyRef:
                   key: rabbitmq_url
                   name: configuration
+            - name: RAILS_MAX_THREADS
+              valueFrom:
+                configMapKeyRef:
+                  key: rails_max_threads
+                  name: raptor-migrate
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: CABLE_REDIS_URL
               valueFrom:
                 secretKeyRef:
                   key: cable_redis_url
-                  name: configuration
-            - name: GRAPHQL_REDIS_URL
+                  name: raptor-migrate
+            - name: CABLE_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  key: cable_allowed_origins
+                  name: raptor-migrate
+            - name: ACTION_CABLE_WORKERS_POOL_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  key: action_cable_workers_pool_size
+                  name: raptor-migrate
+            - name: WEB_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  key: web_concurrency
+                  name: raptor-migrate
+            - name: HUBSPOT_ACCESS_TOKEN
               valueFrom:
                 secretKeyRef:
-                  key: graphql_redis_url
-                  name: configuration
-            - name: MIXPANEL_PROJECT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  key: mixpanel_token
+                  key: hubspot_access_token
                   name: raptor
-            - name: PRODUCT_BOARD_KEY
+            - name: S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: product_board_key
+                  key: s3_secret_access_key
                   name: raptor
-            - name: HUBSPOT_API_KEY
+            - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: hubspot_api_key
+                  key: s3_private_secret_access_key
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-3.5.4
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: openai_api_key
+                  name: raptor
+            - name: GOOGLE_OAUTH2_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: google_oauth2_client_secret
+                  name: raptor
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.0.0
           imagePullPolicy: Always
           name: data-migration
           resources:
@@ -249,6 +312,26 @@ spec:
             - mountPath: /var/ca-bundle/postgres
               name: postgres-ca-bundle
               readOnly: true
+        # - name: stunnel-redis-sidekiq # Uncomment if you use stunnel sidecar containers to configure stunnel between Zenhub and external Redis
+        #   image: us.gcr.io/zenhub-public/stunnel
+        #   imagePullPolicy: Always
+        #   volumeMounts:
+        #     - name: stunnel-redis-sidekiq
+        #       mountPath: /etc/stunnel/stunnel.conf
+        #       subPath: stunnel.conf
+        #     - name: stunnel-redis-sidekiq
+        #       mountPath: /etc/stunnel/ca.crt
+        #       subPath: ca.crt
+        # - name: stunnel-redis-cable
+        #   image: us.gcr.io/zenhub-public/stunnel
+        #   imagePullPolicy: Always
+        #   volumeMounts:
+        #     - name: stunnel-redis-cable
+        #       mountPath: /etc/stunnel/stunnel.conf
+        #       subPath: stunnel.conf
+        #     - name: stunnel-redis-cable
+        #       mountPath: /etc/stunnel/ca.crt
+        #       subPath: ca.crt
       volumes:
         - name: mongo-ca-bundle
           secret:
@@ -256,4 +339,10 @@ spec:
         - name: postgres-ca-bundle
           secret:
             secretName: postgres-ca-bundle
+        # - name: stunnel-redis-cable # Uncomment if you use configmaps to configure stunnel between Zenhub and external Redis
+        #   configMap:
+        #     name: stunnel-redis-cable
+        # - name: stunnel-redis-sidekiq
+        #   configMap:
+        #     name: stunnel-redis-sidekiq
       restartPolicy: Never

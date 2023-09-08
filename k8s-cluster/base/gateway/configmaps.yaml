@@ -194,17 +194,23 @@ apiVersion: v1
 data:
   maintenance.html: "<!DOCTYPE html>\n<html>\n\n  <head>\n    <title>Zenhub Enterprise
     Maintenance In Progress</title>\n    <style>\n      html {\n        height: 100%\n
-    \     }\n      body {\n        background: rgb(15,14,29);\n        background:
-    linear-gradient(315deg, rgba(15,14,29,1) 0%, rgba(29,28,57,1) 22%, rgba(48,65,150,1)
-    62%, rgba(68,100,228,1) 100%);\n      }\n      #message {  \n        margin-left:
-    auto;\n        margin-right: auto;\n        margin-top: 15%;\n        width: 600px;\n
-    \       padding: 10px;\n      }\n      h1, h3 {\n          color: white;\n          font-family:
-    'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode',
-    Geneva, Verdana, sans-serif;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div
-    id=\"message\">\n      <h1>Zenhub (or GitHub) is down for maintenance</h1>\n      <h3>Your
-    Zenhub Enterprise administrators are performing scheduled maintenance. If you
-    have any questions, please contact your Zenhub administrator.</h3>\n    </div>\n
-    \ </body>\n  \n</html>\n"
+    \     }\n      body {\n        background: #0E1332\n      }\n      #message {
+    \ \n        margin-left: auto;\n        margin-right: auto;\n        margin-top:
+    15%;\n        width: 600px;\n        padding: 30px;\n        padding-left: 50px;\n
+    \       background: linear-gradient(#0E1332, #0E1332) padding-box,\n                    linear-gradient(165deg,#4f57f9,#44c7d1)
+    border-box;\n        border-radius: 50px;\n        border: 5px solid transparent;\n
+    \     }\n      h1, h3 {\n          color: white;\n          font-family: Arial,
+    sans-serif;\n      }\n      h3 {\n        margin-bottom: 0px;\n        color:rgb(233,
+    232, 232);\n        font-weight: 100;\n      }\n      .cog {\n        width: 50px;\n
+    \       height: 50px;\n        border-radius: 50%;\n        border: 5px solid
+    #44c7d1;\n        border-top-color: #10383b;\n        animation: spin 2s infinite
+    linear;\n        margin-left: 543px\n      }\n      @keyframes spin {\n        to
+    {\n          transform: rotate(360deg);\n        }\n      }\n    </style>\n  </head>\n\n
+    \ <body>\n    <div id=\"message\">\n      <h1>Zenhub (or GitHub) is down for maintenance</h1>\n
+    \     <h3>Your Zenhub Enterprise administrators are performing scheduled maintenance.
+    If you have any questions, please contact your Zenhub administrator.</h3>\n      <div
+    id=\"cog-container\"><div class=\"cog\"></div></div>\n    </div>\n  </body>\n
+    \ \n</html>\n"
 kind: ConfigMap
 metadata:
   labels:
