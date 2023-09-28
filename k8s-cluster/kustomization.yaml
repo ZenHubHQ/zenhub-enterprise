@@ -18,7 +18,8 @@ patchesStrategicMerge:
 # - options/pullpolicy/always.yaml #! Sets the image pull policy of deployments to Always
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
-# - options/pgbouncer/pgbouncer-config.yaml #! Enable if custom configuration is required for pgbouncer (connection and pool limits, etc).
+# - options/pgbouncer/pgbouncer-config.yaml #! Enable if password_encryption is set to scram-sha-256 on your postgres database,
+                                            #! or if you need to change the default pool size and connection limits.
                                             #! See documentation in options/pgbouncer/README.md to make configuration changes.
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
@@ -210,6 +211,7 @@ secretGenerator:
 
   # [EDIT] If you need admin access to PgBouncer to view pools, connections, etc. and the username that you use to connect to PostgreSQL is not named "postgres".
   # [EDIT] Or if you just need to tune the default PgBouncer pool size and connection limits to better suit your database.
+  # [EDIT] Or if password_encryption is set to scram-sha-256 on your postgres database and md5 authentication cannot be used.
   # [IMPORTANT NOTE] See documentation in options/pgbouncer/README.md to make configuration changes.
   # - name: pgbouncer-userlist
   #   files:
