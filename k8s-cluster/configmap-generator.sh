@@ -19,6 +19,7 @@ export `grep -hir "email_pw_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "w3id_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "azure_ad_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "ldap_enabled=" kustomization.yaml | awk '{print $2}'`
+export `grep -hir "saml_enabled=" kustomization.yaml | awk '{print $2}'`
 
 zhe_hostname="$subdomain_suffix.$domain_tld"
 https_zhe_hostname="https://$zhe_hostname"
@@ -30,6 +31,7 @@ auth_options_email_pw=$email_pw_enabled
 auth_options_w3id=$w3id_enabled
 auth_options_azure_ad=$azure_ad_enabled
 auth_options_ldap=$ldap_enabled
+auth_options_saml=$saml_enabled
 
 function is_gnu_sed(){
   sed --version >/dev/null 2>&1
@@ -70,7 +72,11 @@ EOL
 sed_wrap "s/%%zhe_hostname%%/$zhe_hostname/g" base/kustomization.yaml
 
 # Replace W3ID value in base/kraken/configmaps.yaml
-sed_wrap "s/\"Zenhub\": .*,/\"Zenhub\": $auth_options_email_pw,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"W3ID\": .*,/\"W3ID\": $auth_options_w3id,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"AzureAD\": .*,/\"AzureAD\": $auth_options_azure_ad,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"LDAP\": .*,/\"LDAP\": $auth_options_ldap,/g" base/kraken/configmaps.yaml
+sed_wrap "s/\"SAML\": .*,/\"SAML\": $auth_options_saml,/g" base/kraken/configmaps.yaml
+# IMPORTANT: Zenhub auth is last in the list and does not contain a comma
+# Adding a comma will break firefox extension publishing https://github.com/ZenHubHQ/devops/issues/1889
+# If adding a new auth type, keep Zenhub at the bottom of the list
+sed_wrap "s/\"Zenhub\": .*/\"Zenhub\": $auth_options_email_pw/g" base/kraken/configmaps.yaml

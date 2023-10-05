@@ -157,7 +157,8 @@ data:
         "W3ID": false,
         "AzureAD": false,
         "LDAP": false,
-        "Zenhub": false,
+        "SAML": false,
+        "Zenhub": false
       }
     }
 kind: ConfigMap
