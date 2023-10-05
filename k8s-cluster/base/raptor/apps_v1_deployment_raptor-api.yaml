@@ -160,6 +160,24 @@ spec:
               key: ldap_user_filter
               name: configuration
               optional: true
+        - name: AUTHV2_SAML_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: saml_enabled
+              name: configuration
+              optional: true
+        - name: AUTHV2_SAML_IDP_METADATA_URL
+          valueFrom:
+            configMapKeyRef:
+              key: saml_idp_metadata_url
+              name: configuration
+              optional: true
+        - name: AUTHV2_SAML_SP_ENTITY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: saml_sp_entity_id
+              name: configuration
+              optional: true
         - name: GITHUB_APP_ID
           valueFrom:
             configMapKeyRef:

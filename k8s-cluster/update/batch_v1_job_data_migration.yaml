@@ -295,7 +295,7 @@ spec:
                 secretKeyRef:
                   key: google_oauth2_client_secret
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.0.0
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.0.1
           imagePullPolicy: Always
           name: data-migration
           resources:

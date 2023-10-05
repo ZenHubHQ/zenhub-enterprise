@@ -29,32 +29,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 4.0.0
+  app.kubernetes.io/version: 4.0.1
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-4.0.0
+    newTag: zhe-4.0.1
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-4.0.0
+    newTag: zhe-4.0.1
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-4.0.0
+    newTag: zhe-4.0.1
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-4.0.0
+    newTag: zhe-4.0.1
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-4.0.0
+    newTag: zhe-4.0.1
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-4.0.0
+    newTag: zhe-4.0.1
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-4.0.0
+    newTag: zhe-4.0.1
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -154,6 +154,12 @@ configMapGenerator:
       # - ldap_base=<your_ldap_base> # e.g. dc=example,dc=com
       # - ldap_bind_dn=<your_ldap_bind_dn> # e.g. cn=admin,dc=example,dc=com
       # - ldap_user_filter=<your_ldap_user_filter> # e.g. (&(objectclass=inetOrgPerson)(uid=%<username>s))
+
+      # SAML authentication configuration
+      # [EDIT] (optional) Change saml_enabled to true, then uncomment and fill out the rest of the options to enable
+      - saml_enabled=false
+      # - saml_idp_metadata_url=<your_idp_metadata_url> # Metadata URL for your Zenhub SAML App
+      # - saml_sp_entity_id=<your_sp_entity_id> # Unique Service Provider ID for your Zenhub SAML App
   
   # Do not create/edit zhe-urls.env file. This is managed by the configmap-generator.sh script.
   - name: configuration

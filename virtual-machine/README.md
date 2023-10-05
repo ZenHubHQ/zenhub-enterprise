@@ -78,6 +78,7 @@
   - [10.3 IBM W3ID](#103-ibm-w3id)
   - [10.4 Azure Active Directory](#104-azure-active-directory)
   - [10.5 LDAP](#105-ldap)
+  - [10.6 SAML](#106-saml)
 ## 1. Getting Started
 
 This README will be your guide to setting up Zenhub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set Zenhub up there, please go back to the [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using Zenhub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
@@ -270,6 +271,10 @@ zenhub_configuration:
   # AUTHV2_LDAP_BIND_DN:
   # AUTHV2_LDAP_BIND_PASSWORD:
   # AUTHV2_LDAP_USER_FILTER:
+## (Optional) Configure SAML as an authentication provider
+  # AUTHV2_SAML_ENABLED: true
+  # AUTHV2_SAML_IDP_METADATA_URL:
+  # AUTHV2_SAML_SP_ENTITY_ID:
 
 ## Optional VM configurations
 
@@ -360,6 +365,12 @@ Zenhub Enterprise 4.0 and greater has an optional built-in email/password authen
 - `AUTHV2_LDAP_BIND_DN`: LDAP bind DN. Example: `cn=admin,dc=example,dc=com`
 - `AUTHV2_LDAP_BIND_PASSWORD`: LDAP bind password.
 - `AUTHV2_LDAP_USER_FILTER`: LDAP user filter. Example: `(&(objectclass=inetOrgPerson)(uid=%<username>s))`
+
+###### SAML
+
+- `AUTHV2_SAML_ENABLED`: Enables SAML as an authentication provider
+- `AUTHV2_SAML_IDP_METADATA_URL`: Metadata URL linking to the identity provider's SAML config
+- `AUTHV2_SAML_SP_ENTITY_ID`: Entity ID of the service provider
 
 #### VM Configuration
 
@@ -998,7 +1009,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.0.0`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.0.1`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
@@ -1053,3 +1064,17 @@ Of the authentication methods listed below, the only one that is enabled by defa
 - This authentication option allows users to sign in using LDAP
 - An existing LDAP server is required to use this form of authentication
 - It can be enabled by setting the [LDAP](#ldap) optional configuration
+
+### 10.6 SAML
+
+- This authentication option allows users to sign in using SAML
+- An SSO with SAML provider is required to use this form of authentication
+- It can be enabled by setting the [SAML](#saml) optional configuration
+
+  To configure your SSO with SAML Application for Zenhub, you will need to set the following values:
+
+  - **Application ACS URL**: `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/saml/callback`
+  - **Attributes**:
+    Service Provider Attribute Name mappings for the following attributes:
+    - **Email**: `email`
+    - **Name**: `name`

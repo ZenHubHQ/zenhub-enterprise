@@ -54,6 +54,7 @@
   - [8.3 IBM W3ID](#83-ibm-w3id)
   - [8.4 Azure Active Directory](#84-azure-active-directory)
   - [8.5 LDAP](#85-ldap)
+  - [8.6 SAML](#86-saml)
 
 ## 1. Getting Started
 
@@ -865,3 +866,17 @@ Of the authentication methods listed below, the only one that is enabled by defa
 - This authentication option allows users to sign in using LDAP
 - An existing LDAP server is required to use this form of authentication
 - It can be enabled by following instructions for `ldap_enabled` in the main `kustomization.yaml`
+
+### 8.6 SAML
+
+- This authentication option allows users to sign in using SAML
+- An SSO with SAML provider is required to use this form of authentication
+- It can be enabled by following instructions for `saml_enabled` in the main `kustomization.yaml`
+
+  To configure your SSO with SAML Application for Zenhub, you will need to set the following values:
+
+  - **Application ACS URL**: `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/saml/callback`
+  - **Attributes**:
+    Service Provider Attribute Name mappings for the following attributes:
+    - **Email**: `email`
+    - **Name**: `name`
