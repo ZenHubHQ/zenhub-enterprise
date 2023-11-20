@@ -234,16 +234,6 @@ spec:
             configMapKeyRef:
               key: auth_jwks_url
               name: raptor
-        - name: AUTH0_TENANT
-          valueFrom:
-            configMapKeyRef:
-              key: auth0_tenant
-              name: raptor
-        - name: AUTH0_DB_CONNECTION_NAME
-          valueFrom:
-            configMapKeyRef:
-              key: auth0_db_connection_name
-              name: raptor
         - name: MAILGUN_DOMAIN
           valueFrom:
             configMapKeyRef:
@@ -430,11 +420,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: hubspot_access_token
-              name: raptor
-        - name: AUTH_ZENHUB_APP_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              key: auth_zenhub_app_client_id
               name: raptor
         - name: AUTH_MANAGEMENT_API_CLIENT_ID
           valueFrom:

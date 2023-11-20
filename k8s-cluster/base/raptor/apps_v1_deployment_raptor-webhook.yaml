@@ -2,16 +2,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/component: raptor-api
-  name: raptor-api
+    app.kubernetes.io/component: raptor-webhook
+  name: raptor-webhook
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/component: raptor-api
+      app.kubernetes.io/component: raptor-webhook
   template:
     metadata:
       labels:
-        app.kubernetes.io/component: raptor-api
+        app.kubernetes.io/component: raptor-webhook
     spec:
       affinity:
         podAntiAffinity:
@@ -19,14 +20,14 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app.kubernetes.io/component: raptor-api
+                  app.kubernetes.io/component: raptor-webhook
               namespaces: []
               topologyKey: kubernetes.io/hostname
             weight: 2
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app.kubernetes.io/component: raptor-api
+                  app.kubernetes.io/component: raptor-webhook
               namespaces: []
               topologyKey: topology.kubernetes.io/zone
             weight: 2
@@ -58,126 +59,8 @@ spec:
               name: configuration
         - name: CABLE_URL
           value: raptor-cable
-        - name: AUTHV2_W3ID_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              key: w3id_client_secret
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_client_id
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_enabled
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_DEFAULT_ENDPOINT_URL
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_default_endpoint_url
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_ISSUER_URL
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_issuer_url
-              name: configuration
-              optional: true
-        - name: AUTHV2_AZURE_AD_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: azure_ad_enabled
-              name: configuration
-              optional: true
-        - name: AUTHV2_AZURE_AD_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: azure_ad_client_id
-              name: configuration
-              optional: true
-        - name: AUTHV2_AZURE_AD_TENANT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: azure_ad_tenant_id
-              name: configuration
-              optional: true
-        - name: AUTHV2_AZURE_AD_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              key: azure_ad_client_secret
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: ldap_enabled
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_HOST
-          valueFrom:
-            configMapKeyRef:
-              key: ldap_host
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_PORT
-          valueFrom:
-            configMapKeyRef:
-              key: ldap_port
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_METHOD
-          valueFrom:
-            configMapKeyRef:
-              key: ldap_method
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_BASE
-          valueFrom:
-            configMapKeyRef:
-              key: ldap_base
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_BIND_DN
-          valueFrom:
-            configMapKeyRef:
-              key: ldap_bind_dn
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_BIND_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: ldap_bind_password
-              name: configuration
-              optional: true
-        - name: AUTHV2_LDAP_USER_FILTER
-          valueFrom:
-            configMapKeyRef:
-              key: ldap_user_filter
-              name: configuration
-              optional: true
-        - name: AUTHV2_SAML_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: saml_enabled
-              name: configuration
-              optional: true
-        - name: AUTHV2_SAML_IDP_METADATA_URL
-          valueFrom:
-            configMapKeyRef:
-              key: saml_idp_metadata_url
-              name: configuration
-              optional: true
-        - name: AUTHV2_SAML_SP_ENTITY_ID
-          valueFrom:
-            configMapKeyRef:
-              key: saml_sp_entity_id
-              name: configuration
-              optional: true
+        - name: TOAD_APP_URL
+          value: toad-api
         - name: GITHUB_APP_ID
           valueFrom:
             configMapKeyRef:
@@ -188,34 +71,16 @@ spec:
             configMapKeyRef:
               key: otel_log_level
               name: raptor
-        - name: IS_NOTION_INTEGRATION_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: notion_enabled
-              name: configuration
-              optional: true
-        - name: NOTION_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: notion_client_id
-              name: configuration
-              optional: true
-        - name: NOTION_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              key: notion_client_secret
-              name: configuration
-              optional: true
         - name: RAILS_MAX_THREADS
           valueFrom:
             configMapKeyRef:
               key: rails_max_threads
-              name: raptor-api
+              name: raptor-webhook
         - name: WEB_CONCURRENCY
           valueFrom:
             configMapKeyRef:
               key: web_concurrency
-              name: raptor-api
+              name: raptor-webhook
         - name: RUBYOPT
           value: -W0
         - name: HOST_IP
@@ -448,6 +313,11 @@ spec:
             configMapKeyRef:
               key: google_oauth2_client_id
               name: raptor
+        - name: NOTION_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              key: notion_client_id
+              name: raptor
         - name: X_FORWARDED_FOR_TRUSTED_PROXIES
           valueFrom:
             configMapKeyRef:
@@ -614,6 +484,11 @@ spec:
             secretKeyRef:
               key: google_oauth2_client_secret
               name: raptor
+        - name: NOTION_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: notion_client_secret
+              name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -623,7 +498,7 @@ spec:
           initialDelaySeconds: 40
           periodSeconds: 10
           timeoutSeconds: 5
-        name: raptor-api
+        name: raptor-webhook
         ports:
         - containerPort: 5000
           name: http

@@ -130,6 +130,7 @@ data:
       "isDev": false,
       "isEnterprise": true,
       "isLicenseGovernanceEnabled": false,
+      "isNotionIntegrationEnabled": false,
       "isTrackerEnabled": false,
       "isUploadFileToLocal": false,
       "loginURL": "https://%%subdomain_suffix%%.%%domain_tld%%/api/auth/github",

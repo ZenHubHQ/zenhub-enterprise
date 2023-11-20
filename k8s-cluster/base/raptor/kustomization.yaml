@@ -7,9 +7,11 @@ resources:
 - apps_v1_deployment_raptor-cable.yaml
 - apps_v1_deployment_raptor-sidekiq-worker-default.yaml
 - apps_v1_deployment_raptor-sidekiq-worker.yaml
+- apps_v1_deployment_raptor-webhook.yaml
 - autoscaling_v2_horizontalpodautoscaler_raptor-api-public.yaml
 - autoscaling_v2_horizontalpodautoscaler_raptor-api.yaml
 - autoscaling_v2_horizontalpodautoscaler_raptor-cable.yaml
+- autoscaling_v2_horizontalpodautoscaler_raptor-webhook.yaml
 - batch_v1_job_raptor-db-migrate.yaml
 - configmaps.yaml
 - persistentvolume.yaml

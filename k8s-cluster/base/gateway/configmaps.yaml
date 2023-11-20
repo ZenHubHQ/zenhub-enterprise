@@ -181,7 +181,7 @@ data:
   raptoradmin: raptor-admin
   socket: toad-websocket
   webapp: kraken-webapp
-  webhook: toad-webhook
+  webhook: raptor-webhook
 kind: ConfigMap
 metadata:
   labels:

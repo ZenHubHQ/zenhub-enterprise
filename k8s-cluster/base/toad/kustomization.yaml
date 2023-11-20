@@ -3,11 +3,9 @@ kind: Kustomization
 resources:
 - apps_v1_deployment_toad-api.yaml
 - apps_v1_deployment_toad-cron.yaml
-- apps_v1_deployment_toad-webhook.yaml
 - apps_v1_deployment_toad-websocket.yaml
 - apps_v1_deployment_toad-worker.yaml
 - autoscaling_v2_horizontalpodautoscaler_toad-api.yaml
-- autoscaling_v2_horizontalpodautoscaler_toad-webhook.yaml
 - autoscaling_v2_horizontalpodautoscaler_toad-websocket.yaml
 - configmaps.yaml
 - persistentvolume.yaml

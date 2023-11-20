@@ -55,6 +55,8 @@
   - [8.4 Azure Active Directory](#84-azure-active-directory)
   - [8.5 LDAP](#85-ldap)
   - [8.6 SAML](#86-saml)
+- [9. Integrations](#9-integrations)
+  - [9.1 Notion](#91-notion)
 
 ## 1. Getting Started
 
@@ -95,9 +97,9 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 To get started with Zenhub, you must have an existing Kubernetes cluster set up. You should:
 
-- Be using Kubernetes (>= 1.22).
+- Be using Kubernetes (>= 1.26).
 - Have `kubectl` installed locally with credentials to access the cluster.
-- Have [`kustomize`](https://kustomize.io/) installed locally (>= 4.5.3).
+- Have [`kustomize`](https://kustomize.io/) installed locally (>= 4.5.7).
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
 - Have the capability to pull Docker images from Zenhub's public Docker registry or have access to a private Docker registry where you can push images (and your cluster should have the ability to pull from that private registry).
 
@@ -880,3 +882,9 @@ Of the authentication methods listed below, the only one that is enabled by defa
     Service Provider Attribute Name mappings for the following attributes:
     - **Email**: `email`
     - **Name**: `name`
+
+## 9. Integrations
+
+### 9.1 Notion
+
+Zenhub Enterprise for K8s can be integrated with Notion to allow users to preview Notion links within Zenhub Issues. This integration is disabled by default and can be enabled by following instructions for `notion` in the main `kustomization.yaml`.

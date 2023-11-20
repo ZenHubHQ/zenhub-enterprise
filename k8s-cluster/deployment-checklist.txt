@@ -11,9 +11,9 @@
 - [ ] Configure an OAuth App in GitHub Enterprise Server
 
 #### Kubernetes Requirements
-- [ ] Obtain access to a Kubernetes cluster running K8s v1.22 or greater
+- [ ] Obtain access to a Kubernetes cluster running K8s v1.26 or greater
 - [ ] Install `kubectl` locally
-- [ ] Install `kustomize` v4.5.3 or greater locally
+- [ ] Install `kustomize` v4.5.7 or greater locally
 - [ ] Create a dedicated namespace in the cluster for Zenhub
 - [ ] Have the capability to pull the Docker images from Zenhub's public Docker registry or have access to a private Docker registry where you can push images (and the cluster should have the ability to pull from that private registry)
 
