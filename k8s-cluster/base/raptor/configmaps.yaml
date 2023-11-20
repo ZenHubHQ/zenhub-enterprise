@@ -63,6 +63,14 @@ metadata:
 ---
 apiVersion: v1
 data:
+  rails_max_threads: "5"
+  web_concurrency: "4"
+kind: ConfigMap
+metadata:
+  name: raptor-webhook
+---
+apiVersion: v1
+data:
   action_cable_workers_pool_size: "2"
   auth_issuer_urls: ""
   auth_jwks_url: ""

@@ -18,7 +18,8 @@ patchesStrategicMerge:
 # - options/pullpolicy/always.yaml #! Sets the image pull policy of deployments to Always
 # - options/scaling/deployments-scaling.yaml #! Change number of replicas and scaling
 # - options/scaling/deployments-resources-small.yaml #! Enable to use minimum required resources, or customize them yourself
-# - options/pgbouncer/pgbouncer-config.yaml #! Enable if custom configuration is required for pgbouncer (connection and pool limits, etc).
+# - options/pgbouncer/pgbouncer-config.yaml #! Enable if password_encryption is set to scram-sha-256 on your postgres database,
+                                            #! or if you need to change the default pool size and connection limits.
                                             #! See documentation in options/pgbouncer/README.md to make configuration changes.
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
@@ -29,32 +30,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 4.0.2
+  app.kubernetes.io/version: 4.1.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-4.0.2
+    newTag: zhe-4.1.0
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-4.0.2
+    newTag: zhe-4.1.0
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-4.0.2
+    newTag: zhe-4.1.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-4.0.2
+    newTag: zhe-4.1.0
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-4.0.2
+    newTag: zhe-4.1.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-4.0.2
+    newTag: zhe-4.1.0
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-4.0.2
+    newTag: zhe-4.1.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -160,7 +161,12 @@ configMapGenerator:
       - saml_enabled=false
       # - saml_idp_metadata_url=<your_idp_metadata_url> # Metadata URL for your Zenhub SAML App
       # - saml_sp_entity_id=<your_sp_entity_id> # Unique Service Provider ID for your Zenhub SAML App
-  
+
+      # Notion integration configuration
+      # [EDIT] (optional) Change notion_enabled to true, then uncomment and fill out the rest of the options to enable
+      - notion_enabled=false
+      # - notion_client_id=<your_client_id> # e.g. 1234-abcd-1234567890ab-12345678-abcd
+
   # Do not create/edit zhe-urls.env file. This is managed by the configmap-generator.sh script.
   - name: configuration
     behavior: merge
@@ -199,6 +205,9 @@ secretGenerator:
       # - azure_ad_client_secret=<your_client_secret> # e.g. abcd12~efgh567ijkl890mnopq123rstu456vwxyz
       # [EDIT] (optional) Uncomment and fill to enable LDAP authentication
       # - ldap_bind_password=<your_ldap_bind_password>
+      # [EDIT] (optional) Uncomment and fill to enable Notion integration
+      # - notion_client_secret=<your_client_secret> # e.g. secret_12345678abcd1234abcd1234567890ab
+      
       
   # [EDIT] Required certificate for Postgres DB SSL/TLS.
   # [NOTE] Your provided certificate must be named postgres-ca.pem
@@ -216,6 +225,7 @@ secretGenerator:
 
   # [EDIT] If you need admin access to PgBouncer to view pools, connections, etc. and the username that you use to connect to PostgreSQL is not named "postgres".
   # [EDIT] Or if you just need to tune the default PgBouncer pool size and connection limits to better suit your database.
+  # [EDIT] Or if password_encryption is set to scram-sha-256 on your postgres database and md5 authentication cannot be used.
   # [IMPORTANT NOTE] See documentation in options/pgbouncer/README.md to make configuration changes.
   # - name: pgbouncer-userlist
   #   files:

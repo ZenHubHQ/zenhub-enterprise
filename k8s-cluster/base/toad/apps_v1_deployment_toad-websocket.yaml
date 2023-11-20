@@ -354,26 +354,6 @@ spec:
             secretKeyRef:
               key: chart_mogul_api_token
               name: toad
-        - name: AUTH0_AUDIENCE
-          valueFrom:
-            configMapKeyRef:
-              key: auth0_audience
-              name: toad
-        - name: AUTH0_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: auth0_client_id
-              name: toad
-        - name: AUTH0_DOMAIN
-          valueFrom:
-            configMapKeyRef:
-              key: auth0_domain
-              name: toad
-        - name: AUTH0_ISSUER
-          valueFrom:
-            configMapKeyRef:
-              key: auth0_issuer
-              name: toad
         image: toad-backend
         imagePullPolicy: IfNotPresent
         livenessProbe:

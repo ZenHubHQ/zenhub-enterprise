@@ -68,7 +68,7 @@ Please review the [LICENSE](./LICENSE) in this repository for additional details
 Please note the following:
 
 - Zenhub ships with two backend technologies we call **Raptor** and **Toad**.
-- Raptor and Toad are both made up of several microservices (eg. `raptor-admin`, `raptor-api`, `toad-webhook`, etc...)
+- Raptor and Toad are both made up of several microservices (eg. `raptor-admin`, `raptor-api`, etc...)
 - Zenhub requires the use of two databases: **MongoDB** and **PostgreSQL**.
 - Zenhub requires the use of one instance of **Redis**. We recommend this instance is managed externally (internal for Zenhub as a VM) as it requires data persistence.
 - Zenhub requires the use of a message broker via **RabbitMQ**.

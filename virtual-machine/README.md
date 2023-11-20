@@ -35,9 +35,9 @@
   - [4.3 Application Check](#43-application-check)
   - [4.4 Publish the Chrome and Firefox Extensions](#44-publish-the-chrome-and-firefox-extensions)
 - [5. Upgrades](#5-upgrades)
-  - [5.1 Application Updates](#51-application-updates)
-    - [5.1.1 Update](#511-update)
-    - [5.1.2 Rollback](#512-rollback)
+  - [5.1 Prerequisites](#51-prerequisites)
+  - [5.2 Preparing to Upgrade](#52-preparing-to-upgrade)
+  - [5.3 Upgrading](#53-upgrading)
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
   - [6.1 Tasks in the Admin UI](#61-tasks-in-the-admin-ui)
     - [6.1.1 Publishing the Chrome and Firefox Extensions](#611-publishing-the-chrome-and-firefox-extensions)
@@ -79,6 +79,9 @@
   - [10.4 Azure Active Directory](#104-azure-active-directory)
   - [10.5 LDAP](#105-ldap)
   - [10.6 SAML](#106-saml)
+- [11. Integrations](#11-integrations)
+  - [11.1 Notion](#111-notion)
+
 ## 1. Getting Started
 
 This README will be your guide to setting up Zenhub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set Zenhub up there, please go back to the [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using Zenhub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
@@ -249,6 +252,10 @@ zenhub_configuration:
   # GRAPHQL_RUNTIME_LIMIT:
   # REST_API_REQUEST_LIMIT:
   # REST_API_TIME_LIMIT:
+## (Optional) Configure Notion Integration
+  # NOTION_ENABLED:
+  # NOTION_CLIENT_ID:
+  # NOTION_CLIENT_SECRET:
 ## (Optional) Configure built-in email/password authentication
   # AUTHV2_EMAIL_PW_ENABLED: true
 ## (Optional) Configure W3ID as an authentication provider
@@ -372,6 +379,12 @@ Zenhub Enterprise 4.0 and greater has an optional built-in email/password authen
 - `AUTHV2_SAML_IDP_METADATA_URL`: Metadata URL linking to the identity provider's SAML config
 - `AUTHV2_SAML_SP_ENTITY_ID`: Entity ID of the service provider
 
+##### Notion Integration
+
+- `NOTION_ENABLED`: Enables the Notion integration
+- `NOTION_CLIENT_ID`: The OAuth client ID from notion.so/my-integrations
+- `NOTION_CLIENT_SECRET`: The OAuth client secret from notion.so/my-integrations
+
 #### VM Configuration
 
 These should be in their own sections, not nested under zenhub_configuration. Commented examples are present in the file example above.
@@ -450,51 +463,55 @@ See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for instr
 
 ## 5. Upgrades
 
-Upgrading Zenhub is important for both stability and security. We suggest updating Zenhub _at least_ once every 12 months to avoid issues related to outdated software.
+Zenhub Enterprise Server is continuously evolving, bringing in new features and resolving bugs through feature updates and patch releases. You are responsible for upgrading your instance.
 
-### 5.1 Application Updates
+We highly suggest updating your instance _at least_ once every 12 months to avoid issues related to outdated software.
 
-#### 5.1.1 Update
+### 5.1 Prerequisites
 
-Update Docker images and Kubernetes manifests for the Zenhub application.
+To successfully upgrade, ensure you have sufficient disk space available on your VM. Your disk should be at least 20% free, and you want to ensure you do not reach 90% utilization after the upgrade as this can cause adverse affects on the stability of Zenhub Enterprise. You can check the [Disk Management](#67-disk-management) documentation to see how to check and increase disk space if needed.
 
-> ⚠️ **NOTE:** It is strongly encouraged to take a machine-level snapshot before updating ZHE
+### 5.2 Preparing to Upgrade
 
-> Before updating, perform a data backup `zhe-config --backup`
+1. Before upgrading, you should always check the release notes for the version you are upgrading to. You can find the release notes for each version in the [releases](https://github.com/ZenHubHQ/zenhub-enterprise/releases) section of this repository. You must ensure you are upgrading to a version that is compatible with your GitHub Enterprise Server version. The release notes list the GitHub Enterprise Server versions that are compatible with each Zenhub Enterprise release.
 
-1. Download the latest Zenhub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com)):
+2. To obtain an upgrade bundle, [contact our team](mailto:enterprise@zenhub.com) to get the link. You can download the file to your instance directly using `curl`:
 
 ```bash
 curl -o zhe_upgrade.run "<link-to-upgrade-bundle>"
 ```
 
+If you cannot download the file directly to your instance, you can download it to your local machine and then upload it to your instance using `scp` or your choice of tool.
+
 > ⚠️ **NOTE:** The file integrity is checked automatically via an integrated **checksum** when the upgrade is run. If you want to check the file integrity without running the upgrade, run `bash zhe_upgrade.run --check`
 
-2. If not already directly downloaded to the VM, move the bundle into the VM (use `scp` or your choice of tool).
+3. Finally, **we highly recommend taking a VM or disk snapshot of your VM**. This will allow you to roll back to the previous version if you encounter any issues during or after the upgrade. To ensure data integrity, we recommend taking a snapshot of your VM while it is powered off, or while the Zenhub application is in maintenance mode to ensure background jobs are not running.
 
-3. Run the upgrade script:
+> ⚠️ **NOTE:** If your hypervisor does not support VM snapshots, you can take a snapshot of the disk instead. This will allow you to restore the disk to the previous state if needed.
 
-```bash
-bash zhe_upgrade.run
-```
-> ⚠️ **NOTE:** To protect the upgrade from SSH disconnects, you may want to run the upgrade inside `tmux` or `screen`, e.g. `tmux new-session -s "upgrade" "bash zhe_upgrade.run"`
+### 5.3 Upgrading
 
-4. Wait for Zenhub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with Zenhub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
+Once you are ready to upgrade, follow the steps below. These instructions include the use of the `tmux` terminal multiplexer to ensure the upgrade is not interrupted by a network disconnect.
 
-5. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
-
-#### 5.1.2 Rollback
-
-If you have any problems with Zenhub after installing an update, you can quickly roll back to your most recent application version using the automated application backup taken at the start of your upgrade or to a machine-level snapshot if one was taken.
-
-> ⚠️ **NOTE:** If you have already published the extensions after updating, rolling back the application may break your extensions.
-
-1. Locate your desired backup found within `/opt/zenhub/upgrade_backup/`
-2. Run the following command from the same directory as your latest upgrade bundle:
+1. Create a new tmux session named "upgrade" and run the upgrade bundle while inside the tmux session:
 
 ```bash
-bash zhe_upgrade.run rollback /opt/zenhub/upgrade_backup/<your-backup-name>.tar.gz
+tmux new-session -s "upgrade" "bash zhe_upgrade.run"
 ```
+
+If you become disconnected from the VM during the upgrade, you can reconnect to the tmux session by running: `tmux attach-session -t upgrade`
+
+You can manually detach from the tmux session by pressing: `Ctrl+b` and then `d`. The upgrade will continue to run in the background.
+
+You can list all tmux sessions by running: `tmux ls`
+
+2. Once the upgrade is complete, be sure you are connected to the "upgrade" tmux session and then end the tmux session by running: `exit`
+
+> ⚠️ **NOTE:** If you observe any problems during or after the upgrade, please record the problem and [contact our team](mailto:enterprise@zenhub.com) with the details, including your upgrade log which can be found as `/var/log/zenhub/zhe-upgrade-<timestamp>`. Then, feel free to revert your instance to the previous version using the VM or disk snapshot you took before the upgrade.
+>
+> If you are unable to use a VM or disk snapshot to revert, there is a data backup created during the start of the upgrade process that you can use to restore your instance to the previous version. You can find the backup in `/opt/snapshots` timestamped with the date the upgrade was run. In this situation, please [contact our team](mailto:enterprise@zenhub.com) for assistance.
+
+3. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
 
 ## 6. Maintenance and Operational Tasks
 
@@ -1009,7 +1026,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.0.2`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.1.0`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
@@ -1078,3 +1095,9 @@ Of the authentication methods listed below, the only one that is enabled by defa
     Service Provider Attribute Name mappings for the following attributes:
     - **Email**: `email`
     - **Name**: `name`
+
+## 11. Integrations
+
+### 11.1 Notion
+
+Zenhub Enterprise Server can be integrated with Notion to allow users to preview Notion links within Zenhub Issues. This integration is disabled by default and can be enabled by setting the [Notion Integration](#notion-integration) optional configuration.

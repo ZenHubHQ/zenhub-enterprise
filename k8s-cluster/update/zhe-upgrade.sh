@@ -50,9 +50,9 @@ raptor-sidekiq-worker
 raptor-sidekiq-worker-default
 raptor-admin
 raptor-cable
+raptor-webhook
 kraken-webapp
 toad-worker
-toad-webhook
 admin-ui
 toad-cron
 raptor-api
@@ -61,11 +61,13 @@ toad-websocket
 devsite
 pgbouncer
 raptor-api-public
+toad-webhook
 )
 
 HPA=(
 raptor-api
 raptor-cable
+raptor-webhook
 toad-api
 toad-websocket
 toad-webhook
@@ -81,10 +83,11 @@ kraken-webapp
 nginx-gateway
 raptor-admin
 raptor-api
+raptor-webhook
 raptor-cable
 toad-api
-toad-webhook
 toad-websocket
+toad-webhook
 )
 
 CACHES=(
@@ -143,15 +146,15 @@ echo "###############################################"
 echo "         Starting Data Migration Job"
 echo "###############################################"
 
-echo "         Scaling up workers..."
-kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
-
-kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
-
 echo "         Scaling up pgbouncer..."
 kubectl -n $NAMESPACE scale deployments/pgbouncer --replicas=1
 
 kubectl -n $NAMESPACE wait --for=condition=available deployment/pgbouncer --timeout=300s
+
+echo "         Scaling up workers..."
+kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
+
+kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
 
 echo "         Updating data..."
 kubectl -n $NAMESPACE apply -f batch_v1_job_data_migration.yaml
@@ -176,7 +179,7 @@ do
 done
 
 echo "         Deleting Gateway"
-kubectl -n $NAMESPACE delete deployment/nginx-gateway
+kubectl -n $NAMESPACE delete deployment/nginx-gateway --ignore-not-found
 
 echo "         Deleting Services"
 for s in "${SERVICES[@]}"

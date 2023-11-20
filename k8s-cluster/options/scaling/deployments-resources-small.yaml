@@ -170,25 +170,6 @@ spec:
               memory: 500M
 
 ---
-# toad-webhook
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: toad-webhook
-spec:
-  template:
-    spec:
-      containers:
-        - name: toad-webhook
-          resources:
-            limits:
-              cpu: 500m
-              memory: 2500M
-            requests:
-              cpu: 200m
-              memory: 500M
-
----
 # toad-worker
 apiVersion: apps/v1
 kind: Deployment

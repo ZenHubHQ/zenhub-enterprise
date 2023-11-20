@@ -15,7 +15,7 @@ spec:
             - bundle
             - exec
             - rake
-            - zhe:migrate_4_0
+            - zhe:migrate_4_1
           env:
             - name: MONGO_IS_DOCUMENTDB
               valueFrom:
@@ -195,7 +195,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: graphql_redis_url
-                  name: raptor-migrate
+                  name: configuration
             - name: SECRET_KEY_BASE
               valueFrom:
                 secretKeyRef:
@@ -254,7 +254,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: cable_redis_url
-                  name: raptor-migrate
+                  name: configuration
             - name: CABLE_ALLOWED_ORIGINS
               valueFrom:
                 configMapKeyRef:
@@ -295,7 +295,7 @@ spec:
                 secretKeyRef:
                   key: google_oauth2_client_secret
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.0.2
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.1.0
           imagePullPolicy: Always
           name: data-migration
           resources:

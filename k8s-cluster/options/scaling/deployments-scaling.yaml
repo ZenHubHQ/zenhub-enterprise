@@ -112,15 +112,6 @@ spec:
   replicas: 2
 
 ---
-# toad-webhook
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: toad-webhook
-spec:
-  replicas: 2
-
----
 # toad-worker
 apiVersion: apps/v1
 kind: Deployment

@@ -34,17 +34,6 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: toad-webhook
-spec:
-  template:
-    spec:
-      imagePullSecrets:
-        - name: zenhub-docker-registry-credentials
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
   name: toad-worker
 spec:
   template:
