@@ -2,6 +2,10 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: data-migration
+  labels:
+    app.kubernetes.io/part-of: zenhub-enterprise
+    app.kubernetes.io/application: zenhub
+    app.kubernetes.io/instance: zhe-for-k8s
 spec:
   backoffLimit: 0
   completions: 1
@@ -295,7 +299,7 @@ spec:
                 secretKeyRef:
                   key: google_oauth2_client_secret
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.1.0
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.1.1
           imagePullPolicy: Always
           name: data-migration
           resources:

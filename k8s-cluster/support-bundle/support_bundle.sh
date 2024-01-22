@@ -56,8 +56,8 @@ kubectl -n $namespace describe configmap > $info_dir/kubectl_describe_configmap.
 kubectl get events --all-namespaces > $info_dir/kubectl_get_all_events.log
 kubectl describe node >> $info_dir/kubectl_describe_node.log
 
-# Gather logs from all zenhub pods and store in a directory
-for pod in $(kubectl get pods --selector=app.kubernetes.io/application=zenhub -o name -n $namespace)
+# Gather all logs from the zenhub namespace and store them in a directory
+for pod in $(kubectl get pods -o name -n $namespace)
 do  
   kubectl -n $namespace logs $pod --all-containers > $logs_dir/${pod//\//_}.log
 done
