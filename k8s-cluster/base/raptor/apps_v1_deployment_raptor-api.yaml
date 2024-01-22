@@ -88,6 +88,8 @@ spec:
               key: w3id_issuer_url
               name: configuration
               optional: true
+        - name: AUTHV2_W3ID_CHECK_ACCESS_INTERVAL
+          value: "1800"
         - name: AUTHV2_AZURE_AD_ENABLED
           valueFrom:
             configMapKeyRef:
