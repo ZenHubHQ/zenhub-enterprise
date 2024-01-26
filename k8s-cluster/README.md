@@ -870,10 +870,11 @@ Start by going to your IBM Security Verify tenant and switching to the **Admin C
   - Ensure **Require proof key for code exchange (PKCE) verification** is disabled
   - Set the **Redirect URL** to `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/w3id/callback`
   - Under **Token settings**
-    - Set **Access token expiry (secs)** to whatever you prefer
-    - Add an attribute with the name `active` and the source `enabled`
-  - Under **Attribute mappings**
-    - Add an attribute with the name `active` and the source `enabled`
+    - Set **Access token expiry (secs)** to whatever you prefer. 7200 seconds is a normal default.
+    - Enable **Generate refresh token** if it's not already enabled.
+      - Set **Refresh token expiry (secs)** to whatever you prefer. This will be the maximum amount of time a user can stay logged in without having to log in again.
+
+> ⚠️ **NOTE:** Zenhub will check W3ID every 30 minutes to see if the user's access token has expired. If it has, Zenhub will use the refresh token to get a new access token. If the refresh token has expired, Zenhub will prompt the user to log in again.
 
 #### Obtain configuration values
 
