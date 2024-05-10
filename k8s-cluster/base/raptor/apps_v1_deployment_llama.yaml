@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: llm
+  name: llama
+spec:
+  selector:
+    matchLabels:
+      app: llama
+      app.kubernetes.io/component: llm
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+      labels:
+        app: llama
+        app.kubernetes.io/component: llm
+    spec:
+      containers:
+      - env:
+        - name: MODEL
+          value: /models/mistral-7b-openorca.F16.gguf
+        - name: N_CTX
+          value: "8192"
+        image: llama
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 8000
+          timeoutSeconds: 1
+        name: llama-cpp-python
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "3"
+            memory: 14000Mi
+            nvidia.com/gpu: "1"
+          requests:
+            cpu: "3"
+            memory: 8000Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+      runtimeClassName: nvidia
+      schedulerName: default-scheduler
+      securityContext:
+        runAsUser: 0
+      tolerations: []

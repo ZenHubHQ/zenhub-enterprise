@@ -22,6 +22,7 @@ patchesStrategicMerge:
   - non-dynamic/set-var-mongo-shortindex.yaml
   - non-dynamic/set-admin-ui-service.yaml
   - non-dynamic/set-deployments-resources.yaml
+  - non-dynamic/set-raptor-db-migrate-job-vars.yaml
 
 configMapGenerator:
   - name: toad

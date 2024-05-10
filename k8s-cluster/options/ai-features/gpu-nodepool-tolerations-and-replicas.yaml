@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: llm
+  name: llama
+spec:
+  replicas: 1 #[EDIT] Set to the number of LLM replicas you want and have GPU nodes for
+  template:
+    spec:
+      nodeSelector:
+        example-node-label: "true" #[EDIT] Set to the nodeSelector label you want to use for GPU nodes
+      tolerations: #[EDIT] Set to the tolerations you want to use for GPU nodes
+      - key: "example-key"
+        operator: "Exists"
+        effect: "NoSchedule"

@@ -97,6 +97,18 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: raptor-webhook
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-webhook
+          imagePullPolicy: Always
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: kraken-webapp
 spec:
   template:
@@ -117,4 +129,16 @@ spec:
     spec:
       containers:
         - name: admin-ui
+          imagePullPolicy: Always
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama
+spec:
+  template:
+    spec:
+      containers:
+        - name: llama-cpp-python
           imagePullPolicy: Always

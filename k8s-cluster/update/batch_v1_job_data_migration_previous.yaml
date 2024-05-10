@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: data-migration
+  name: data-migration-previous
   labels:
     app.kubernetes.io/part-of: zenhub-enterprise
     app.kubernetes.io/application: zenhub
@@ -19,7 +19,7 @@ spec:
             - bundle
             - exec
             - rake
-            - zhe:migrate_4_2
+            - zhe:migrate_4_1
           env:
             - name: MONGO_IS_DOCUMENTDB
               valueFrom:

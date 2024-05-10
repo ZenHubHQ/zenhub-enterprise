@@ -1,0 +1,18 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: raptor-db-migrate
+spec:
+  template:
+    spec:
+      containers:
+      - name: raptor-db-migrate
+        env:
+          # The raptor-db-migrate job seems to use the DATABASE_URL instead of MIGRATIONS_DATABASE_URL,
+          # so we need to set DATABASE_URL to the pgbouncer_url, which is the direct URI to the database.
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                key: pgbouncer_url
+                name: configuration
