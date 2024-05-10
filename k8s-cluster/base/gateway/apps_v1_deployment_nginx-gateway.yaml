@@ -93,6 +93,12 @@ spec:
         - mountPath: /usr/share/nginx/html/maintenance.html
           name: maintenance-page-volume
           subPath: maintenance.html
+        - mountPath: /usr/share/nginx/html/ghe-status.html
+          name: ghe-status-page-volume
+          subPath: ghe-status.html
+        - mountPath: /usr/share/nginx/html/license-status.html
+          name: license-status-page-volume
+          subPath: license-status.html
         - mountPath: /etc/nginx/conf.d/include-ssl.conf
           name: zhe-gw-include-ssl-volume
           subPath: include-ssl.conf
@@ -119,6 +125,8 @@ spec:
         - name: WAITING_TIME
           value: "30"
         - name: MAINTENANCE_MODE
+          value: ""
+        - name: LICENSE_MODE
           value: ""
         image: nginx
         imagePullPolicy: IfNotPresent
@@ -148,6 +156,12 @@ spec:
       - configMap:
           name: zhe-maintenance-page
         name: maintenance-page-volume
+      - configMap:
+          name: zhe-license-status-page
+        name: license-status-page-volume
+      - configMap:
+          name: zhe-ghe-status-page
+        name: ghe-status-page-volume
       - configMap:
           defaultMode: 511
           name: zhe-monitor

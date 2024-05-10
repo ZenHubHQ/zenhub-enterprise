@@ -18,25 +18,6 @@ spec:
               memory: 2500M
 
 ---
-# raptor-api-public
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: raptor-api-public
-spec:
-  template:
-    spec:
-      containers:
-        - name: raptor-api-public
-          resources:
-            requests:
-              cpu: 200m
-              memory: 500M
-            limits:
-              cpu: 500m
-              memory: 2500M
-
----
 # raptor-cable
 apiVersion: apps/v1
 kind: Deployment

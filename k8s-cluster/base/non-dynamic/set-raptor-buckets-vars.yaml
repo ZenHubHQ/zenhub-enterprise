@@ -19,13 +19,13 @@ spec:
           - name: S3_PRIVATE_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                key: bucket_secret_access_key
+                key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
                 name: configuration
           - name: FILE_DOWNLOAD_URL
             valueFrom:
               configMapKeyRef:
                 key: zenhub_server_address
-                name: toad
+                name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
           - name: IS_UPLOAD_FILE_TO_LOCAL
             valueFrom:
               configMapKeyRef:
@@ -35,6 +35,11 @@ spec:
             valueFrom:
               configMapKeyRef:
                 key: bucket_region
+                name: configuration
+          - name: S3_BUCKET
+            valueFrom:
+              configMapKeyRef:
+                key: files_bucket_name
                 name: configuration
           - name: S3_PRIVATE_BUCKET
             valueFrom:
@@ -67,13 +72,13 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key
+                  key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad
+                  name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
@@ -84,53 +89,10 @@ spec:
                 configMapKeyRef:
                   key: bucket_region
                   name: configuration
-            - name: S3_PRIVATE_BUCKET
+            - name: S3_BUCKET
               valueFrom:
                 configMapKeyRef:
                   key: files_bucket_name
-                  name: configuration
-            - name: S3_PRIVATE_ACCESS_KEY_ID
-              valueFrom:
-                configMapKeyRef:
-                  key: bucket_access_key_id
-                  name: configuration
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app.kubernetes.io/component: raptor-api-public
-  name: raptor-api-public
-spec:
-  template:
-    spec:
-      containers:
-        - name: raptor-api-public
-          env:
-            - name: GITHUB_APP_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: github_app_secret
-                  name: configuration
-            - name: S3_PRIVATE_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  key: bucket_secret_access_key
-                  name: configuration
-            - name: FILE_DOWNLOAD_URL
-              valueFrom:
-                configMapKeyRef:
-                  key: zenhub_server_address
-                  name: toad
-            - name: IS_UPLOAD_FILE_TO_LOCAL
-              valueFrom:
-                configMapKeyRef:
-                  name: configuration
-                  key: local_files
-            - name: S3_REGION
-              valueFrom:
-                configMapKeyRef:
-                  key: bucket_region
                   name: configuration
             - name: S3_PRIVATE_BUCKET
               valueFrom:
@@ -163,13 +125,13 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key
+                  key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad
+                  name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
@@ -179,6 +141,11 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: bucket_region
+                  name: configuration
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  key: files_bucket_name
                   name: configuration
             - name: S3_PRIVATE_BUCKET
               valueFrom:
@@ -211,13 +178,13 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key
+                  key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad
+                  name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
@@ -227,6 +194,11 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: bucket_region
+                  name: configuration
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  key: files_bucket_name
                   name: configuration
             - name: S3_PRIVATE_BUCKET
               valueFrom:
@@ -259,13 +231,13 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key
+                  key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad
+                  name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
@@ -275,6 +247,11 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: bucket_region
+                  name: configuration
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  key: files_bucket_name
                   name: configuration
             - name: S3_PRIVATE_BUCKET
               valueFrom:
@@ -307,13 +284,13 @@ spec:
             - name: S3_PRIVATE_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  key: bucket_secret_access_key
+                  key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
                   name: configuration
             - name: FILE_DOWNLOAD_URL
               valueFrom:
                 configMapKeyRef:
                   key: zenhub_server_address
-                  name: toad
+                  name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
             - name: IS_UPLOAD_FILE_TO_LOCAL
               valueFrom:
                 configMapKeyRef:
@@ -323,6 +300,64 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: bucket_region
+                  name: configuration
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  key: files_bucket_name
+                  name: configuration
+            - name: S3_PRIVATE_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  key: files_bucket_name
+                  name: configuration
+            - name: S3_PRIVATE_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: bucket_access_key_id
+                  name: configuration
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-webhook
+  name: raptor-webhook
+spec:
+  template:
+    spec:
+      containers:
+        - name: raptor-webhook
+          env:
+            - name: GITHUB_APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: github_app_secret
+                  name: configuration
+            - name: S3_PRIVATE_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
+                  name: configuration
+            - name: FILE_DOWNLOAD_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: zenhub_server_address
+                  name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
+            - name: IS_UPLOAD_FILE_TO_LOCAL
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: local_files
+            - name: S3_REGION
+              valueFrom:
+                configMapKeyRef:
+                  key: bucket_region
+                  name: configuration
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  key: files_bucket_name
                   name: configuration
             - name: S3_PRIVATE_BUCKET
               valueFrom:
@@ -353,13 +388,13 @@ spec:
           - name: S3_PRIVATE_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                key: bucket_secret_access_key
+                key: bucket_secret_access_key # Uses the existing files bucket for raptor file and image uploads, that toad used before for just files
                 name: configuration
           - name: FILE_DOWNLOAD_URL
             valueFrom:
               configMapKeyRef:
                 key: zenhub_server_address
-                name: toad
+                name: toad # Uses the same <hostname>/api endpoint as toad for raptor file uploads
           - name: IS_UPLOAD_FILE_TO_LOCAL
             valueFrom:
               configMapKeyRef:
@@ -369,6 +404,11 @@ spec:
             valueFrom:
               configMapKeyRef:
                 key: bucket_region
+                name: configuration
+          - name: S3_BUCKET
+            valueFrom:
+              configMapKeyRef:
+                key: files_bucket_name
                 name: configuration
           - name: S3_PRIVATE_BUCKET
             valueFrom:

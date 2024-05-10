@@ -56,17 +56,6 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: raptor-api-public
-spec:
-  template:
-    spec:
-      imagePullSecrets:
-        - name: zenhub-docker-registry-credentials
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
   name: raptor-cable
 spec:
   template:
@@ -101,6 +90,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: raptor-sidekiq-worker-default
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raptor-webhook
 spec:
   template:
     spec:
@@ -166,6 +166,17 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: sanitycheck
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: zenhub-docker-registry-credentials
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama
 spec:
   template:
     spec:
