@@ -56,10 +56,6 @@
   - [8.5 SAML](#85-saml)
 - [9. Integrations](#9-integrations)
   - [9.1 Notion](#91-notion)
-- [10. AI Features](#10-ai-features)
-  - [10.1 Add a GPU Node Pool to your Kubernetes Cluster](#101-add-a-gpu-node-pool-to-your-kubernetes-cluster)
-  - [10.2 Enable the AI Features in Zenhub](#102-enable-the-ai-features-in-zenhub)
-  - [10.3 Verify the AI Setup is Complete](#103-verify-the-ai-setup-is-complete)
 
 ## 1. Getting Started
 
@@ -100,7 +96,7 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 To get started with Zenhub, you must have an existing Kubernetes cluster set up. You should:
 
-- Be using Kubernetes (>= 1.27).
+- Be using Kubernetes (>= 1.26).
 - Have `kubectl` installed locally with credentials to access the cluster.
 - Have [`kustomize`](https://kustomize.io/) installed locally (>= 4.5.7).
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
@@ -116,9 +112,11 @@ Zenhub will require a connection to a PostgreSQL 11 database. We recommend the l
 
 ### 2.5 MongoDB
 
-Zenhub will require a connection to a MongoDB database. We recommend using the latest 5.x version. It is also recommended to avoid any patch versions that MongoDB does not recommend for production use. Please refer to the list of versions to avoid here: https://www.mongodb.com/docs/manual/release-notes/5.0/#patch-releases.
+Zenhub will require a connection to a MongoDB database. We recommend using the latest 4.x version. It is also recommended to avoid MongoDB version 4.4.5 which was released with a [critical issue](https://docs.mongodb.com/manual/release-notes/4.4/#4.4.5---apr-8--2021).
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
+
+> ⚠️ **NOTE:** If you are running MongoDB version 3.x and plan to upgrade to MongoDB version 4.x, please reach out to us for some specific steps that need to be taken for the upgrade.
 
 ### 2.6 RabbitMQ
 
@@ -503,10 +501,10 @@ To configure the GraphQL rate limits, follow these steps:
 kustomize build . | kubectl apply -f-
 ```
 
-3. Restart the raptor-api deployment so the updated rate limit configmap values are picked up
+3. Restart the raptor-api-public deployment so the updated rate limit configmap values are picked up
 
 ```bash
-kubectl rollout restart deployment raptor-api -n <namespace>
+kubectl rollout restart deployment raptor-api-public -n <namespace>
 ```
 
 #### 3.7.2 Legacy REST API
@@ -1004,82 +1002,3 @@ To create the Notion integration, you will need to do the following:
   Click `Submit`
 
 5. After submitting the integration, you should be able to navigate to the "Secrets" tab in the sidebar. Copy the `OAuth client ID` and `OAuth client secret` values and set them in your `kustomization.yaml` file for `notion_client_id` and `notion_client_secret` respectively.
-
-## 10. AI Features
-
-Zenhub Enterprise v4.2 and greater has AI driven features that can be enabled to help save time and improve productivity. These features are powered by a large language model (LLM) that is securely hosted within your Kubernetes cluster alongside Zenhub. The AI features are disabled by default. To enable them, there are several steps that need to be taken to ensure that the LLM can be set up and run correctly.
-
-### 10.1 Add a GPU Node Pool to your Kubernetes Cluster
-
-The AI features require a GPU to run the LLM. You will need to add a GPU node pool to your Kubernetes cluster. The GPU node pool should have at least one node with a GPU that has at least 24GB of VRAM. The node should have at least 4 CPUs and 16GB of memory to run the LLM deployment.
-
-The NVIDIA device plugin will need to be installed on the GPU node in order to run the LLM. The plugin is a DaemonSet that runs on each GPU node in the cluster and exposes the GPU resources to the Kubernetes API. The NVIDIA device plugin can be installed by applying the following manifest. This manifest is for the NVIDIA device plugin version 0.15.0. You can find the latest version of the NVIDIA device plugin on the NVIDIA GPU Cloud (NGC) registry. The NVIDIA device plugin should be installed in the `kube-system` namespace. You will need to update the `nodeSelector` and `tolerations` to match the GPU node(s) in your cluster.
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: nvidia-device-plugin-daemonset
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      name: nvidia-device-plugin-ds
-  updateStrategy:
-    type: RollingUpdate
-  template:
-    metadata:
-      labels:
-        name: nvidia-device-plugin-ds
-    spec:
-      nodeSelector:
-        node.kubernetes.io/instance-type: g5.example
-      tolerations:
-      - key: ai-workloads-only-example
-        operator: Exists
-        effect: NoSchedule
-      priorityClassName: "system-node-critical"
-      containers:
-      - image: nvcr.io/nvidia/k8s-device-plugin:v0.15.0
-        name: nvidia-device-plugin-ctr
-        env:
-          - name: FAIL_ON_INIT_ERROR
-            value: "false"
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
-        volumeMounts:
-        - name: device-plugin
-          mountPath: /var/lib/kubelet/device-plugins
-      volumes:
-      - name: device-plugin
-        hostPath:
-          path: /var/lib/kubelet/device-plugins
-```
-
-Once the DaemonSet is applied, you can check that the NVIDIA device plugin is running on the GPU node(s) by running the following command:
-
-```bash
-kubectl get pods -n kube-system -l name=nvidia-device-plugin-ds
-```
-
-To confirm it is working correctly, you can run the following command:
-
-```bash
-kubectl describe node <gpu-node-name> | grep nvidia.com/gpu
-```
-
-The output should show the number of GPUs on the node that are available for scheduling.
-
-### 10.2 Enable the AI Features in Zenhub
-
-To enable the AI features in Zenhub, you will need to set `ai_features_enabled` in the main `kustomization.yaml` file to `true`.
-
-You will also need to uncomment the `options/ai-features/gpu-nodepool-tolerations-and-replicas.yaml` file in the `patchesStrategicMerge` section, and edit the file accordingly with the correct tolerations and replicas for your GPU nodepool.
-
-Then, apply the changes to your cluster via the typical `diff` and `apply` commands outlined in the [Deployment](#4-deployment) section.
-
-### 10.3 Verify the AI Setup is Complete
-
-Once you have completed the steps above, you can verify that the AI setup is complete by checking that the AI features are working within the Zenhub application. You can do this by creating a new issue within Zenhub and checking if there is a "Generate acceptance criteria" button available under the description field when creating the issue. Click the button to generate acceptance criteria for the issue. If the button is available, and you are able to generate acceptance criteria, the AI setup is complete. If you are unable to generate acceptance criteria, please [contact our team](mailto:enterprise@zenhub.com), and we will be happy to assist you!

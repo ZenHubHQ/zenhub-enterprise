@@ -3,54 +3,6 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app.kubernetes.io/component: llm
-  name: ai-acceptance-criteria
-spec:
-  ports:
-  - name: http-rest-svc
-    port: 8000
-    protocol: TCP
-    targetPort: 8000
-  selector:
-    app.kubernetes.io/component: llm
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app.kubernetes.io/component: llm
-  name: ai-labels
-spec:
-  ports:
-  - name: http-rest-svc
-    port: 8000
-    protocol: TCP
-    targetPort: 8000
-  selector:
-    app.kubernetes.io/component: llm
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app.kubernetes.io/component: llm
-  name: ai-sprint-review
-spec:
-  ports:
-  - name: http-rest-svc
-    port: 8000
-    protocol: TCP
-    targetPort: 8000
-  selector:
-    app.kubernetes.io/component: llm
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
     app.kubernetes.io/component: raptor-admin
   name: raptor-admin
 spec:
@@ -61,6 +13,22 @@ spec:
     targetPort: http
   selector:
     app.kubernetes.io/component: raptor-admin
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: raptor-api-public
+  name: raptor-api-public
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: raptor-api-public
   type: ClusterIP
 ---
 apiVersion: v1

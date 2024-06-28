@@ -19,7 +19,7 @@ spec:
             - bundle
             - exec
             - rake
-            - zhe:migrate_4_2
+            - zhe:migrate_4_1
           env:
             - name: MONGO_IS_DOCUMENTDB
               valueFrom:
@@ -122,8 +122,8 @@ spec:
             - name: S3_BUCKET
               valueFrom:
                 configMapKeyRef:
-                  key: files_bucket_name
-                  name: configuration
+                  key: s3_bucket
+                  name: raptor
             - name: S3_PRIVATE_ACCESS_KEY_ID
               valueFrom:
                 configMapKeyRef:
@@ -175,16 +175,6 @@ spec:
                 configMapKeyRef:
                   key: google_oauth2_client_id
                   name: raptor
-            - name: NOTION_CLIENT_ID
-              valueFrom:
-                configMapKeyRef:
-                  key: notion_client_id
-                  name: raptor
-            - name: SLACK_CLIENT_ID
-              valueFrom:
-                configMapKeyRef:
-                  key: slack_client_id
-                  name: raptor
             - name: LD_OFFLINE
               valueFrom:
                 configMapKeyRef:
@@ -195,66 +185,6 @@ spec:
                 configMapKeyRef:
                   key: is_enterprise
                   name: raptor
-            - name: AI_LABELS_ENDPOINT
-              valueFrom:
-                configMapKeyRef:
-                  key: ai_labels_endpoint
-                  name: raptor
-                  optional: true
-            - name: AI_LABELS_MODEL
-              valueFrom:
-                configMapKeyRef:
-                  key: ai_labels_model
-                  name: raptor
-                  optional: true
-            - name: AI_SPRINT_REVIEW_ENDPOINT
-              valueFrom:
-                configMapKeyRef:
-                  key: ai_sprint_review_endpoint
-                  name: raptor
-                  optional: true
-            - name: AI_SPRINT_REVIEW_MODEL
-              valueFrom:
-                configMapKeyRef:
-                  key: ai_sprint_review_model
-                  name: raptor
-                  optional: true
-            - name: AI_ACCEPTANCE_CRITERIA_ENDPOINT
-              valueFrom:
-                configMapKeyRef:
-                  key: ai_acceptance_criteria_endpoint
-                  name: raptor
-                  optional: true
-            - name: AI_ACCEPTANCE_CRITERIA_MODEL
-              valueFrom:
-                configMapKeyRef:
-                  key: ai_acceptance_criteria_model
-                  name: raptor
-                  optional: true
-            - name: AZURE_PRIVATE_OPENAI_ENDPOINT
-              valueFrom:
-                configMapKeyRef:
-                  key: azure_private_openai_endpoint
-                  name: raptor
-                  optional: true
-            - name: AZURE_PRIVATE_OPENAI_ENDPOINT_16K
-              valueFrom:
-                configMapKeyRef:
-                  key: azure_private_openai_endpoint_16k
-                  name: raptor
-                  optional: true
-            - name: AZURE_PRIVATE_OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  key: azure_private_openai_api_key
-                  name: raptor
-                  optional: true
-            - name: CLICKHOUSE_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  key: clickhouse_enabled
-                  name: raptor
-                  optional: true
             - name: SIDEKIQ_REDIS_URL
               valueFrom:
                 secretKeyRef:
@@ -294,11 +224,6 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: internal_auth_token
-                  name: internal
-            - name: INTERNAL_INTEGRATION_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  key: internal_integration_auth_token
                   name: internal
             - name: LD_SDK_KEY
               valueFrom:
@@ -374,22 +299,7 @@ spec:
                 secretKeyRef:
                   key: google_oauth2_client_secret
                   name: raptor
-            - name: NOTION_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: notion_client_secret
-                  name: raptor
-            - name: SLACK_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: slack_client_secret
-                  name: raptor
-            - name: CLICKHOUSE_URL
-              valueFrom:
-                secretKeyRef:
-                  key: clickhouse_url
-                  name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.2.0
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.1.3
           imagePullPolicy: Always
           name: data-migration
           resources:

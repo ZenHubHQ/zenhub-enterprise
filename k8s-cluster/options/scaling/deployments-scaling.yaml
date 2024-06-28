@@ -9,6 +9,16 @@ spec:
   minReplicas: 2
 
 ---
+# raptor-api
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: raptor-api-public
+spec:
+  maxReplicas: 2
+  minReplicas: 2
+
+---
 # raptor-cable
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -49,15 +59,6 @@ spec:
 
 ---
 # raptor-sidekiq-worker
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: raptor-sidekiq-worker
-spec:
-  minReplicas: 2
-  maxReplicas: 2
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:

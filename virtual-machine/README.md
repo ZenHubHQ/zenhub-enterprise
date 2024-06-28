@@ -80,12 +80,6 @@
   - [10.5 SAML](#105-saml)
 - [11. Integrations](#11-integrations)
   - [11.1 Notion](#111-notion)
-- [12. AI Features](#12-ai-features)
-  - [12.1 Add a Compatible GPU to Your Zenhub VM](#121-add-a-compatible-gpu-to-your-zenhub-vm)
-  - [12.2 VM Size Changes](#122-vm-size-changes)
-  - [12.3 Install the AI Components](#123-install-the-ai-components)
-  - [12.4 AI Features Configuration](#124-ai-features-configuration)
-  - [12.5 Verify the AI Setup is Complete](#125-verify-the-ai-setup-is-complete)
 
 ## 1. Getting Started
 
@@ -151,16 +145,12 @@ When deploying Zenhub on your VM, Zenhub will check the available hardware resou
 
 > ⚠️ **NOTE:** User count is an approximation and your use may vary depending on the usage of Zenhub per user.
 
-| Description | Number of users | vCPUs                               | Memory | Disk         | GPU  | GPU memory | EC2 example |
-|-------------|-----------------|-------------------------------------|--------|--------------|------|------------|-------------|
-| Small       | 10-100          | 4                                   | 16GB   | 90GB+ (SSD)  | 0    | n/a        | m5.xlarge   |
-| Medium      | 100-1000        | 8                                   | 32GB   | 250GB+ (SSD) | 0    | n/a        | m5.2xlarge  |
-| Large       | 1000-5000       | 16                                  | 64GB   | 500GB+ (SSD) | 0    | n/a        | m5.4xlarge  |
-| Small + AI  | 10-100          | 8                                   | 32GB   | 250GB+ (SSD) | 1    | 24GB       | g6.2xlarge  |
-| Medium + AI | 100-1000        | 16                                  | 64GB   | 500GB+ (SSD) | 1    | 24GB       | g6.4xlarge  |
-| Large + AI  | 1000-5000       | 32                                  | 128GB  | 600GB+ (SSD) | 1    | 24GB       | g6.8xlarge  |
-|             | 5000+           | [Contact us](enterprise@zenhub.com) |        |              |      |            |             |
-
+| Number of Users | vCPUs                               | Memory | Disk         |
+| --------------- | ----------------------------------- | ------ | ------------ |
+| 10-100          | 4                                   | 16GB   | 90GB+ (SSD)  |
+| 100-1000        | 8                                   | 32GB   | 250GB+ (SSD) |
+| 1000-5000       | 16                                  | 64GB   | 500GB+ (SSD) |
+| 5000+           | [Contact us](enterprise@zenhub.com) |        |              |
 
 > ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to Zenhub, as well as how many backups you are storing on the VM. At 95% disk utilization, container images will start being removed from containerd, with the least recently used images being removed first. Eventually, if disk space is not increased, the kubelet will be forced to remove images that are essential to the running of Zenhub and you will see pods in the **Evicted** state. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
 
@@ -289,22 +279,13 @@ zenhub_configuration:
   # AUTHV2_SAML_ENABLED: true
   # AUTHV2_SAML_IDP_METADATA_URL:
   # AUTHV2_SAML_SP_ENTITY_ID:
-## (Optional) Enable AI features if you have a GPU available
-  # AI_FEATURES_ENABLED: true
 
 ## Optional VM configurations
 
 ## Set below to true to let Zenhub installation generate the self-signed certificate
 # ssl_self_signed: true
 
-## To set custom kubernetes cluster CIDR
-##  Please ensure your subnet mask is between 16 and 20 for both the cluster and service space to allow the cluster to operate normally
-##  The below CIDR cannot overlap with each other
-# k8s_cidr:
-#   cluster_cidr: 10.x.0.0/16
-#   service_cidr: 10.x.0.0/16
-
-## To add ssh key to the default user. Multiple keys can be added
+## To add ssh key to default user. Multiple keys can be added
 # ssh_keys:
 #   key1: ssh-rsa 123xxx...
 #   key2: ssh-rsa
@@ -312,7 +293,6 @@ zenhub_configuration:
 ## To set static IP
 # ip:
 #   static: true
-#   dhcp: false
 #   address: "xxx.xxx.xxx.xxx/xx"
 #   gateway: "xxx.xxx.xxx.xxx"
 #   dns: "xxx.xxx.xxx.xxx, yyy.yyy.yyy.yyy"
@@ -356,10 +336,6 @@ These should be nested under zenhub_configuration along with the "Required Value
 - `GRAPHQL_RUNTIME_LIMIT`: Sets the rate limit in milliseconds for the total amount of process time per minute per token for GraphQL API.
 - `REST_API_REQUEST_LIMIT`: Sets the number of requests the legacy REST API will serve in a given **REST_API_TIME_LIMIT** before rate limiting.
 - `REST_API_TIME_LIMIT`: Sets the timespan in seconds that the legacy REST API will use to calculate rate limiting.
-
-##### AI Features
-
-- `AI_FEATURES_ENABLED`: Enables AI features if you have a GPU available. Drivers must be installed separately, please see [section 12](#12-ai-features) for more information.
 
 ##### Authentication Providers
 
@@ -407,14 +383,7 @@ Zenhub Enterprise 4.0 and greater supports several external authentication metho
 
 These should be in their own sections, not nested under zenhub_configuration. Commented examples are present in the file example above.
 
-> ⚠️ **NOTE:** `k8s_cidr` values can only be set during the initial installation of k3s, which occurs during the **first** run of `zhe-config --config-file <file.yaml>`. Once set, it cannot be changed on a running cluster.
-
 - `ssl_self_signed`: Generate a new self-signed SSL certificate during installation
-
-> ⚠️ **NOTE:** Please ensure your subnet mask is between 16 and 20 for both the cluster and service space to allow the cluster to operate normally. Please make sure that `cluster_cidr` and `service_cidr` do not overlap.
-- `k8s_cidr`: Assign a custom CIDR for the internal kubernetes network
-  - `cluster_cidr`: IPv4/IPv6 network CIDRs to use for pod IPs. If unset, defaults to 10.42.0.0/16
-  - `service_cidr`: IPv4/IPv6 network CIDRs to use for service IPs. If unset, defaults to 10.43.0.0/16
 - `ssh_keys`: SSH key(s) to be included as authorized_keys
 - `ip`: Configure the VM to use static IP
 - `chrony`: Configure the VM to use custom NTP servers for your environment
@@ -497,8 +466,6 @@ We highly suggest updating your instance _at least_ once every 12 months to avoi
 To successfully upgrade, ensure you have sufficient disk space available on your VM. Your disk should be at least 20% free, and you want to ensure you do not reach 90% utilization after the upgrade as this can cause adverse affects on the stability of Zenhub Enterprise. You can check the [Disk Management](#67-disk-management) documentation to see how to check and increase disk space if needed.
 
 ### 5.2 Preparing to Upgrade
-
-⚠️ **NOTE:** Starting in version 4.2.0, you can now upgrade from two minor versions behind the latest release. For example, if the latest release is 4.2.0, you can upgrade from 4.0.X or 4.1.X.
 
 1. Before upgrading, you should always check the release notes for the version you are upgrading to. You can find the release notes for each version in the [releases](https://github.com/ZenHubHQ/zenhub-enterprise/releases) section of this repository. You must ensure you are upgrading to a version that is compatible with your GitHub Enterprise Server version. The release notes list the GitHub Enterprise Server versions that are compatible with each Zenhub Enterprise release.
 
@@ -1057,7 +1024,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.2.0`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.1.3`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
@@ -1255,56 +1222,3 @@ To create the Notion integration, you will need to do the following:
   Click `Submit`
 
 5. After submitting the integration, you should be able to navigate to the "Secrets" tab in the sidebar. Copy the `OAuth client ID` and `OAuth client secret` values and set them in your Zenhub configuration file. See the [Optional Values](#332-optional-values) section for which values to set.
-
-## 12. AI Features
-
-Zenhub Enterprise Server v4.2 and greater has AI driven features that can be enabled to help save time and improve productivity. These features are powered by a large language model (LLM) that is securely hosted alongside the Zenhub application, wherever you run your virtual machine. The AI features are disabled by default. To enable them, there are several steps that need to be taken to ensure that the LLM can be set up and run correctly.
-
-- Add a compatible GPU to your Zenhub VM
-- Increase the VM size and add disk space if needed
-- Install the CUDA drivers, dependencies, and AI image
-- Configure the AI features in the Zenhub configuration file to enable them within the application
-
-Each of these steps has been outlined below in more detail to help you get started with the AI features in Zenhub Enterprise Server.
-
-### 12.1 Add a Compatible GPU to Your Zenhub VM
-
-Our AI features require an NVIDIA GPU with at least 24GB of VRAM to be available on your Zenhub VM. You can add a GPU to your VM by following the instructions provided by your hosting provider. If you're running on a cloud provider, you can typically add a GPU to your VM by changing the VM type to one that includes a GPU.
-
-### 12.2 VM Size Changes
-
-Adding a self-hosted LLM to Zenhub Enterprise for VM increases the resource requirements for running the application and the LLM. You will need to increase the amount of CPUs and RAM available to your VM to maintain the performance of the application to suit the number of users and the size of the data you have. Please consult the [hardware sizes](#312-hardware-sizes) section for more information on the recommended hardware sizes for running Zenhub with the AI features enabled.
-
-In addition to increasing the amount of CPUs and RAM available to your VM, you will also need to increase the amount of disk space available to your VM to accommodate the LLM and its dependencies. We recommend having at least 100GB in free space available before enabling the AI features. Please consult the [disk management](#67-disk-management) section for more information on how to increase disk space.
-
-### 12.3 Install the AI Components
-
-Once you have added a GPU to your Zenhub VM and have increased the system resources as specified above, you will need to install the necessary drivers, dependencies, and AI image. We have created an AI installation package that will install all the necessary components for you. Please [contact our team](mailto:enterprise@zenhub.com) with your Zenhub version, and we will provide you with a signed link to download the AI installation package for your version of Zenhub.
-
-You can download the file to your instance directly using `curl`:
-
-```bash
-curl -o zhe_ai_install.run "<link-to-ai-install-bundle>"
-```
-
-Then, run the installation script:
-
-```bash
-bash zhe_ai_install.run
-```
-
-The package will install the necessary drivers, dependencies, and AI image for you. Once the installation is complete, you will need to restart your Zenhub VM to apply the changes. Some components to be installed are large, so the installation process may take some time to complete.
-
-> ⚠️ **NOTE:** The current version of the AI installation package requires an active internet connection to download the necessary components. Please ensure that your Zenhub VM has an active internet connection before running the installation script. The script will need to reach `developer.download.nvidia.com` and any domain listed in `/etc/apt/sources.list` to download the necessary components.
-
-### 12.4 AI Features Configuration
-
-To enable the AI features within the Zenhub application, you will need to set the following values in your Zenhub configuration file:
-
-- `AI_FEATURES_ENABLED`: Set this value to `true`. Please see the [Optional Values](#332-optional-values) section for more information on how to set this value.
-
-Then, apply the updated configuration to the app as per section [4.1 Run the Configuration Tool](#41-run-the-configuration-tool). Please note that running the configuration tool will cause a brief downtime while the application restarts.
-
-### 12.5 Verify the AI Setup is Complete
-
-Once you have completed the steps above, you can verify that the AI setup is complete by checking that the AI features are working within the Zenhub application. You can do this by creating a new issue within Zenhub and checking if there is a "Generate acceptance criteria" button available under the description field when creating the issue. Click the button to generate acceptance criteria for the issue. If the button is available, and you are able to generate acceptance criteria, the AI setup is complete. If you are unable to generate acceptance criteria, please [contact our team](mailto:enterprise@zenhub.com), and we will be happy to assist you!

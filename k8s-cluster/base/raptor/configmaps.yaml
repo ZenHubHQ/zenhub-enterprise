@@ -15,6 +15,14 @@ data:
   web_concurrency: "4"
 kind: ConfigMap
 metadata:
+  name: raptor-api-public
+---
+apiVersion: v1
+data:
+  rails_max_threads: "5"
+  web_concurrency: "4"
+kind: ConfigMap
+metadata:
   name: raptor-api
 ---
 apiVersion: v1
@@ -64,20 +72,13 @@ metadata:
 apiVersion: v1
 data:
   action_cable_workers_pool_size: "2"
-  ai_acceptance_criteria_endpoint: http://ai-acceptance-criteria:8000
-  ai_acceptance_criteria_model: /models/mistral-7b-openorca.F16.gguf
-  ai_labels_endpoint: http://ai-labels:8000
-  ai_labels_model: /models/mistral-7b-openorca.F16.gguf
-  ai_sprint_review_endpoint: http://ai-sprint-review:8000
-  ai_sprint_review_model: /models/mistral-7b-openorca.F16.gguf
   auth_issuer_urls: ""
   auth_jwks_url: ""
   auth0_db_connection_name: ""
   auth0_tenant: ""
   cable_allowed_origins: $(cable_allowed_origins)
-  clickhouse_enabled: "false"
   disable_prepare_db: "1"
-  file_download_url: $(https_zhe_hostname)/api
+  file_download_url: ""
   files_upload_path: ""
   github_api_url: $(github_hostname)/api/v3
   github_graphql_url: $(github_hostname)/api/graphql
@@ -87,8 +88,6 @@ data:
   hubspot_paid_user_form_guid: ""
   hubspot_platform_signup_form_guid: ""
   hubspot_portal_id: ""
-  hubspot_zorg_member_association_type_id: ""
-  hubspot_zorg_object_id: ""
   is_enterprise: "true"
   is_upload_file_to_local: "false"
   ld_offline: "1"
@@ -99,6 +98,7 @@ data:
   new_relic_app_name: ""
   notion_client_id: ""
   openai_organization_id: ""
+  otel_log_level: FATAL
   rails_env: production
   rails_log_to_stdout: "1"
   s3_access_key_id: ""
@@ -108,7 +108,6 @@ data:
   s3_region: ""
   sentry_dsn: ""
   sentry_environment: ""
-  slack_client_id: ""
   stripe_monthly_price_id: ""
   stripe_trial_price_id: ""
   stripe_yearly_price_id: ""

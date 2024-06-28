@@ -19,14 +19,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: raptor-api
+                name: raptor-api-public
                 port:
                   number: 80
           - path: /public/graphql
             pathType: Prefix
             backend:
               service:
-                name: raptor-api
+                name: raptor-api-public
                 port:
                   number: 80
   tls:

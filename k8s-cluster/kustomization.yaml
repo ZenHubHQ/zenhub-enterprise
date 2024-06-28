@@ -21,8 +21,6 @@ patchesStrategicMerge:
 # - options/pgbouncer/pgbouncer-config.yaml #! Enable if password_encryption is set to scram-sha-256 on your postgres database,
                                             #! or if you need to change the default pool size and connection limits.
                                             #! See documentation in options/pgbouncer/README.md to make configuration changes.
-# - options/ai-features/gpu-nodepool-tolerations-and-replicas.yaml #! Enable to configure the AI deployment to tolerate the
-                                                                   #! taints on your GPU node(s) and set desired number of replicas.
 
 # [EDIT] (Optional) specify any labels you want applied to the deployments.
 commonLabels:
@@ -32,32 +30,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 4.2.0
+  app.kubernetes.io/version: 4.1.3
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-4.2.0
+    newTag: zhe-4.1.3
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-4.2.0
+    newTag: zhe-4.1.3
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-4.2.0
+    newTag: zhe-4.1.3
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-4.2.0
+    newTag: zhe-4.1.3
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-4.2.0
+    newTag: zhe-4.1.3
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-4.2.0
+    newTag: zhe-4.1.3
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-4.2.0
+    newTag: zhe-4.1.3
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -168,12 +166,6 @@ configMapGenerator:
       - notion_enabled=false
       # - notion_client_id=<your_client_id> # e.g. 1234-abcd-1234567890ab-12345678-abcd
 
-      # AI features configuration
-      # [EDIT] (optional) Change ai_features_enabled to true to enable AI features. Be sure to enable and configure the
-      # patchesStrategicMerge options/ai-features/gpu-nodepool-tolerations-and-replicas.yaml file in order to configure the AI deployment to
-      # tolerate the taints on your GPU node(s) and set the desired number of replicas.
-      - ai_features_enabled=false
-
   # Do not create/edit zhe-urls.env file. This is managed by the configmap-generator.sh script.
   - name: configuration
     behavior: merge
@@ -272,10 +264,6 @@ secretGenerator:
       # [EDIT] A random string used to seed the encryption of sensitive data in
       # the Raptor database.
       - secret_key_base=<[:alnum:]{42}>
-      # [EDIT] A random auth token string that will be passed in the headers of any internal requests
-      - internal_integration_auth_token=<[:alnum:]{38}>
-      # A random string for the Zenhub token verification service, not used on-premise
-      - token_verification_github_access_token=thisisrequiredbytheappbutnotusedonprem
       # [EDIT] Private key used to encrypt GitHub token retrieved and cached in
       # the database.
       - github_token_value_key=<[:xdigit:]{64}>
