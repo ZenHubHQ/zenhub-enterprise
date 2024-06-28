@@ -13,20 +13,6 @@ if [ -z "${1:-}" ]; then
     exit 1
 fi
 
-# Check for updating two versions at a time
-read -p "Are you upgrading from two versions behind? (yes/no) : " UPGRADE_FROM_TWO_VERSIONS_BEHIND
-
-# Validate input, only allow yes or no
-case "${UPGRADE_FROM_TWO_VERSIONS_BEHIND}" in
-  "yes" | "no" )
-    # Continue with the script
-    ;;
-  * )
-    echo "Only 'yes' or 'no' is supported, exiting upgrade."
-    exit 1
-    ;;
-esac
-
 # Check for non-zenhub registry
 if [ -z "${2:-}" ]; then
     # Use Zenhub registry
@@ -51,11 +37,9 @@ else
 
     # Replace occurences of Zenhub registry in data migration manifests with the custom registry
     sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_data_migration.yaml
-    sed -i.bak "s+us.gcr.io/zenhub-public+$REGISTRY+g" batch_v1_job_data_migration_previous.yaml
 
     # Remove imagePullSecrets for Zenhub registry
     sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_data_migration.yaml
-    sed -i.bak "/remove-if-custom-registry/d" batch_v1_job_data_migration_previous.yaml
 
 fi
 
@@ -66,9 +50,9 @@ raptor-sidekiq-worker
 raptor-sidekiq-worker-default
 raptor-admin
 raptor-cable
-raptor-webhook
 kraken-webapp
 toad-worker
+toad-webhook
 admin-ui
 toad-cron
 raptor-api
@@ -76,14 +60,15 @@ toad-api
 toad-websocket
 devsite
 pgbouncer
+raptor-api-public
 )
 
 HPA=(
 raptor-api
 raptor-cable
-raptor-webhook
 toad-api
 toad-websocket
+toad-webhook
 )
 
 SERVICES=(
@@ -96,9 +81,9 @@ kraken-webapp
 nginx-gateway
 raptor-admin
 raptor-api
-raptor-webhook
 raptor-cable
 toad-api
+toad-webhook
 toad-websocket
 )
 
@@ -158,24 +143,15 @@ echo "###############################################"
 echo "         Starting Data Migration Job"
 echo "###############################################"
 
-echo "         Scaling up pgbouncer..."
-kubectl -n $NAMESPACE scale deployments/pgbouncer --replicas=1
-
-kubectl -n $NAMESPACE wait --for=condition=available deployment/pgbouncer --timeout=300s
-
 echo "         Scaling up workers..."
 kubectl -n $NAMESPACE scale deployments/raptor-sidekiq-worker --replicas=2
 
 kubectl -n $NAMESPACE wait --for=condition=available deployment/raptor-sidekiq-worker --timeout=300s
 
-# Run previous feature version data migration if UPGRADE_FROM_TWO_VERSIONS_BEHIND is set to yes
-if [[ "${UPGRADE_FROM_TWO_VERSIONS_BEHIND}" == "yes" ]]; then
-    echo "         Running previous feature version data migration..."
-    kubectl -n $NAMESPACE apply -f batch_v1_job_data_migration_previous.yaml
+echo "         Scaling up pgbouncer..."
+kubectl -n $NAMESPACE scale deployments/pgbouncer --replicas=1
 
-    echo "         Waiting Previous Data Migration Job to be 'complete' (timeout 3000s)"
-    kubectl -n $NAMESPACE wait --for=condition=complete job/data-migration-previous --timeout=3000s
-fi
+kubectl -n $NAMESPACE wait --for=condition=available deployment/pgbouncer --timeout=300s
 
 echo "         Updating data..."
 kubectl -n $NAMESPACE apply -f batch_v1_job_data_migration.yaml
@@ -200,7 +176,7 @@ do
 done
 
 echo "         Deleting Gateway"
-kubectl -n $NAMESPACE delete deployment/nginx-gateway --ignore-not-found
+kubectl -n $NAMESPACE delete deployment/nginx-gateway
 
 echo "         Deleting Services"
 for s in "${SERVICES[@]}"

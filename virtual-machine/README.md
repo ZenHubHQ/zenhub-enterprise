@@ -35,9 +35,9 @@
   - [4.3 Application Check](#43-application-check)
   - [4.4 Publish the Chrome and Firefox Extensions](#44-publish-the-chrome-and-firefox-extensions)
 - [5. Upgrades](#5-upgrades)
-  - [5.1 Prerequisites](#51-prerequisites)
-  - [5.2 Preparing to Upgrade](#52-preparing-to-upgrade)
-  - [5.3 Upgrading](#53-upgrading)
+  - [5.1 Application Updates](#51-application-updates)
+    - [5.1.1 Update](#511-update)
+    - [5.1.2 Rollback](#512-rollback)
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
   - [6.1 Tasks in the Admin UI](#61-tasks-in-the-admin-ui)
     - [6.1.1 Publishing the Chrome and Firefox Extensions](#611-publishing-the-chrome-and-firefox-extensions)
@@ -73,20 +73,12 @@
   - [8.2 Reverting to the Default Log Configuration](#82-reverting-to-the-default-log-configuration)
 - [9. Developer Site](#9-developer-site)
 - [10. Platform Authentication](#10-platform-authentication)
-  - [10.1 GitHub](#101-github)
-  - [10.2 IBM W3ID](#102-ibm-w3id)
-  - [10.3 Microsoft Entra ID](#103-microsoft-entra-id)
-  - [10.4 LDAP](#104-ldap)
-  - [10.5 SAML](#105-saml)
-- [11. Integrations](#11-integrations)
-  - [11.1 Notion](#111-notion)
-- [12. AI Features](#12-ai-features)
-  - [12.1 Add a Compatible GPU to Your Zenhub VM](#121-add-a-compatible-gpu-to-your-zenhub-vm)
-  - [12.2 VM Size Changes](#122-vm-size-changes)
-  - [12.3 Install the AI Components](#123-install-the-ai-components)
-  - [12.4 AI Features Configuration](#124-ai-features-configuration)
-  - [12.5 Verify the AI Setup is Complete](#125-verify-the-ai-setup-is-complete)
-
+  - [10.1 Email/Password](#101-emailpassword)
+  - [10.2 GitHub](#102-github)
+  - [10.3 IBM W3ID](#103-ibm-w3id)
+  - [10.4 Azure Active Directory](#104-azure-active-directory)
+  - [10.5 LDAP](#105-ldap)
+  - [10.6 SAML](#106-saml)
 ## 1. Getting Started
 
 This README will be your guide to setting up Zenhub as a virtual machine. If you currently run a Kubernetes cluster and would prefer to set Zenhub up there, please go back to the [**k8s-cluster**](https://github.com/ZenhubHQ/zenhub-enterprise/tree/master/k8s-cluster) folder. If this is your first time using Zenhub On-Premise, please get in touch with us at https://www.zenhub.com/enterprise and join us in our [Community](https://help.zenhub.com/support/solutions/articles/43000556746-zenhub-users-slack-community) so that we can provide you with additional support.
@@ -151,16 +143,12 @@ When deploying Zenhub on your VM, Zenhub will check the available hardware resou
 
 > ⚠️ **NOTE:** User count is an approximation and your use may vary depending on the usage of Zenhub per user.
 
-| Description | Number of users | vCPUs                               | Memory | Disk         | GPU  | GPU memory | EC2 example |
-|-------------|-----------------|-------------------------------------|--------|--------------|------|------------|-------------|
-| Small       | 10-100          | 4                                   | 16GB   | 90GB+ (SSD)  | 0    | n/a        | m5.xlarge   |
-| Medium      | 100-1000        | 8                                   | 32GB   | 250GB+ (SSD) | 0    | n/a        | m5.2xlarge  |
-| Large       | 1000-5000       | 16                                  | 64GB   | 500GB+ (SSD) | 0    | n/a        | m5.4xlarge  |
-| Small + AI  | 10-100          | 8                                   | 32GB   | 250GB+ (SSD) | 1    | 24GB       | g6.2xlarge  |
-| Medium + AI | 100-1000        | 16                                  | 64GB   | 500GB+ (SSD) | 1    | 24GB       | g6.4xlarge  |
-| Large + AI  | 1000-5000       | 32                                  | 128GB  | 600GB+ (SSD) | 1    | 24GB       | g6.8xlarge  |
-|             | 5000+           | [Contact us](enterprise@zenhub.com) |        |              |      |            |             |
-
+| Number of Users | vCPUs                               | Memory | Disk         |
+| --------------- | ----------------------------------- | ------ | ------------ |
+| 10-100          | 4                                   | 16GB   | 90GB+ (SSD)  |
+| 100-1000        | 8                                   | 32GB   | 250GB+ (SSD) |
+| 1000-5000       | 16                                  | 64GB   | 500GB+ (SSD) |
+| 5000+           | [Contact us](enterprise@zenhub.com) |        |              |
 
 > ⚠️ **NOTE:** Disk utilization depends highly on the number of images and files uploaded to Zenhub, as well as how many backups you are storing on the VM. At 95% disk utilization, container images will start being removed from containerd, with the least recently used images being removed first. Eventually, if disk space is not increased, the kubelet will be forced to remove images that are essential to the running of Zenhub and you will see pods in the **Evicted** state. To recover from a high disk utilization event, reduce the disk utilization and run `zhe-config --images-import`. This will reload the images into containerd.
 
@@ -261,10 +249,8 @@ zenhub_configuration:
   # GRAPHQL_RUNTIME_LIMIT:
   # REST_API_REQUEST_LIMIT:
   # REST_API_TIME_LIMIT:
-## (Optional) Configure Notion Integration
-  # NOTION_ENABLED:
-  # NOTION_CLIENT_ID:
-  # NOTION_CLIENT_SECRET:
+## (Optional) Configure built-in email/password authentication
+  # AUTHV2_EMAIL_PW_ENABLED: true
 ## (Optional) Configure W3ID as an authentication provider
   # AUTHV2_W3ID_ENABLED: true
   # AUTHV2_W3ID_CLIENT_ID:
@@ -289,22 +275,12 @@ zenhub_configuration:
   # AUTHV2_SAML_ENABLED: true
   # AUTHV2_SAML_IDP_METADATA_URL:
   # AUTHV2_SAML_SP_ENTITY_ID:
-## (Optional) Enable AI features if you have a GPU available
-  # AI_FEATURES_ENABLED: true
 
 ## Optional VM configurations
 
-## Set below to true to let Zenhub installation generate the self-signed certificate
 # ssl_self_signed: true
 
-## To set custom kubernetes cluster CIDR
-##  Please ensure your subnet mask is between 16 and 20 for both the cluster and service space to allow the cluster to operate normally
-##  The below CIDR cannot overlap with each other
-# k8s_cidr:
-#   cluster_cidr: 10.x.0.0/16
-#   service_cidr: 10.x.0.0/16
-
-## To add ssh key to the default user. Multiple keys can be added
+## To add ssh key to default user. Multiple keys can be added
 # ssh_keys:
 #   key1: ssh-rsa 123xxx...
 #   key2: ssh-rsa
@@ -312,7 +288,6 @@ zenhub_configuration:
 ## To set static IP
 # ip:
 #   static: true
-#   dhcp: false
 #   address: "xxx.xxx.xxx.xxx/xx"
 #   gateway: "xxx.xxx.xxx.xxx"
 #   dns: "xxx.xxx.xxx.xxx, yyy.yyy.yyy.yyy"
@@ -357,13 +332,13 @@ These should be nested under zenhub_configuration along with the "Required Value
 - `REST_API_REQUEST_LIMIT`: Sets the number of requests the legacy REST API will serve in a given **REST_API_TIME_LIMIT** before rate limiting.
 - `REST_API_TIME_LIMIT`: Sets the timespan in seconds that the legacy REST API will use to calculate rate limiting.
 
-##### AI Features
-
-- `AI_FEATURES_ENABLED`: Enables AI features if you have a GPU available. Drivers must be installed separately, please see [section 12](#12-ai-features) for more information.
-
 ##### Authentication Providers
 
-Zenhub Enterprise 4.0 and greater supports several external authentication methods. You can enable one or more of these authentication methods by setting the corresponding environment variables.
+Zenhub Enterprise 4.0 and greater has an optional built-in email/password authentication feature and also supports several external authentication methods. You can enable one or more of these authentication methods by setting the corresponding environment variables.
+
+###### Built-in Email/Password
+
+- `AUTHV2_EMAIL_PW_ENABLED`: Enables built-in email/password authentication. Should be used with caution if Zenhub is publicly accessible to the internet as it will allow anyone with the URL to sign up.
 
 ###### W3ID
 
@@ -397,24 +372,11 @@ Zenhub Enterprise 4.0 and greater supports several external authentication metho
 - `AUTHV2_SAML_IDP_METADATA_URL`: Metadata URL linking to the identity provider's SAML config
 - `AUTHV2_SAML_SP_ENTITY_ID`: Entity ID of the service provider
 
-##### Notion Integration
-
-- `NOTION_ENABLED`: Enables the Notion integration
-- `NOTION_CLIENT_ID`: The OAuth client ID from notion.so/my-integrations
-- `NOTION_CLIENT_SECRET`: The OAuth client secret from notion.so/my-integrations
-
 #### VM Configuration
 
 These should be in their own sections, not nested under zenhub_configuration. Commented examples are present in the file example above.
 
-> ⚠️ **NOTE:** `k8s_cidr` values can only be set during the initial installation of k3s, which occurs during the **first** run of `zhe-config --config-file <file.yaml>`. Once set, it cannot be changed on a running cluster.
-
-- `ssl_self_signed`: Generate a new self-signed SSL certificate during installation
-
-> ⚠️ **NOTE:** Please ensure your subnet mask is between 16 and 20 for both the cluster and service space to allow the cluster to operate normally. Please make sure that `cluster_cidr` and `service_cidr` do not overlap.
-- `k8s_cidr`: Assign a custom CIDR for the internal kubernetes network
-  - `cluster_cidr`: IPv4/IPv6 network CIDRs to use for pod IPs. If unset, defaults to 10.42.0.0/16
-  - `service_cidr`: IPv4/IPv6 network CIDRs to use for service IPs. If unset, defaults to 10.43.0.0/16
+- `ssl_self_signed`: To deploy Zenhub with a self-signed SSL certificate
 - `ssh_keys`: SSH key(s) to be included as authorized_keys
 - `ip`: Configure the VM to use static IP
 - `chrony`: Configure the VM to use custom NTP servers for your environment
@@ -440,7 +402,7 @@ Copy the certificate and key pair to the following path:
 
 > ⚠️ **NOTE:** The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
 
-> ⚠️ **NOTE:** Zenhub will automatically generate a new self-signed certificate if `ssl_self_signed` is set to `true` in the configuration file. Set `ssl_self_signed` to `false` if you want to provide your own self-signed certificates.
+A self-signed certificate can be generated by enabling the `ssl_self_signed` option in the configuration file.
 
 #### 3.4.2 Developer Site TLS
 
@@ -488,61 +450,51 @@ See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for instr
 
 ## 5. Upgrades
 
-Zenhub Enterprise Server is continuously evolving, bringing in new features and resolving bugs through feature updates and patch releases. You are responsible for upgrading your instance.
+Upgrading Zenhub is important for both stability and security. We suggest updating Zenhub _at least_ once every 12 months to avoid issues related to outdated software.
 
-We highly suggest updating your instance _at least_ once every 12 months to avoid issues related to outdated software.
+### 5.1 Application Updates
 
-### 5.1 Prerequisites
+#### 5.1.1 Update
 
-To successfully upgrade, ensure you have sufficient disk space available on your VM. Your disk should be at least 20% free, and you want to ensure you do not reach 90% utilization after the upgrade as this can cause adverse affects on the stability of Zenhub Enterprise. You can check the [Disk Management](#67-disk-management) documentation to see how to check and increase disk space if needed.
+Update Docker images and Kubernetes manifests for the Zenhub application.
 
-### 5.2 Preparing to Upgrade
+> ⚠️ **NOTE:** It is strongly encouraged to take a machine-level snapshot before updating ZHE
 
-⚠️ **NOTE:** Starting in version 4.2.0, you can now upgrade from two minor versions behind the latest release. For example, if the latest release is 4.2.0, you can upgrade from 4.0.X or 4.1.X.
+> Before updating, perform a data backup `zhe-config --backup`
 
-1. Before upgrading, you should always check the release notes for the version you are upgrading to. You can find the release notes for each version in the [releases](https://github.com/ZenHubHQ/zenhub-enterprise/releases) section of this repository. You must ensure you are upgrading to a version that is compatible with your GitHub Enterprise Server version. The release notes list the GitHub Enterprise Server versions that are compatible with each Zenhub Enterprise release.
-
-2. To obtain an upgrade bundle, [contact our team](mailto:enterprise@zenhub.com) to get the link. You can download the file to your instance directly using `curl`:
+1. Download the latest Zenhub application update bundle from the link provided in the release email (or [contact our team](mailto:enterprise@zenhub.com)):
 
 ```bash
 curl -o zhe_upgrade.run "<link-to-upgrade-bundle>"
 ```
 
-If you cannot download the file directly to your instance, you can download it to your local machine and then upload it to your instance using `scp` or your choice of tool.
-
 > ⚠️ **NOTE:** The file integrity is checked automatically via an integrated **checksum** when the upgrade is run. If you want to check the file integrity without running the upgrade, run `bash zhe_upgrade.run --check`
 
-3. Finally, **we highly recommend taking a VM or disk snapshot of your VM**. This will allow you to roll back to the previous version if you encounter any issues during or after the upgrade. To ensure data integrity, we recommend taking a snapshot of your VM while it is powered off, or while the Zenhub application is in maintenance mode to ensure background jobs are not running.
+2. If not already directly downloaded to the VM, move the bundle into the VM (use `scp` or your choice of tool).
 
-> ⚠️ **NOTE:** If your hypervisor does not support VM snapshots, you can take a snapshot of the disk instead. This will allow you to restore the disk to the previous state if needed.
-
-### 5.3 Upgrading
-
-Once you are ready to upgrade, follow the steps below. These instructions include the use of the `tmux` terminal multiplexer to ensure the upgrade is not interrupted by a network disconnect.
-
-1. Create a new tmux session named "upgrade" and run the upgrade bundle while inside the tmux session:
-
-```bash
-tmux new-session -s "upgrade"
-```
+3. Run the upgrade script:
 
 ```bash
 bash zhe_upgrade.run
 ```
+> ⚠️ **NOTE:** To protect the upgrade from SSH disconnects, you may want to run the upgrade inside `tmux` or `screen`, e.g. `tmux new-session -s "upgrade" "bash zhe_upgrade.run"`
 
-If you become disconnected from the VM during the upgrade, you can reconnect to the tmux session by running: `tmux attach-session -t upgrade`
+4. Wait for Zenhub to update and then confirm that it has updated successfully by checking the version number on the root page of the application. If you observe any problems with Zenhub after the update, you can follow the [Rollback](#512-rollback) steps below. Otherwise, proceed to the next step.
 
-You can manually detach from the tmux session by pressing: `Ctrl+b` and then `d`. The upgrade will continue to run in the background.
+5. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
 
-You can list all tmux sessions by running: `tmux ls`
+#### 5.1.2 Rollback
 
-2. Once the upgrade is complete, be sure you are connected to the "upgrade" tmux session and then end the tmux session by running: `exit`
+If you have any problems with Zenhub after installing an update, you can quickly roll back to your most recent application version using the automated application backup taken at the start of your upgrade or to a machine-level snapshot if one was taken.
 
-> ⚠️ **NOTE:** If you observe any problems during or after the upgrade, please record the problem and [contact our team](mailto:enterprise@zenhub.com) with the details, including your upgrade log which can be found as `/var/log/zenhub/zhe-upgrade-<timestamp>`. Then, feel free to revert your instance to the previous version using the VM or disk snapshot you took before the upgrade.
->
-> If you are unable to use a VM or disk snapshot to revert, there is a data backup created during the start of the upgrade process that you can use to restore your instance to the previous version. You can find the backup in `/opt/snapshots` timestamped with the date the upgrade was run. In this situation, please [contact our team](mailto:enterprise@zenhub.com) for assistance.
+> ⚠️ **NOTE:** If you have already published the extensions after updating, rolling back the application may break your extensions.
 
-3. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
+1. Locate your desired backup found within `/opt/zenhub/upgrade_backup/`
+2. Run the following command from the same directory as your latest upgrade bundle:
+
+```bash
+bash zhe_upgrade.run rollback /opt/zenhub/upgrade_backup/<your-backup-name>.tar.gz
+```
 
 ## 6. Maintenance and Operational Tasks
 
@@ -1057,7 +1009,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.2.0`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.0.3`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
@@ -1084,227 +1036,45 @@ These users can choose to connect their GitHub account at any time which will pr
 
 Of the authentication methods listed below, the only one that is enabled by default is GitHub.
 
-> ⚠️ **NOTE:** Users may need to clear their browser cache in order to see the newly enabled authentication options on the login page once they have been applied.
+### 10.1 Email/Password
 
-### 10.1 GitHub
+- This built-in authentication option allows users to sign up with an email and password. These user accounts are stored in Zenhub
+- It can be enabled by setting the [Built-in Email/Password](#built-in-emailpassword) optional configuration
+- Be very cautious about enabling this option if your Zenhub instance is publicly accessible to the internet as it would allow anyone with access to sign up and possibly consume a license if the "Auto Assign License" setting is enabled
+
+### 10.2 GitHub
 
 - This classic authentication option allows users to sign in via their GitHub account
 - This is the default authentication method for Zenhub and cannot be disabled
 
-### 10.2 IBM W3ID
+### 10.3 IBM W3ID
 
 - This authentication option allows users to sign in through IBM W3ID
 - An IBM Security Verify tenant is required to use this form of authentication
 - It can be enabled by setting the [W3ID](#w3id) optional configuration
 
-  To configure your W3ID Application for Zenhub, you will need to do the following:
+### 10.4 Azure Active Directory
 
-#### Add a New Application via IBM Security Verify
-
-Start by going to your IBM Security Verify tenant and switching to the **Admin Console**. The URL for this will be `https://<tenant_hostname>/ui/admin`. Then, follow the steps below:
-
-- Navigate to **Applications** and click `Add Application` > `Connect to an app`
-  - Select `Custom Application`, then click `Add application`
-
-#### Configure the Application
-
-- Under **General**, set the application name, description, and company name to whatever you prefer.
-- Under **Sign-on**, there are several things to configure:
-  - Set the **Sign-on method** to `Open ID Connect 1.0`
-  - Set the **Application URL** to `https://<subdomain_suffix>.<domain_tld>/`
-  - Ensure **Require proof key for code exchange (PKCE) verification** is disabled
-  - Set the **Redirect URL** to `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/w3id/callback`
-  - Under **Token settings**
-    - Set **Access token expiry (secs)** to whatever you prefer. 7200 seconds is a normal default.
-    - Enable **Generate refresh token** if it's not already enabled.
-      - Set **Refresh token expiry (secs)** to whatever you prefer. This will be the maximum amount of time a user can stay logged in without having to log in again.
-
-> ⚠️ **NOTE:** Zenhub will check W3ID every 30 minutes to see if the user's access token has expired. If it has, Zenhub will use the refresh token to get a new access token. If the refresh token has expired, Zenhub will prompt the user to log in again.
-
-#### Obtain configuration values
-
-There are four values that need to be obtained from your W3ID Application to enable W3ID authentication:
-
-- `AUTHV2_W3ID_CLIENT_ID`
-- `AUTHV2_W3ID_CLIENT_SECRET`
-- `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL`
-- `AUTHV2_W3ID_ISSUER_URL`
-
-To obtain `AUTHV2_W3ID_CLIENT_ID` and `AUTHV2_W3ID_CLIENT_SECRET`, go to **Applications > Applications > Your application > Settings > Sign-on**
-
-- The value for `AUTHV2_W3ID_CLIENT_ID` will be the value for `Client ID` found on the page.
-- The value for `AUTHV2_W3ID_CLIENT_SECRET` will be the value for `Client secret` found on the page.
-
-To obtain `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL` and `AUTHV2_W3ID_ISSUER_URL`, go to **Applications > Application settings > OIDC general settings** and obtain your `Issuer hostname`.
-
-- The value for `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL` will be `https://<issuer_hostname>/v1.0/endpoint/default`
-- The value for `AUTHV2_W3ID_ISSUER_URL` will be `https://<issuer_hostname>/oidc/endpoint/default`
-
-In addition to these configuration values, there will be one more configuration value to set in your Zenhub configuration file to enable W3ID authentication. See [Optional Values](#332-optional-values) for which value to set. Then, apply the updated configuration to the app as per section [4.1 Run the Configuration Tool](#41-run-the-configuration-tool). Please note that running the configuration tool will cause a brief downtime while the application restarts.
-
-### 10.3 Microsoft Entra ID
-
-- This authentication option allows users to sign in through Microsoft Entra ID
-- An Microsoft Entra ID tenant is required to use this form of authentication
+- This authentication option allows users to sign in through Microsoft Azure Active Directory
+- An Azure Active Directory tenant is required to use this form of authentication
 - It can be enabled by setting the [Azure AD](#azure-ad) optional configuration
 
-To configure your Microsoft Entra ID Application for Zenhub, you will need to do the following:
-
-#### Add a New Application via Microsoft Entra ID
-
-Start by going to the Entra ID portal in Microsoft Azure. The URL for this will be `https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview`. Then, follow the steps below:
-
-- Navigate to **Overview** and click `+ Add` > `Enterprise application`
-  - Name your application and select the `Integrate any other application you don't find in the gallery (Non-gallery)` option. Then click `Create`.
-
-#### Configure the Application
-
-- Under **Authentication > Platform configurations**, click `Add a platform` and select `Web`.
-  - Set the Redirect URI to `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/azure_activedirectory_v2/callback`. Then click `Configure`.
-- Under **Authentication > Front-channel logout URL**, set the URL to `https://<subdomain_suffix>.<domain_tld>/logout`. Then click `Save`.
-- Under **Certificates & secrets**, click `+ New client secret`, set a description, and set the expiration to whatever you prefer. Then click `Add`.
-- Under **API permissions > Configured permissions**, click `Add a permission` and select `Microsoft Graph`.
-  - Select `Delegated permissions` and check the `User.Read` permission. Then click `Add permissions`.
-
-#### Obtain configuration values
-
-There are three values that need to be obtained from your Microsoft Entra ID Application to enable Microsoft Entra ID authentication:
-
-- `AUTHV2_AZURE_AD_CLIENT_ID`
-- `AUTHV2_AZURE_AD_CLIENT_SECRET`
-- `AUTHV2_AZURE_AD_TENANT_ID`
-
-To obtain `AUTHV2_AZURE_AD_CLIENT_ID` and `AUTHV2_AZURE_AD_TENANT_ID`, go to **App registrations > All applications > Your application > Overview**
-
-- The value for `AUTHV2_AZURE_AD_CLIENT_ID` will be the value for `Application (client) ID` found on the page.
-- The value for `AUTHV2_AZURE_AD_TENANT_ID` will be the value for `Directory (tenant) ID` found on the page.
-
-To obtain `AUTHV2_AZURE_AD_CLIENT_SECRET`, go to **App registrations > All applications > Your application > Certificates & secrets**
-
-- The value for `AUTHV2_AZURE_AD_CLIENT_SECRET` will be the value for `Value` found on the page. Click the copy button to copy the value to your clipboard.
-
-In addition to these configuration values, there will be one more configuration value to set in your Zenhub configuration file to enable Microsoft Entra ID authentication. See [Optional Values](#332-optional-values) for which value to set. Then, apply the updated configuration to the app as per section [4.1 Run the Configuration Tool](#41-run-the-configuration-tool). Please note that running the configuration tool will cause a brief downtime while the application restarts.
-
-> ⚠️ **NOTE:** The login option will say Azure AD instead of Microsoft Entra ID since that name change was recent and not yet reflected in the Zenhub UI.
-
-### 10.4 LDAP
+### 10.5 LDAP
 
 - This authentication option allows users to sign in using LDAP
 - An existing LDAP server is required to use this form of authentication
 - It can be enabled by setting the [LDAP](#ldap) optional configuration
 
-  Ensure that there is an LDAP Bind DN user in your directory being connected that has read access to the LDAP directory. This user will be used to search for the users attempting to sign in.
-
-  See the [Optional Values](#332-optional-values) section for which values to set to configure your Zenhub instance to use LDAP user authentication.
-
-### 10.5 SAML
+### 10.6 SAML
 
 - This authentication option allows users to sign in using SAML
 - An SSO with SAML provider is required to use this form of authentication
 - It can be enabled by setting the [SAML](#saml) optional configuration
 
-  To configure your SSO with SAML Application for Zenhub, you will need to set the following values in SAML SSO Application:
+  To configure your SSO with SAML Application for Zenhub, you will need to set the following values:
 
   - **Application ACS URL**: `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/saml/callback`
-  - **SAMLSubject NameID**: `email`
-  - **SAMLSubject NameID Format**: `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`
   - **Attributes**:
     Service Provider Attribute Name mappings for the following attributes:
     - **Email**: `email`
     - **Name**: `name`
-
-  Once you have configured the application, you will have all the required values available to configure your Zenhub instance. See the [Optional Values](#332-optional-values) section for which values to set.
-
-## 11. Integrations
-
-### 11.1 Notion
-
-Zenhub Enterprise Server can be integrated with Notion to allow users to preview Notion links within Zenhub Issues. This integration is disabled by default and can be enabled by setting the [Notion Integration](#notion-integration) optional configuration.
-
-To create the Notion integration, you will need to do the following:
-
-1. Navigate to <https://www.notion.com/my-integrations> and click `+ New integration`
-
-2. Enter "Basic Information" for your integration
-    - Choose an associated workspace that you use for your organization. This is only temporary and will be changed later when the integration is upgraded to use OAuth later.
-    - Name your integration whatever you prefer
-    - You can download the Zenhub logo from <https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/assets/notion-integration/zenhub-logo.png> and upload it as your integration's logo.
-
-3. After creating the integration, you should be able to navigate to the "Capabilities" section for that integration via the sidebar. Set enabled the following capabilities:
-    - Read content
-    - Update content
-    - Insert content
-    - Read user information including email addresses
-
-    Click `Save changes`
-
-4. Navigate to the "Distribution" tab in the sidebar and toggle on the `Do you want to make this integration public?` option. This will allow you to share the integration with your organization. Then fill out the following information:
-
-- Organization Information
-
-  - **Company name**: `<your company name>`
-  - **Website or homepage**: `https://www.zenhub.com/`
-  - **Privacy policy**: `https://www.zenhub.com/privacy-policy`
-  - **Terms of use**: `https://www.zenhub.com/terms-of-service`
-  - **Support email**: `support@zenhub.com`
-
-- OAuth Domain & URIs
-  
-  - **Redirect URI**: `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/notion/callback`
-
-  Click `Submit`
-
-5. After submitting the integration, you should be able to navigate to the "Secrets" tab in the sidebar. Copy the `OAuth client ID` and `OAuth client secret` values and set them in your Zenhub configuration file. See the [Optional Values](#332-optional-values) section for which values to set.
-
-## 12. AI Features
-
-Zenhub Enterprise Server v4.2 and greater has AI driven features that can be enabled to help save time and improve productivity. These features are powered by a large language model (LLM) that is securely hosted alongside the Zenhub application, wherever you run your virtual machine. The AI features are disabled by default. To enable them, there are several steps that need to be taken to ensure that the LLM can be set up and run correctly.
-
-- Add a compatible GPU to your Zenhub VM
-- Increase the VM size and add disk space if needed
-- Install the CUDA drivers, dependencies, and AI image
-- Configure the AI features in the Zenhub configuration file to enable them within the application
-
-Each of these steps has been outlined below in more detail to help you get started with the AI features in Zenhub Enterprise Server.
-
-### 12.1 Add a Compatible GPU to Your Zenhub VM
-
-Our AI features require an NVIDIA GPU with at least 24GB of VRAM to be available on your Zenhub VM. You can add a GPU to your VM by following the instructions provided by your hosting provider. If you're running on a cloud provider, you can typically add a GPU to your VM by changing the VM type to one that includes a GPU.
-
-### 12.2 VM Size Changes
-
-Adding a self-hosted LLM to Zenhub Enterprise for VM increases the resource requirements for running the application and the LLM. You will need to increase the amount of CPUs and RAM available to your VM to maintain the performance of the application to suit the number of users and the size of the data you have. Please consult the [hardware sizes](#312-hardware-sizes) section for more information on the recommended hardware sizes for running Zenhub with the AI features enabled.
-
-In addition to increasing the amount of CPUs and RAM available to your VM, you will also need to increase the amount of disk space available to your VM to accommodate the LLM and its dependencies. We recommend having at least 100GB in free space available before enabling the AI features. Please consult the [disk management](#67-disk-management) section for more information on how to increase disk space.
-
-### 12.3 Install the AI Components
-
-Once you have added a GPU to your Zenhub VM and have increased the system resources as specified above, you will need to install the necessary drivers, dependencies, and AI image. We have created an AI installation package that will install all the necessary components for you. Please [contact our team](mailto:enterprise@zenhub.com) with your Zenhub version, and we will provide you with a signed link to download the AI installation package for your version of Zenhub.
-
-You can download the file to your instance directly using `curl`:
-
-```bash
-curl -o zhe_ai_install.run "<link-to-ai-install-bundle>"
-```
-
-Then, run the installation script:
-
-```bash
-bash zhe_ai_install.run
-```
-
-The package will install the necessary drivers, dependencies, and AI image for you. Once the installation is complete, you will need to restart your Zenhub VM to apply the changes. Some components to be installed are large, so the installation process may take some time to complete.
-
-> ⚠️ **NOTE:** The current version of the AI installation package requires an active internet connection to download the necessary components. Please ensure that your Zenhub VM has an active internet connection before running the installation script. The script will need to reach `developer.download.nvidia.com` and any domain listed in `/etc/apt/sources.list` to download the necessary components.
-
-### 12.4 AI Features Configuration
-
-To enable the AI features within the Zenhub application, you will need to set the following values in your Zenhub configuration file:
-
-- `AI_FEATURES_ENABLED`: Set this value to `true`. Please see the [Optional Values](#332-optional-values) section for more information on how to set this value.
-
-Then, apply the updated configuration to the app as per section [4.1 Run the Configuration Tool](#41-run-the-configuration-tool). Please note that running the configuration tool will cause a brief downtime while the application restarts.
-
-### 12.5 Verify the AI Setup is Complete
-
-Once you have completed the steps above, you can verify that the AI setup is complete by checking that the AI features are working within the Zenhub application. You can do this by creating a new issue within Zenhub and checking if there is a "Generate acceptance criteria" button available under the description field when creating the issue. Click the button to generate acceptance criteria for the issue. If the button is available, and you are able to generate acceptance criteria, the AI setup is complete. If you are unable to generate acceptance criteria, please [contact our team](mailto:enterprise@zenhub.com), and we will be happy to assist you!

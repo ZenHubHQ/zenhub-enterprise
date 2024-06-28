@@ -52,6 +52,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: toad-webhook
+spec:
+  template:
+    spec:
+      containers:
+        - name: toad-webhook
+          env:
+            - name: MONGO_IS_DOCUMENTDB
+              valueFrom:
+                configMapKeyRef:
+                  name: configuration
+                  key: mongo_is_documentdb
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: toad-worker
 spec:
   template:

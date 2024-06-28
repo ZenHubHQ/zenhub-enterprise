@@ -49,17 +49,12 @@
   - [6.5 Usage Report](#65-usage-report)
 - [7. Developer Site](#7-developer-site)
 - [8. Platform Authentication](#8-platform-authentication)
-  - [8.1 GitHub](#81-github)
-  - [8.2 IBM W3ID](#82-ibm-w3id)
-  - [8.3 Microsoft Entra ID](#83-microsoft-entra-id)
-  - [8.4 LDAP](#84-ldap)
-  - [8.5 SAML](#85-saml)
-- [9. Integrations](#9-integrations)
-  - [9.1 Notion](#91-notion)
-- [10. AI Features](#10-ai-features)
-  - [10.1 Add a GPU Node Pool to your Kubernetes Cluster](#101-add-a-gpu-node-pool-to-your-kubernetes-cluster)
-  - [10.2 Enable the AI Features in Zenhub](#102-enable-the-ai-features-in-zenhub)
-  - [10.3 Verify the AI Setup is Complete](#103-verify-the-ai-setup-is-complete)
+  - [8.1 Email/Password](#81-emailpassword)
+  - [8.2 GitHub](#82-github)
+  - [8.3 IBM W3ID](#83-ibm-w3id)
+  - [8.4 Azure Active Directory](#84-azure-active-directory)
+  - [8.5 LDAP](#85-ldap)
+  - [8.6 SAML](#86-saml)
 
 ## 1. Getting Started
 
@@ -100,9 +95,9 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 To get started with Zenhub, you must have an existing Kubernetes cluster set up. You should:
 
-- Be using Kubernetes (>= 1.27).
+- Be using Kubernetes (>= 1.22).
 - Have `kubectl` installed locally with credentials to access the cluster.
-- Have [`kustomize`](https://kustomize.io/) installed locally (>= 4.5.7).
+- Have [`kustomize`](https://kustomize.io/) installed locally (>= 4.5.3).
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
 - Have the capability to pull Docker images from Zenhub's public Docker registry or have access to a private Docker registry where you can push images (and your cluster should have the ability to pull from that private registry).
 
@@ -116,9 +111,11 @@ Zenhub will require a connection to a PostgreSQL 11 database. We recommend the l
 
 ### 2.5 MongoDB
 
-Zenhub will require a connection to a MongoDB database. We recommend using the latest 5.x version. It is also recommended to avoid any patch versions that MongoDB does not recommend for production use. Please refer to the list of versions to avoid here: https://www.mongodb.com/docs/manual/release-notes/5.0/#patch-releases.
+Zenhub will require a connection to a MongoDB database. We recommend using the latest 4.x version. It is also recommended to avoid MongoDB version 4.4.5 which was released with a [critical issue](https://docs.mongodb.com/manual/release-notes/4.4/#4.4.5---apr-8--2021).
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
+
+> ⚠️ **NOTE:** If you are running MongoDB version 3.x and plan to upgrade to MongoDB version 4.x, please reach out to us for some specific steps that need to be taken for the upgrade.
 
 ### 2.6 RabbitMQ
 
@@ -503,10 +500,10 @@ To configure the GraphQL rate limits, follow these steps:
 kustomize build . | kubectl apply -f-
 ```
 
-3. Restart the raptor-api deployment so the updated rate limit configmap values are picked up
+3. Restart the raptor-api-public deployment so the updated rate limit configmap values are picked up
 
 ```bash
-kubectl rollout restart deployment raptor-api -n <namespace>
+kubectl rollout restart deployment raptor-api-public -n <namespace>
 ```
 
 #### 3.7.2 Legacy REST API
@@ -841,245 +838,45 @@ These users can choose to connect their GitHub account at any time which will pr
 
 Of the authentication methods listed below, the only one that is enabled by default is GitHub.
 
-> ⚠️ **NOTE:** Users may need to clear their browser cache in order to see the newly enabled authentication options on the login page once they have been applied.
+### 8.1 Email/Password
 
-### 8.1 GitHub
+- This built-in authentication option allows users to sign up with an email and password. These user accounts are stored in Zenhub
+- It can be enabled by following instructions for `email_pw_enabled` in the main `kustomization.yaml`
+- Be very cautious about enabling this option if your Zenhub instance is publicly accessible to the internet as it would allow anyone with access to sign up and possibly consume a license if the "Auto Assign License" setting is enabled
+
+### 8.2 GitHub
 
 - This classic authentication option allows users to sign in via their GitHub account
 - This is the default authentication method for Zenhub and cannot be disabled
 
-### 8.2 IBM W3ID
+### 8.3 IBM W3ID
 
 - This authentication option allows users to sign in through IBM W3ID
 - An IBM Security Verify tenant is required to use this form of authentication
 - It can be enabled by following instructions for `w3id_enabled` in the main `kustomization.yaml`
 
-  To configure your W3ID Application for Zenhub, you will need to do the following:
+### 8.4 Azure Active Directory
 
-#### Add a New Application via IBM Security Verify
-
-Start by going to your IBM Security Verify tenant and switching to the **Admin Console**. The URL for this will be `https://<tenant_hostname>/ui/admin`. Then, follow the steps below:
-
-- Navigate to **Applications** and click `Add Application` > `Connect to an app`
-  - Select `Custom Application`, then click `Add application`
-
-#### Configure the Application
-
-- Under **General**, set the application name, description, and company name to whatever you prefer.
-- Under **Sign-on**, there are several things to configure:
-  - Set the **Sign-on method** to `Open ID Connect 1.0`
-  - Set the **Application URL** to `https://<subdomain_suffix>.<domain_tld>/`
-  - Ensure **Require proof key for code exchange (PKCE) verification** is disabled
-  - Set the **Redirect URL** to `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/w3id/callback`
-  - Under **Token settings**
-    - Set **Access token expiry (secs)** to whatever you prefer. 7200 seconds is a normal default.
-    - Enable **Generate refresh token** if it's not already enabled.
-      - Set **Refresh token expiry (secs)** to whatever you prefer. This will be the maximum amount of time a user can stay logged in without having to log in again.
-
-> ⚠️ **NOTE:** Zenhub will check W3ID every 30 minutes to see if the user's access token has expired. If it has, Zenhub will use the refresh token to get a new access token. If the refresh token has expired, Zenhub will prompt the user to log in again.
-
-#### Obtain configuration values
-
-There are four values that need to be obtained from your W3ID Application to enable W3ID authentication:
-
-- `w3id_client_id`
-- `w3id_client_secret`
-- `w3id_default_endpoint_url`
-- `w3id_issuer_url`
-
-To obtain `w3id_client_id` and `w3id_client_secret`, go to **Applications > Applications > Your application > Settings > Sign-on**
-
-- The value for `w3id_client_id` will be the value for `Client ID` found on the page.
-- The value for `w3id_client_secret` will be the value for `Client secret` found on the page.
-
-To obtain `w3id_default_endpoint_url` and `w3id_issuer_url`, go to **Applications > Application settings > OIDC general settings** and obtain your `Issuer hostname`.
-
-- The value for `w3id_default_endpoint_url` will be `https://<issuer_hostname>/v1.0/endpoint/default`
-- The value for `w3id_issuer_url` will be `https://<issuer_hostname>/oidc/endpoint/default`
-
-### 8.3 Microsoft Entra ID
-
-- This authentication option allows users to sign in through Microsoft Entra ID
-- An Microsoft Entra ID tenant is required to use this form of authentication
+- This authentication option allows users to sign in through Microsoft Azure Active Directory
+- An Azure Active Directory tenant is required to use this form of authentication
 - It can be enabled by following instructions for `azure_ad_enabled` in the main `kustomization.yaml`
 
-To configure your Microsoft Entra ID Application for Zenhub, you will need to do the following:
-
-#### Add a New Application via Microsoft Entra ID
-
-Start by going to the Entra ID portal in Microsoft Azure. The URL for this will be `https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview`. Then, follow the steps below:
-
-- Navigate to **Overview** and click `+ Add` > `Enterprise application`
-  - Name your application and select the `Integrate any other application you don't find in the gallery (Non-gallery)` option. Then click `Create`.
-
-#### Configure the Application
-
-- Under **Authentication > Platform configurations**, click `Add a platform` and select `Web`.
-  - Set the Redirect URI to `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/azure_activedirectory_v2/callback`. Then click `Configure`.
-- Under **Authentication > Front-channel logout URL**, set the URL to `https://<subdomain_suffix>.<domain_tld>/logout`. Then click `Save`.
-- Under **Certificates & secrets**, click `+ New client secret`, set a description, and set the expiration to whatever you prefer. Then click `Add`.
-- Under **API permissions > Configured permissions**, click `Add a permission` and select `Microsoft Graph`.
-  - Select `Delegated permissions` and check the `User.Read` permission. Then click `Add permissions`.
-
-#### Obtain configuration values
-
-There are three values that need to be obtained from your Microsoft Entra ID Application to enable Microsoft Entra ID authentication via your kustomization.yaml file:
-
-- `azure_ad_client_id`
-- `azure_ad_client_secret`
-- `azure_ad_tenant_id`
-
-To obtain `azure_ad_client_id` and `azure_ad_tenant_id`, go to **App registrations > All applications > Your application > Overview**
-
-- The value for `azure_ad_client_id` will be the value for `Application (client) ID` found on the page.
-- The value for `azure_ad_tenant_id` will be the value for `Directory (tenant) ID` found on the page.
-
-To obtain `azure_ad_client_secret`, go to **App registrations > All applications > Your application > Certificates & secrets**
-
-- The value for `azure_ad_client_secret` will be the value for `Value` found on the page. Click the copy button to copy the value to your clipboard.
-
-> ⚠️ **NOTE:** The login option will say Azure AD instead of Microsoft Entra ID since that name change was recent and not yet reflected in the Zenhub UI.
-
-### 8.4 LDAP
+### 8.5 LDAP
 
 - This authentication option allows users to sign in using LDAP
 - An existing LDAP server is required to use this form of authentication
 - It can be enabled by following instructions for `ldap_enabled` in the main `kustomization.yaml`
 
-  Ensure that there is an LDAP Bind DN user in your directory being connected that has read access to the LDAP directory. This user will be used to search for the users attempting to sign in.
-
-### 8.5 SAML
+### 8.6 SAML
 
 - This authentication option allows users to sign in using SAML
 - An SSO with SAML provider is required to use this form of authentication
 - It can be enabled by following instructions for `saml_enabled` in the main `kustomization.yaml`
 
-  To configure your SSO with SAML Application for Zenhub, you will need to set the following values in SAML SSO Application:
+  To configure your SSO with SAML Application for Zenhub, you will need to set the following values:
 
   - **Application ACS URL**: `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/saml/callback`
-  - **SAMLSubject NameID**: `email`
-  - **SAMLSubject NameID Format**: `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`
   - **Attributes**:
     Service Provider Attribute Name mappings for the following attributes:
     - **Email**: `email`
     - **Name**: `name`
-
-## 9. Integrations
-
-### 9.1 Notion
-
-Zenhub Enterprise for K8s can be integrated with Notion to allow users to preview Notion links within Zenhub Issues. This integration is disabled by default and can be enabled by following instructions for `notion` in the main `kustomization.yaml`.
-
-To create the Notion integration, you will need to do the following:
-
-1. Navigate to <https://www.notion.com/my-integrations> and click `+ New integration`
-
-2. Enter "Basic Information" for your integration
-    - Choose an associated workspace that you use for your organization. This is only temporary and will be changed later when the integration is upgraded to use OAuth later.
-    - Name your integration whatever you prefer
-    - You can download the Zenhub logo from <https://github.com/ZenHubHQ/zenhub-enterprise/blob/master/assets/notion-integration/zenhub-logo.png> and upload it as your integration's logo.
-
-3. After creating the integration, you should be able to navigate to the "Capabilities" section for that integration via the sidebar. Set enabled the following capabilities:
-    - Read content
-    - Update content
-    - Insert content
-    - Read user information including email addresses
-
-    Click `Save changes`
-
-4. Navigate to the "Distribution" tab in the sidebar and toggle on the `Do you want to make this integration public?` option. This will allow you to share the integration with your organization. Then fill out the following information:
-
-- Organization Information
-
-  - **Company name**: `<your company name>`
-  - **Website or homepage**: `https://www.zenhub.com/`
-  - **Privacy policy**: `https://www.zenhub.com/privacy-policy`
-  - **Terms of use**: `https://www.zenhub.com/terms-of-service`
-  - **Support email**: `support@zenhub.com`
-
-- OAuth Domain & URIs
-  
-  - **Redirect URI**: `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/notion/callback`
-
-  Click `Submit`
-
-5. After submitting the integration, you should be able to navigate to the "Secrets" tab in the sidebar. Copy the `OAuth client ID` and `OAuth client secret` values and set them in your `kustomization.yaml` file for `notion_client_id` and `notion_client_secret` respectively.
-
-## 10. AI Features
-
-Zenhub Enterprise v4.2 and greater has AI driven features that can be enabled to help save time and improve productivity. These features are powered by a large language model (LLM) that is securely hosted within your Kubernetes cluster alongside Zenhub. The AI features are disabled by default. To enable them, there are several steps that need to be taken to ensure that the LLM can be set up and run correctly.
-
-### 10.1 Add a GPU Node Pool to your Kubernetes Cluster
-
-The AI features require a GPU to run the LLM. You will need to add a GPU node pool to your Kubernetes cluster. The GPU node pool should have at least one node with a GPU that has at least 24GB of VRAM. The node should have at least 4 CPUs and 16GB of memory to run the LLM deployment.
-
-The NVIDIA device plugin will need to be installed on the GPU node in order to run the LLM. The plugin is a DaemonSet that runs on each GPU node in the cluster and exposes the GPU resources to the Kubernetes API. The NVIDIA device plugin can be installed by applying the following manifest. This manifest is for the NVIDIA device plugin version 0.15.0. You can find the latest version of the NVIDIA device plugin on the NVIDIA GPU Cloud (NGC) registry. The NVIDIA device plugin should be installed in the `kube-system` namespace. You will need to update the `nodeSelector` and `tolerations` to match the GPU node(s) in your cluster.
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: nvidia-device-plugin-daemonset
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      name: nvidia-device-plugin-ds
-  updateStrategy:
-    type: RollingUpdate
-  template:
-    metadata:
-      labels:
-        name: nvidia-device-plugin-ds
-    spec:
-      nodeSelector:
-        node.kubernetes.io/instance-type: g5.example
-      tolerations:
-      - key: ai-workloads-only-example
-        operator: Exists
-        effect: NoSchedule
-      priorityClassName: "system-node-critical"
-      containers:
-      - image: nvcr.io/nvidia/k8s-device-plugin:v0.15.0
-        name: nvidia-device-plugin-ctr
-        env:
-          - name: FAIL_ON_INIT_ERROR
-            value: "false"
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
-        volumeMounts:
-        - name: device-plugin
-          mountPath: /var/lib/kubelet/device-plugins
-      volumes:
-      - name: device-plugin
-        hostPath:
-          path: /var/lib/kubelet/device-plugins
-```
-
-Once the DaemonSet is applied, you can check that the NVIDIA device plugin is running on the GPU node(s) by running the following command:
-
-```bash
-kubectl get pods -n kube-system -l name=nvidia-device-plugin-ds
-```
-
-To confirm it is working correctly, you can run the following command:
-
-```bash
-kubectl describe node <gpu-node-name> | grep nvidia.com/gpu
-```
-
-The output should show the number of GPUs on the node that are available for scheduling.
-
-### 10.2 Enable the AI Features in Zenhub
-
-To enable the AI features in Zenhub, you will need to set `ai_features_enabled` in the main `kustomization.yaml` file to `true`.
-
-You will also need to uncomment the `options/ai-features/gpu-nodepool-tolerations-and-replicas.yaml` file in the `patchesStrategicMerge` section, and edit the file accordingly with the correct tolerations and replicas for your GPU nodepool.
-
-Then, apply the changes to your cluster via the typical `diff` and `apply` commands outlined in the [Deployment](#4-deployment) section.
-
-### 10.3 Verify the AI Setup is Complete
-
-Once you have completed the steps above, you can verify that the AI setup is complete by checking that the AI features are working within the Zenhub application. You can do this by creating a new issue within Zenhub and checking if there is a "Generate acceptance criteria" button available under the description field when creating the issue. Click the button to generate acceptance criteria for the issue. If the button is available, and you are able to generate acceptance criteria, the AI setup is complete. If you are unable to generate acceptance criteria, please [contact our team](mailto:enterprise@zenhub.com), and we will be happy to assist you!

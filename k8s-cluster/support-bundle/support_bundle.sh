@@ -51,14 +51,13 @@ overview_file="$tempdir/cluster_overview.log"
 kubectl -n $namespace get all > $info_dir/kubectl_get_all.log
 kubectl -n $namespace describe pods > $info_dir/kubectl_describe_pods.log
 kubectl -n $namespace describe jobs > $info_dir/kubectl_describe_jobs.log
-kubectl -n $namespace describe deployments > $info_dir/kubectl_describe_deployments.log
-kubectl -n $namespace describe configmaps > $info_dir/kubectl_describe_configmaps.log
-kubectl top pods --all-namespaces > $info_dir/kubectl_top_all_pods.log
+kubectl -n $namespace describe deployment > $info_dir/kubectl_describe_deployment.log
+kubectl -n $namespace describe configmap > $info_dir/kubectl_describe_configmap.log
 kubectl get events --all-namespaces > $info_dir/kubectl_get_all_events.log
-kubectl describe nodes >> $info_dir/kubectl_describe_nodes.log
+kubectl describe node >> $info_dir/kubectl_describe_node.log
 
-# Gather all logs from the zenhub namespace and store them in a directory
-for pod in $(kubectl get pods -o name -n $namespace)
+# Gather logs from all zenhub pods and store in a directory
+for pod in $(kubectl get pods --selector=app.kubernetes.io/application=zenhub -o name -n $namespace)
 do  
   kubectl -n $namespace logs $pod --all-containers > $logs_dir/${pod//\//_}.log
 done
@@ -81,7 +80,7 @@ echo "### Node Status:" >> $overview_file
 kubectl get nodes >> $overview_file
 
 echo "### Node Resources:" >> $overview_file
-kubectl top nodes >> $overview_file
+kubectl top node >> $overview_file
 
 echo "### Pods Not Running" >> $overview_file
 kubectl get pods --all-namespaces --field-selector=status.phase!=Running | grep -v Completed >> $overview_file

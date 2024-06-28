@@ -1,35 +1,5 @@
 apiVersion: v1
 data:
-  ghe-status.html: "<!DOCTYPE html>\n<html>\n\n  <head>\n    <title>GitHub Enterprise
-    is Not Available</title>\n    <style>\n      html {\n        height: 100%\n      }\n
-    \     body {\n        background: #0E1332\n      }\n      #message {  \n        margin-left:
-    auto;\n        margin-right: auto;\n        margin-top: 15%;\n        width: 600px;\n
-    \       padding: 30px;\n        padding-left: 50px;\n        background: linear-gradient(#0E1332,
-    #0E1332) padding-box,\n                    linear-gradient(165deg,#4f57f9,#44c7d1)
-    border-box;\n        border-radius: 50px;\n        border: 5px solid transparent;\n
-    \     }\n      h1, h3 {\n          color: white;\n          font-family: Arial,
-    sans-serif;\n      }\n      h3 {\n        margin-bottom: 0px;\n        color:rgb(233,
-    232, 232);\n        font-weight: 100;\n      }\n      .cog {\n        width: 50px;\n
-    \       height: 50px;\n        border-radius: 50%;\n        border: 5px solid
-    #44c7d1;\n        border-top-color: #10383b;\n        animation: spin 2s infinite
-    linear;\n        margin-left: 543px\n      }\n      @keyframes spin {\n        to
-    {\n          transform: rotate(360deg);\n        }\n      }\n    </style>\n  </head>\n\n
-    \ <body>\n    <div id=\"message\">\n      <h1>Your GitHub Enterprise Server is
-    Not Available</h1>\n      <h3>Zenhub tried to reach your GitHub Enterprise Server
-    but did not receive a successful response. It may be in maintenance or an outage.
-    If you have any questions, please contact your GitHub administrator.</h3>\n      <div
-    id=\"cog-container\"><div class=\"cog\"></div></div>\n    </div>\n  </body>\n
-    \ \n</html>\n"
-kind: ConfigMap
-metadata:
-  labels:
-    app.kubernetes.io/component: nginx-gateway
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: nginx-gateway
-  name: zhe-ghe-status-page
----
-apiVersion: v1
-data:
   default.conf.template: "upstream webapp {\n  server ${WEBAPP};\n}\n\nupstream api
     {\n  server ${API};\n}\n\nupstream webhook {\n  server ${WEBHOOK};\n}\n\nupstream
     action-cable {\n  server ${ACTIONCABLE};\n}\n\nupstream raptor-admin {\n  server
@@ -37,17 +7,12 @@ data:
     \ server ${SOCKET};\n}\n\ninclude conf.d/include-upstream-bucket.conf;\n\n\nserver
     {\n    server_tokens off;\n    listen 80;\n\n    include conf.d/include-ssl.conf;\n\n
     \   access_log /var/log/nginx/access.log main;\n    error_log /var/log/nginx/error.log
-    error;\n    server_name _;\n\n    error_page 503 /maintenance.html;\n    error_page
-    418 /ghe-status.html;\n    error_page 419 /license-status.html;\n\n    location
-    /ghe-status.html {\n        root /usr/share/nginx/html;\n        internal;\n    }\n\n
-    \   location /license-status.html {\n        root /usr/share/nginx/html;\n        internal;\n
-    \   }\n\n    location /maintenance.html {\n        root /usr/share/nginx/html;\n
-    \       internal;\n    }\n\n    location /healthcheck {\n        access_log\toff;\n
-    \       error_log\toff;\n        return 200 'ok';\n        add_header Content-Type
-    text/plain;\n    }\n\n    location /status {\n\n        if (-f /data/zhe-monitor/maintenance-status)
-    {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
-    {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        access_log\toff;\n        error_log\toff;\n
+    error;\n    server_name _;\n\n    error_page 503 /maintenance.html;\n\n    location
+    /maintenance.html {\n        root /usr/share/nginx/html;\n        internal;\n
+    \   }\n\n    location /healthcheck {\n        access_log\toff;\n        error_log\toff;\n
+    \       return 200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n
+    \   location /status {\n\n        if (-f /data/zhe-monitor/maintenance-status)
+    {\n            return 503;\n        }\n\n        access_log\toff;\n        error_log\toff;\n
     \       return 200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n
     \   location /usage {\n        access_log\toff;\n        error_log\toff;\n        return
     404;\n    }\n\n    keepalive_timeout 70;\n\n    add_header Strict-Transport-Security
@@ -57,60 +22,45 @@ data:
     \   proxy_set_header X-Forwarded-Proto $scheme;\n    proxy_hide_header Content-Security-Policy;\n\n
     \   # Legacy files\n    location ^~ /app/files {\n        rewrite ^/app/files(.*)$
     /files$1 permanent;\n    }\n\n    # Legacy workspaces\n    location ^~ /app/workspaces
-    {\n        rewrite ^/app/workspaces(.*)$ /workspaces$1 permanent;\n    }\n\n    #
-    Raptor files\n    location ^~ /rails/active_storage/ {\n        rewrite ^/rails/active_storage/(.*)$
-    /api/rails/active_storage/$1 permanent;\n    }\n\n    include conf.d/include-location-images.conf;\n
-    \   include conf.d/include-location-files.conf;\n    include conf.d/include-location-ff-extension.conf;\n\n
-    \   location /raptor-admin/ {\n\n        if (-f /data/zhe-monitor/maintenance-status)
-    {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
-    {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        proxy_pass http://raptor-admin/;\n
-    \       proxy_http_version 1.1;\n\n        client_max_body_size 30M;\n\n        proxy_redirect
-    off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Connection
-    \"\";\n        proxy_buffering off;\n    }\n\n    location /webhook/ {\n\n        if
-    (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n        }\n
-    \       if (-f /data/zhe-monitor/ghe-status) {\n            return 418;\n        }\n
-    \       if (-f /data/zhe-monitor/license-status) {\n            return 419;\n
-    \       }\n\n        proxy_pass http://webhook/webhook/;\n        proxy_http_version
-    1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header
-    Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header
-    Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /api/socket.io
-    {\n        rewrite ^/api/socket.io(.*)$ /socket.io$1;\n    }\n\n    location /socket.io
+    {\n        rewrite ^/app/workspaces(.*)$ /workspaces$1 permanent;\n    }\n\n    include
+    conf.d/include-location-images.conf;\n    include conf.d/include-location-files.conf;\n
+    \   include conf.d/include-location-ff-extension.conf;\n\n    location /raptor-admin/
     {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return
-    503;\n        }\n        if (-f /data/zhe-monitor/ghe-status) {\n            return
-    418;\n        }\n        if (-f /data/zhe-monitor/license-status) {\n            return
-    419;\n        }\n\n        proxy_pass http://api-socket;\n        proxy_http_version
-    1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header
-    Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header
-    Connection \"upgrade\";\n        proxy_buffering off;\n        proxy_set_header
-    X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n
-    \       proxy_set_header X-NginX-Proxy true;\n        real_ip_header X-Real-IP;\n
-    \   }\n\n    location /cable/ {\n\n        if (-f /data/zhe-monitor/maintenance-status)
-    {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
-    {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        proxy_pass http://action-cable/cable/;\n
+    503;\n        }\n\n        proxy_pass http://raptor-admin/;\n        proxy_http_version
+    1.1;\n\n        client_max_body_size 30M;\n\n        proxy_redirect off;\n        proxy_set_header
+    Host $http_host;\n        proxy_set_header Connection \"\";\n        proxy_buffering
+    off;\n    }\n\n    location /webhook/ {\n\n        if (-f /data/zhe-monitor/maintenance-status)
+    {\n            return 503;\n        }\n\n        proxy_pass http://webhook/webhook/;\n
     \       proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream
     off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade
     $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering
-    off;\n    }\n\n    location /api/ {\n\n        if (-f /data/zhe-monitor/maintenance-status)
-    {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
-    {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        proxy_pass http://api/;\n        proxy_http_version
+    off;\n    }\n\n    location /api/socket.io {\n        rewrite ^/api/socket.io(.*)$
+    /socket.io$1;\n    }\n\n    location /socket.io {\n\n        if (-f /data/zhe-monitor/maintenance-status)
+    {\n            return 503;\n        }\n\n        proxy_pass http://api-socket;\n
+    \       proxy_http_version 1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream
+    off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade
+    $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering
+    off;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header
+    X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-NginX-Proxy
+    true;\n        real_ip_header X-Real-IP;\n    }\n\n    location /cable/ {\n\n
+    \       if (-f /data/zhe-monitor/maintenance-status) {\n            return 503;\n
+    \       }\n\n        proxy_pass http://action-cable/cable/;\n        proxy_http_version
+    1.1;\n\n        proxy_redirect off;\n        proxy_next_upstream off;\n        proxy_set_header
+    Host $http_host;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header
+    Connection \"upgrade\";\n        proxy_buffering off;\n    }\n\n    location /api/
+    {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return
+    503;\n        }\n\n        proxy_pass http://api/;\n        proxy_http_version
     1.1;\n\n        client_max_body_size 100M;\n\n        proxy_redirect off;\n        proxy_next_upstream
     off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade
     $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering
     off;\n    }\n\n    location /upload/ {\n\n        if (-f /data/zhe-monitor/maintenance-status)
-    {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
-    {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        proxy_pass http://api;\n        proxy_http_version
+    {\n            return 503;\n        }\n\n        proxy_pass http://api;\n        proxy_http_version
     1.1;\n\n        client_max_body_size 100M;\n\n        proxy_redirect off;\n        proxy_next_upstream
     off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade
     $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering
     off;\n    }\n\n    location / {\n        add_header X-Robots-Tag \"noindex, nofollow,
     noarchive, nosnippet\";\n\n        if (-f /data/zhe-monitor/maintenance-status)
-    {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
-    {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        proxy_pass http://webapp;\n        proxy_http_version
+    {\n            return 503;\n        }\n\n        proxy_pass http://webapp;\n        proxy_http_version
     1.1;\n\n        client_max_body_size 100M;\n\n        proxy_redirect off;\n        proxy_set_header
     Host $http_host;\n        proxy_set_header Connection \"\";\n        proxy_buffering
     off;\n    }\n}\n"
@@ -231,7 +181,7 @@ data:
   raptoradmin: raptor-admin
   socket: toad-websocket
   webapp: kraken-webapp
-  webhook: raptor-webhook
+  webhook: toad-webhook
 kind: ConfigMap
 metadata:
   labels:
@@ -239,35 +189,6 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: nginx-gateway
   name: zhe-gw-vars
----
-apiVersion: v1
-data:
-  license-status.html: "<!DOCTYPE html>\n<html>\n\n  <head>\n    <title>Zenhub Enterprise
-    License has Expired</title>\n    <style>\n      html {\n        height: 100%\n
-    \     }\n      body {\n        background: #0E1332\n      }\n      #message {
-    \ \n        margin-left: auto;\n        margin-right: auto;\n        margin-top:
-    15%;\n        width: 600px;\n        padding: 30px;\n        padding-left: 50px;\n
-    \       background: linear-gradient(#0E1332, #0E1332) padding-box,\n                    linear-gradient(165deg,#4f57f9,#44c7d1)
-    border-box;\n        border-radius: 50px;\n        border: 5px solid transparent;\n
-    \     }\n      h1, h3 {\n          color: white;\n          font-family: Arial,
-    sans-serif;\n      }\n      h3 {\n        margin-bottom: 0px;\n        color:rgb(233,
-    232, 232);\n        font-weight: 100;\n      }\n      .cog {\n        width: 50px;\n
-    \       height: 50px;\n        border-radius: 50%;\n        border: 5px solid
-    #44c7d1;\n        border-top-color: #10383b;\n        animation: spin 2s infinite
-    linear;\n        margin-left: 543px\n      }\n      @keyframes spin {\n        to
-    {\n          transform: rotate(360deg);\n        }\n      }\n    </style>\n  </head>\n\n
-    \ <body>\n    <div id=\"message\">\n      <h1>Your Zenhub Enterprise License has
-    Expired</h1>\n      <h3>A new license is required to continue using Zenhub Enterprise.
-    If you have any questions, please contact your Zenhub administrator.</h3>\n      <div
-    id=\"cog-container\"><div class=\"cog\"></div></div>\n    </div>\n  </body>\n
-    \ \n</html>\n"
-kind: ConfigMap
-metadata:
-  labels:
-    app.kubernetes.io/component: nginx-gateway
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: nginx-gateway
-  name: zhe-license-status-page
 ---
 apiVersion: v1
 data:
@@ -285,7 +206,7 @@ data:
     #44c7d1;\n        border-top-color: #10383b;\n        animation: spin 2s infinite
     linear;\n        margin-left: 543px\n      }\n      @keyframes spin {\n        to
     {\n          transform: rotate(360deg);\n        }\n      }\n    </style>\n  </head>\n\n
-    \ <body>\n    <div id=\"message\">\n      <h1>Zenhub is down for maintenance</h1>\n
+    \ <body>\n    <div id=\"message\">\n      <h1>Zenhub (or GitHub) is down for maintenance</h1>\n
     \     <h3>Your Zenhub Enterprise administrators are performing scheduled maintenance.
     If you have any questions, please contact your Zenhub administrator.</h3>\n      <div
     id=\"cog-container\"><div class=\"cog\"></div></div>\n    </div>\n  </body>\n
@@ -300,35 +221,90 @@ metadata:
 ---
 apiVersion: v1
 data:
-  ghe-maintenance-monitor.sh: "#!/bin/bash\n# GitHub Enterprise Maintenance Monitor
-    Service V3 - K8s\n# Zenhub (c)\n\n# As well as checking the status of GHES, this
-    script also checks for the status of the LICENSE_MODE and\n# MAINTENANCE_MODE
-    environment variables in order to display a \"Your license has expired\" page
-    or \"Your ZHE\n# is in maintenance mode\" page respectively. \n\nMAINT_FILE=\"/data/zhe-monitor/maintenance-status\"\nLICENSE_FILE=\"/data/zhe-monitor/license-status\"\nGHE_FILE=\"/data/zhe-monitor/ghe-status\"\n\nfunction
-    create_file {\n  echo \"ZHE $1 Enabled: Manual\"\n  echo \"[$(date)] ZHE $1 Enable\"
-    > \"$2\"\n}\n\nfunction delete_file {\n  echo \"ZHE $1 Disabled: ${responseHistory[*]}\"\n
-    \ rm \"$1\"\n}\n\nwhile true; do\n\n  # Handling case when more than one type
-    is true - defaults to maintenance mode.\n  mode_counter=0\n  [[ \"$MAINTENANCE_MODE\"
-    == \"TRUE\" ]] && ((mode_counter+=1))\n  [[ \"$LICENSE_MODE\" == \"TRUE\" ]] &&
-    ((mode_counter+=1))\n\n  if [[ \"$MAINTENANCE_MODE\" == \"TRUE\" ]]; then\n    if
-    [[ $mode_counter -gt 1 ]]; then\n      LICENSE_MODE=\"FALSE\"\n    fi\n    create_file
-    \"Maintenance\" \"$MAINT_FILE\"\n  fi\n\n  if [[ \"$LICENSE_MODE\" == \"TRUE\"
-    ]]; then\n    create_file \"License Maintenance\" \"$LICENSE_FILE\"\n  fi\n\n
-    \ # Delete files if no longer relevant\n  [[ \"$LICENSE_MODE\" == \"FALSE\" &&
-    -e \"$LICENSE_FILE\" ]] && delete_file \"$LICENSE_FILE\"\n  [[ \"$MAINTENANCE_MODE\"
-    == \"FALSE\" && -e \"$MAINT_FILE\" ]] && delete_file \"$MAINT_FILE\"\n\n\n  ##
-    This is GHE dynamic counter for counting to 3 (200) or 3 (503) ################\n
-    \ # If not maint nor license, then set it if issue.\n  if [[ $mode_counter -eq
-    0 ]]; then\n    successfulGHEResponses=0\n    maintenanceGHEResponses=0\n    response=$(curl
-    -s -o /dev/null -H \"Cache-Control: no-cache\" -w \"%{http_code}\" \"$GITHUB_SERVER_ADDRESS/status\")\n
-    \   responseHistory[0]=${responseHistory[1]}\n    responseHistory[1]=${responseHistory[2]}\n
-    \   responseHistory[2]=$response\n    for i in \"${responseHistory[@]}\"; do\n
-    \     case $i in\n      200) ((successfulGHEResponses+=1));;\n      503) ((maintenanceGHEResponses+=1));;\n
-    \     *) echo \"The response ($i) is ignored\";;\n      esac\n    done\n    if
-    [[ $successfulGHEResponses -eq 3 && -e \"$GHE_FILE\" ]]; then\n      delete_file
-    \"$GHE_FILE\"\n    elif [[ $maintenanceGHEResponses -eq 3 && ! -e \"$GHE_FILE\"
-    ]]; then\n      create_file \"GHE Maintenance\" \"$GHE_FILE\"\n    fi\n    sleep
-    \"${WAITING_TIME:-30}\"\n  fi\ndone"
+  ghe-maintenance-monitor.sh: |-
+    #!/bin/bash
+    # GitHub Enterprise Maintenance Monitor Service V2 - K8s
+    # Zenhub (c)
+
+    DIR_FILE="/data/zhe-monitor/maintenance-status"
+
+    function create_file {
+      echo "ZHE Maintenance Enabled: Manual"
+      echo "[$(date)] ZHE maintenance Enable" > $DIR_FILE
+    }
+
+    function delete_file {
+      echo "ZHE Maintenance Disabled: ${responseHistory[*]}"
+      rm $DIR_FILE
+    }
+
+    ### --- MAIN BLOCK --- ###
+    while true; do
+
+      if [ "$MAINTENANCE_MODE" == "TRUE" ]
+      then
+        create_file
+
+      else
+
+        # make sure the test file is not present
+        # if [ -e $DIR_FILE ]; then
+
+        #   rm $DIR_FILE
+
+        # fi
+
+        # Init: Because we need it for later, Reset: Because we no longer need it at the end of the iteration
+        goodCode=0;
+        maintCode=0;
+        response=$(curl -s -o /dev/null -H "Cache-Control: no-cache" -w "%{http_code}" "$GITHUB_SERVER_ADDRESS"/status)
+
+        # Replaces the array values for the last three HTTP codes
+        responseHistory[0]=${responseHistory[1]};
+        responseHistory[1]=${responseHistory[2]};
+        responseHistory[2]=$response;
+
+        for i in "${responseHistory[@]}"; do
+
+          case $i in
+
+            200) let goodCode=goodCode+1;;
+            503) let maintCode=maintCode+1;;
+            *) echo "The response ($i) is ignored";;
+
+          esac
+
+        done
+
+        echo "G:$goodCode // M:$maintCode // A:${responseHistory[*]}";
+
+        if [ $goodCode -eq 3 ]; then
+
+          # if file exists -> remove file to disable maintenance
+          # if file DNE -> don't do anything
+          if [ -e $DIR_FILE ]; then
+
+            delete_file
+
+          fi
+
+        elif [ $maintCode -eq 3 ]; then
+
+          # if file exists -> don't do anything
+          # if file DNE -> create file to enable maintenance
+          if [ ! -e $DIR_FILE ]; then
+
+            create_file
+
+          fi
+
+        fi
+
+      fi
+
+    sleep ${WAITING_TIME:-30};
+
+    done
 kind: ConfigMap
 metadata:
   labels:

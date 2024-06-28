@@ -20,7 +20,6 @@ export `grep -hir "w3id_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "azure_ad_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "ldap_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "saml_enabled=" kustomization.yaml | awk '{print $2}'`
-export `grep -hir "notion_enabled=" kustomization.yaml | awk '{print $2}'`
 
 zhe_hostname="$subdomain_suffix.$domain_tld"
 https_zhe_hostname="https://$zhe_hostname"
@@ -33,7 +32,6 @@ auth_options_w3id=$w3id_enabled
 auth_options_azure_ad=$azure_ad_enabled
 auth_options_ldap=$ldap_enabled
 auth_options_saml=$saml_enabled
-feat_options_notion=$notion_enabled
 
 function is_gnu_sed(){
   sed --version >/dev/null 2>&1
@@ -82,6 +80,3 @@ sed_wrap "s/\"SAML\": .*,/\"SAML\": $auth_options_saml,/g" base/kraken/configmap
 # Adding a comma will break firefox extension publishing https://github.com/ZenHubHQ/devops/issues/1889
 # If adding a new auth type, keep Zenhub at the bottom of the list
 sed_wrap "s/\"Zenhub\": .*/\"Zenhub\": $auth_options_email_pw/g" base/kraken/configmaps.yaml
-
-# Replace integration values in base/kraken/configmaps.yaml
-sed_wrap "s/\"isNotionIntegrationEnabled\": .*/\"isNotionIntegrationEnabled\": $feat_options_notion,/g" base/kraken/configmaps.yaml

@@ -88,8 +88,6 @@ spec:
               key: w3id_issuer_url
               name: configuration
               optional: true
-        - name: AUTHV2_W3ID_CHECK_ACCESS_INTERVAL
-          value: "1800"
         - name: AUTHV2_AZURE_AD_ENABLED
           valueFrom:
             configMapKeyRef:
@@ -185,29 +183,16 @@ spec:
             configMapKeyRef:
               key: github_app_id
               name: configuration
-        - name: IS_NOTION_INTEGRATION_ENABLED
+        - name: OTEL_LOG_LEVEL
           valueFrom:
             configMapKeyRef:
-              key: notion_enabled
-              name: configuration
-              optional: true
-        - name: NOTION_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: notion_client_id
-              name: configuration
-              optional: true
-        - name: NOTION_CLIENT_SECRET
+              key: otel_log_level
+              name: raptor
+        - name: AUTH0_LOG_STREAM_TOKEN
           valueFrom:
             secretKeyRef:
-              key: notion_client_secret
-              name: configuration
-              optional: true
-        - name: AI_FEATURES_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: ai_features_enabled
-              name: configuration
+              key: auth0_log_stream_token
+              name: raptor-api
               optional: true
         - name: RAILS_MAX_THREADS
           valueFrom:
@@ -226,6 +211,8 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: status.hostIP
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://$(HOST_IP):4318
         - name: APP_SERVICE
           valueFrom:
             fieldRef:
@@ -234,6 +221,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['app.kubernetes.io/instance']
+        - name: OTEL_SERVICE_NAME
+          value: $(APP_DEPLOY_ENV)-$(APP_SERVICE)
         - name: RAILS_ENV
           valueFrom:
             configMapKeyRef:
@@ -356,16 +345,6 @@ spec:
             configMapKeyRef:
               key: hubspot_paid_user_form_guid
               name: raptor
-        - name: HUBSPOT_ZORG_OBJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_zorg_object_id
-              name: raptor
-        - name: HUBSPOT_ZORG_MEMBER_ASSOCIATION_TYPE_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_zorg_member_association_type_id
-              name: raptor
         - name: AUTH_ISSUER_URLS
           valueFrom:
             configMapKeyRef:
@@ -375,6 +354,16 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: auth_jwks_url
+              name: raptor
+        - name: AUTH0_TENANT
+          valueFrom:
+            configMapKeyRef:
+              key: auth0_tenant
+              name: raptor
+        - name: AUTH0_DB_CONNECTION_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: auth0_db_connection_name
               name: raptor
         - name: MAILGUN_DOMAIN
           valueFrom:
@@ -457,10 +446,10 @@ spec:
             configMapKeyRef:
               key: google_oauth2_client_id
               name: raptor
-        - name: SLACK_CLIENT_ID
+        - name: NOTION_CLIENT_ID
           valueFrom:
             configMapKeyRef:
-              key: slack_client_id
+              key: notion_client_id
               name: raptor
         - name: X_FORWARDED_FOR_TRUSTED_PROXIES
           valueFrom:
@@ -468,70 +457,10 @@ spec:
               key: x_forwarded_for_trusted_proxies
               name: raptor
               optional: true
-        - name: CLICKHOUSE_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: clickhouse_enabled
-              name: raptor
-              optional: true
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: AI_LABELS_ENDPOINT
-          valueFrom:
-            configMapKeyRef:
-              key: ai_labels_endpoint
-              name: raptor
-              optional: true
-        - name: AI_LABELS_MODEL
-          valueFrom:
-            configMapKeyRef:
-              key: ai_labels_model
-              name: raptor
-              optional: true
-        - name: AI_SPRINT_REVIEW_ENDPOINT
-          valueFrom:
-            configMapKeyRef:
-              key: ai_sprint_review_endpoint
-              name: raptor
-              optional: true
-        - name: AI_SPRINT_REVIEW_MODEL
-          valueFrom:
-            configMapKeyRef:
-              key: ai_sprint_review_model
-              name: raptor
-              optional: true
-        - name: AI_ACCEPTANCE_CRITERIA_ENDPOINT
-          valueFrom:
-            configMapKeyRef:
-              key: ai_acceptance_criteria_endpoint
-              name: raptor
-              optional: true
-        - name: AI_ACCEPTANCE_CRITERIA_MODEL
-          valueFrom:
-            configMapKeyRef:
-              key: ai_acceptance_criteria_model
-              name: raptor
-              optional: true
-        - name: AZURE_PRIVATE_OPENAI_ENDPOINT
-          valueFrom:
-            configMapKeyRef:
-              key: azure_private_openai_endpoint
-              name: raptor
-              optional: true
-        - name: AZURE_PRIVATE_OPENAI_ENDPOINT_16K
-          valueFrom:
-            configMapKeyRef:
-              key: azure_private_openai_endpoint_16k
-              name: raptor
-              optional: true
-        - name: AZURE_PRIVATE_OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              key: azure_private_openai_api_key
-              name: raptor
-              optional: true
         - name: SIDEKIQ_REDIS_URL
           valueFrom:
             secretKeyRef:
@@ -562,20 +491,10 @@ spec:
             secretKeyRef:
               key: github_webhooks_secret
               name: internal
-        - name: TOKEN_VERIFICATION_GITHUB_ACCESS_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: token_verification_github_access_token
-              name: internal
         - name: INTERNAL_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
               key: internal_auth_token
-              name: internal
-        - name: INTERNAL_INTEGRATION_AUTH_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: internal_integration_auth_token
               name: internal
         - name: LD_SDK_KEY
           valueFrom:
@@ -636,6 +555,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: hubspot_access_token
+              name: raptor
+        - name: AUTH_ZENHUB_APP_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: auth_zenhub_app_client_id
               name: raptor
         - name: AUTH_MANAGEMENT_API_CLIENT_ID
           valueFrom:
@@ -698,15 +622,10 @@ spec:
             secretKeyRef:
               key: google_oauth2_client_secret
               name: raptor
-        - name: SLACK_CLIENT_SECRET
+        - name: NOTION_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              key: slack_client_secret
-              name: raptor
-        - name: CLICKHOUSE_URL
-          valueFrom:
-            secretKeyRef:
-              key: clickhouse_url
+              key: notion_client_secret
               name: raptor
         image: raptor-backend
         imagePullPolicy: IfNotPresent
