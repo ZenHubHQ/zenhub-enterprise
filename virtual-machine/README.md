@@ -430,7 +430,7 @@ If you need to know how to update existing certificates without downtime, see se
 
 #### 3.4.1 Zenhub Application TLS
 
-Generate a certificate for your main application domain, like `https://<subdomain_suffix>.<domain_tld>`
+Generate a passwordless certificate for your main application domain, like `https://<subdomain_suffix>.<domain_tld>`
 
 Copy the certificate and key pair to the following path:
 
@@ -438,19 +438,23 @@ Copy the certificate and key pair to the following path:
 
 `${ZENHUB_HOME}/configuration/ssl/tls.crt` - certificate
 
+> ⚠️ **NOTE:** The application comes with self-signed certificates set up by default. If you want to provide your own certificates, you can safely replace the self-signed certificates with your own.
+
 > ⚠️ **NOTE:** The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
 
-> ⚠️ **NOTE:** Zenhub will automatically generate a new self-signed certificate if `ssl_self_signed` is set to `true` in the configuration file. Set `ssl_self_signed` to `false` if you want to provide your own self-signed certificates.
+> ⚠️ **NOTE:** Zenhub will automatically generate a new self-signed certificate if `ssl_self_signed` is set to `true` in the configuration file. Set `ssl_self_signed` to `false` or leave it unset if you want to provide your own self-signed certificates.
 
 #### 3.4.2 Developer Site TLS
 
-Generate a certificate for your developer site domain, like `https://developers-<subdomain_suffix>.<domain_tld>`
+Generate a passwordless certificate for your developer site domain, like `https://developers-<subdomain_suffix>.<domain_tld>`
 
 Copy the certificate and key pair to the following path:
 
 `${ZENHUB_HOME}/configuration/ssl/developer-site/tls.key` - certificate private key
 
 `${ZENHUB_HOME}/configuration/ssl/developer-site/tls.crt` - certificate
+
+> ⚠️ **NOTE:** The application comes with self-signed certificates set up by default. If you want to provide your own certificates, you can safely replace the self-signed certificates with your own.
 
 > ⚠️ **NOTE:** The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
 
@@ -498,7 +502,7 @@ To successfully upgrade, ensure you have sufficient disk space available on your
 
 ### 5.2 Preparing to Upgrade
 
-⚠️ **NOTE:** Starting in version 4.2.0, you can now upgrade from two minor versions behind the latest release. For example, if the latest release is 4.2.0, you can upgrade from 4.0.X or 4.1.X.
+⚠️ **NOTE:** Starting in version 4.2, you can now upgrade from two minor versions behind the latest release. For example, if the latest release is 4.2.8, you can upgrade from 4.0.X or 4.1.X.
 
 1. Before upgrading, you should always check the release notes for the version you are upgrading to. You can find the release notes for each version in the [releases](https://github.com/ZenHubHQ/zenhub-enterprise/releases) section of this repository. You must ensure you are upgrading to a version that is compatible with your GitHub Enterprise Server version. The release notes list the GitHub Enterprise Server versions that are compatible with each Zenhub Enterprise release.
 
@@ -1057,7 +1061,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.2.0`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.2.1`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site

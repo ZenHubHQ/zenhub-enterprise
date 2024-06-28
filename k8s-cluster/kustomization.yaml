@@ -32,32 +32,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 4.2.0
+  app.kubernetes.io/version: 4.2.1
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-4.2.0
+    newTag: zhe-4.2.1
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-4.2.0
+    newTag: zhe-4.2.1
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-4.2.0
+    newTag: zhe-4.2.1
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-4.2.0
+    newTag: zhe-4.2.1
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-4.2.0
+    newTag: zhe-4.2.1
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-4.2.0
+    newTag: zhe-4.2.1
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-4.2.0
+    newTag: zhe-4.2.1
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
