@@ -238,6 +238,24 @@ spec:
               key: azure_private_openai_api_key
               name: raptor
               optional: true
+        - name: AZURE_PRIVATE_OPENAI_ENDPOINT_GPT4
+          valueFrom:
+            configMapKeyRef:
+              key: azure_private_openai_endpoint_gpt4
+              name: raptor
+              optional: true
+        - name: AZURE_PRIVATE_OPENAI_GPT4_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: azure_private_openai_gpt4_api_key
+              name: raptor
+              optional: true
+        - name: PROMETHEUS_EXPORTER_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: prometheus_exporter_host
+              name: raptor
+              optional: true
         - name: CLICKHOUSE_ENABLED
           valueFrom:
             configMapKeyRef:
@@ -268,11 +286,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: lockbox_master_key
-              name: internal
-        - name: GITHUB_TOKEN_VALUE_KEY
-          valueFrom:
-            secretKeyRef:
-              key: github_token_value_key
               name: internal
         - name: GITHUB_WEBHOOKS_SECRET
           valueFrom:

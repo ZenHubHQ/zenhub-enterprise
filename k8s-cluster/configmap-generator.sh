@@ -17,7 +17,7 @@ export `grep -hir "chrome_extension_webstore_url=" kustomization.yaml | awk '{pr
 export `grep -hir "graphiql_explorer_subdomain_prefix=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "email_pw_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "w3id_enabled=" kustomization.yaml | awk '{print $2}'`
-export `grep -hir "azure_ad_enabled=" kustomization.yaml | awk '{print $2}'`
+export `grep -hir "entra_id_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "ldap_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "saml_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "notion_enabled=" kustomization.yaml | awk '{print $2}'`
@@ -30,7 +30,7 @@ https_admin_zhe_hostname="https://$admin_zhe_hostname"
 cable_allowed_origins="$https_zhe_hostname, $github_hostname, null"
 auth_options_email_pw=$email_pw_enabled
 auth_options_w3id=$w3id_enabled
-auth_options_azure_ad=$azure_ad_enabled
+auth_options_entra_id=$entra_id_enabled
 auth_options_ldap=$ldap_enabled
 auth_options_saml=$saml_enabled
 feat_options_notion=$notion_enabled
@@ -75,7 +75,7 @@ sed_wrap "s/%%zhe_hostname%%/$zhe_hostname/g" base/kustomization.yaml
 
 # Replace W3ID value in base/kraken/configmaps.yaml
 sed_wrap "s/\"W3ID\": .*,/\"W3ID\": $auth_options_w3id,/g" base/kraken/configmaps.yaml
-sed_wrap "s/\"AzureAD\": .*,/\"AzureAD\": $auth_options_azure_ad,/g" base/kraken/configmaps.yaml
+sed_wrap "s/\"AzureAD\": .*,/\"AzureAD\": $auth_options_entra_id,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"LDAP\": .*,/\"LDAP\": $auth_options_ldap,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"SAML\": .*,/\"SAML\": $auth_options_saml,/g" base/kraken/configmaps.yaml
 # IMPORTANT: Zenhub auth is last in the list and does not contain a comma

@@ -86,6 +86,12 @@ kubectl top nodes >> $overview_file
 echo "### Pods Not Running" >> $overview_file
 kubectl get pods --all-namespaces --field-selector=status.phase!=Running | grep -v Completed >> $overview_file
 
+# Get the journalctl logs from the VM for the current and previous boot
+journalctl_dir="$tempdir/journalctl"
+mkdir $journalctl_dir
+journalctl -b 0 > $journalctl_dir/boot-current.log
+journalctl -b -1 > $journalctl_dir/boot-previous.log
+
 echo "### Creating Tar archive"
 
 # Saves to /opt/zenhub/support-bundle/ on VM or the current directory on K8s

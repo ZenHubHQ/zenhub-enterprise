@@ -87,6 +87,10 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: status.hostIP
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         - name: APP_SERVICE
           valueFrom:
             fieldRef:
@@ -217,15 +221,35 @@ spec:
             configMapKeyRef:
               key: hubspot_paid_user_form_guid
               name: raptor
+        - name: HUBSPOT_PMF_SURVEY_FORM_GUID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_pmf_survey_form_guid
+              name: raptor
         - name: HUBSPOT_ZORG_OBJECT_ID
           valueFrom:
             configMapKeyRef:
               key: hubspot_zorg_object_id
               name: raptor
-        - name: HUBSPOT_ZORG_MEMBER_ASSOCIATION_TYPE_ID
+        - name: HUBSPOT_UNLICENSED_MEMBER_ASSOCIATION_TYPE_ID
           valueFrom:
             configMapKeyRef:
-              key: hubspot_zorg_member_association_type_id
+              key: hubspot_unlicensed_member_association_type_id
+              name: raptor
+        - name: HUBSPOT_LICENSED_USER_ASSOCIATION_TYPE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_licensed_user_association_type_id
+              name: raptor
+        - name: HUBSPOT_EXTERNAL_USER_ASSOCIATION_TYPE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_external_user_association_type_id
+              name: raptor
+        - name: HUBSPOT_ADMIN_ASSOCIATION_TYPE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_admin_association_type_id
               name: raptor
         - name: AUTH_ISSUER_URLS
           valueFrom:
@@ -340,10 +364,6 @@ spec:
               key: clickhouse_enabled
               name: raptor
               optional: true
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         - name: AI_LABELS_ENDPOINT
           valueFrom:
             configMapKeyRef:
@@ -392,10 +412,28 @@ spec:
               key: azure_private_openai_endpoint_16k
               name: raptor
               optional: true
+        - name: AZURE_PRIVATE_OPENAI_ENDPOINT_GPT4
+          valueFrom:
+            configMapKeyRef:
+              key: azure_private_openai_endpoint_gpt4
+              name: raptor
+              optional: true
         - name: AZURE_PRIVATE_OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
               key: azure_private_openai_api_key
+              name: raptor
+              optional: true
+        - name: AZURE_PRIVATE_OPENAI_GPT4_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: azure_private_openai_gpt4_api_key
+              name: raptor
+              optional: true
+        - name: PROMETHEUS_EXPORTER_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: prometheus_exporter_host
               name: raptor
               optional: true
         - name: SIDEKIQ_REDIS_URL
@@ -417,11 +455,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: lockbox_master_key
-              name: internal
-        - name: GITHUB_TOKEN_VALUE_KEY
-          valueFrom:
-            secretKeyRef:
-              key: github_token_value_key
               name: internal
         - name: GITHUB_WEBHOOKS_SECRET
           valueFrom:
@@ -589,8 +622,8 @@ spec:
         name: raptor-sidekiq-worker
         resources:
           limits:
-            cpu: 550m
+            cpu: 1200m
             memory: 1500Mi
           requests:
-            cpu: 550m
+            cpu: 800m
             memory: 1000Mi

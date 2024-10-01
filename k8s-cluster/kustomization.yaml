@@ -32,32 +32,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 4.2.1
+  app.kubernetes.io/version: 4.3.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-4.2.1
+    newTag: zhe-4.3.0
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-4.2.1
+    newTag: zhe-4.3.0
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-4.2.1
+    newTag: zhe-4.3.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-4.2.1
+    newTag: zhe-4.3.0
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-4.2.1
+    newTag: zhe-4.3.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-4.2.1
+    newTag: zhe-4.3.0
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-4.2.1
+    newTag: zhe-4.3.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -141,11 +141,11 @@ configMapGenerator:
       # - w3id_default_endpoint_url=<your_default_endpoint> # e.g. https://acme.verify.ibm.com/v1.0/endpoint/default
       # - w3id_issuer_url=<your_issuer_url> # e.g. https://acme.verify.ibm.com/oidc/endpoint/default
 
-      # Azure AD authentication configuration
-      # [EDIT] (optional) Change azure_ad_enabled to true, then uncomment and fill out the rest of the options to enable
-      - azure_ad_enabled=false
-      # - azure_ad_client_id=<your_client_id> # e.g. 12345678-abcd-1234-abcd-1234567890ab
-      # - azure_ad_tenant_id=<your_tenant_id> # e.g. abcdefgh-4321-abcd-4321-abcdefgh1234
+      # Entra ID authentication configuration
+      # [EDIT] (optional) Change entra_id_enabled to true, then uncomment and fill out the rest of the options to enable
+      - entra_id_enabled=false
+      # - entra_id_client_id=<your_client_id> # e.g. 12345678-abcd-1234-abcd-1234567890ab
+      # - entra_id_tenant_id=<your_tenant_id> # e.g. abcdefgh-4321-abcd-4321-abcdefgh1234
 
       # LDAP authentication configuration
       # [EDIT] (optional) Change ldap_enabled to true, then uncomment and fill out the rest of the options to enable
@@ -208,8 +208,8 @@ secretGenerator:
       - admin_ui_pass=<some_pass>
       # [EDIT] (optional) Uncomment and fill to enable W3ID authentication
       # - w3id_client_secret=<your_client_secret> # e.g. U75zD5Zet4
-      # [EDIT] (optional) Uncomment and fill to enable Azure AD authentication
-      # - azure_ad_client_secret=<your_client_secret> # e.g. abcd12~efgh567ijkl890mnopq123rstu456vwxyz
+      # [EDIT] (optional) Uncomment and fill to enable Entra ID authentication
+      # - entra_id_client_secret=<your_client_secret> # e.g. abcd12~efgh567ijkl890mnopq123rstu456vwxyz
       # [EDIT] (optional) Uncomment and fill to enable LDAP authentication
       # - ldap_bind_password=<your_ldap_bind_password>
       # [EDIT] (optional) Uncomment and fill to enable Notion integration
