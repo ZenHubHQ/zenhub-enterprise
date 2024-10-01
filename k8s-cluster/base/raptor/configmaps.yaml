@@ -19,7 +19,9 @@ metadata:
 ---
 apiVersion: v1
 data:
-  action_cable_workers_pool_size: "2"
+  action_cable_workers_pool_size: "7"
+  rails_max_threads: "8"
+  web_concurrency: "4"
 kind: ConfigMap
 metadata:
   name: raptor-cable
@@ -84,10 +86,14 @@ data:
   github_html_url: $(github_hostname)
   github_webhook_enabled: "true"
   google_oauth2_client_id: ""
+  hubspot_admin_association_type_id: ""
+  hubspot_external_user_association_type_id: ""
+  hubspot_licensed_user_association_type_id: ""
   hubspot_paid_user_form_guid: ""
   hubspot_platform_signup_form_guid: ""
+  hubspot_pmf_survey_form_guid: ""
   hubspot_portal_id: ""
-  hubspot_zorg_member_association_type_id: ""
+  hubspot_unlicensed_member_association_type_id: ""
   hubspot_zorg_object_id: ""
   is_enterprise: "true"
   is_upload_file_to_local: "false"

@@ -287,11 +287,6 @@ spec:
             secretKeyRef:
               key: internal_auth_token
               name: internal
-        - name: RAPTOR_SECRET_KEY_BASE
-          valueFrom:
-            secretKeyRef:
-              key: secret_key_base
-              name: internal
         - name: GITHUB_APP_SECRET
           valueFrom:
             secretKeyRef:
@@ -301,11 +296,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: ghwebhook_invite_code
-              name: toad
-        - name: LAUNCHDARKLY_SDK_KEY
-          valueFrom:
-            secretKeyRef:
-              key: launchdarkly_sdk_key
               name: toad
         - name: SLACK_WEBHOOK
           valueFrom:
@@ -391,10 +381,10 @@ spec:
         resources:
           limits:
             cpu: 600m
-            memory: 450Mi
+            memory: 1000Mi
           requests:
-            cpu: 200m
-            memory: 410Mi
+            cpu: 300m
+            memory: 600Mi
       initContainers:
       - command:
         - sh

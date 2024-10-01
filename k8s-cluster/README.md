@@ -100,7 +100,7 @@ You will need to [set up an OAuth App](https://docs.github.com/en/developers/app
 
 To get started with Zenhub, you must have an existing Kubernetes cluster set up. You should:
 
-- Be using Kubernetes (>= 1.27).
+- Be using Kubernetes (>= 1.28).
 - Have `kubectl` installed locally with credentials to access the cluster.
 - Have [`kustomize`](https://kustomize.io/) installed locally (>= 4.5.7).
 - Create a dedicated Kubernetes namespace. Grant your user full access to that namespace.
@@ -143,7 +143,7 @@ Resources required:
 - IAM user `access_key_secret`
 - Bucket policy or permissions allowing bucket `list` and objects `get` from Kubernetes nodes
 
-> ⚠️ **NOTE:** At the moment, only AWS S3 API is supported for buckets. S3-compatible APIs (such as IBM Cloud's Object Storage) should also work.
+> ⚠️ **NOTE:** At the moment, only AWS S3 API is supported for buckets. S3-compatible APIs should also work.
 
 To access and write these objects Zenhub also requires CLI/API credentials (`access_key_id`/`access_key_secret` or similar) for a IAM user with at least read and write access.
 
@@ -901,7 +901,7 @@ To obtain `w3id_default_endpoint_url` and `w3id_issuer_url`, go to **Application
 
 - This authentication option allows users to sign in through Microsoft Entra ID
 - An Microsoft Entra ID tenant is required to use this form of authentication
-- It can be enabled by following instructions for `azure_ad_enabled` in the main `kustomization.yaml`
+- It can be enabled by following instructions for `entra_id_enabled` in the main `kustomization.yaml`
 
 To configure your Microsoft Entra ID Application for Zenhub, you will need to do the following:
 
@@ -925,18 +925,18 @@ Start by going to the Entra ID portal in Microsoft Azure. The URL for this will 
 
 There are three values that need to be obtained from your Microsoft Entra ID Application to enable Microsoft Entra ID authentication via your kustomization.yaml file:
 
-- `azure_ad_client_id`
-- `azure_ad_client_secret`
-- `azure_ad_tenant_id`
+- `entra_id_client_id`
+- `entra_id_client_secret`
+- `entra_id_tenant_id`
 
-To obtain `azure_ad_client_id` and `azure_ad_tenant_id`, go to **App registrations > All applications > Your application > Overview**
+To obtain `entra_id_client_id` and `entra_id_tenant_id`, go to **App registrations > All applications > Your application > Overview**
 
-- The value for `azure_ad_client_id` will be the value for `Application (client) ID` found on the page.
-- The value for `azure_ad_tenant_id` will be the value for `Directory (tenant) ID` found on the page.
+- The value for `entra_id_client_id` will be the value for `Application (client) ID` found on the page.
+- The value for `entra_id_tenant_id` will be the value for `Directory (tenant) ID` found on the page.
 
-To obtain `azure_ad_client_secret`, go to **App registrations > All applications > Your application > Certificates & secrets**
+To obtain `entra_id_client_secret`, go to **App registrations > All applications > Your application > Certificates & secrets**
 
-- The value for `azure_ad_client_secret` will be the value for `Value` found on the page. Click the copy button to copy the value to your clipboard.
+- The value for `entra_id_client_secret` will be the value for `Value` found on the page. Click the copy button to copy the value to your clipboard.
 
 > ⚠️ **NOTE:** The login option will say Azure AD instead of Microsoft Entra ID since that name change was recent and not yet reflected in the Zenhub UI.
 
