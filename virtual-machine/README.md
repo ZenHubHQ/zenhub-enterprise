@@ -29,6 +29,7 @@
   - [3.4 SSL/TLS Ingress Certificates](#34-ssltls-ingress-certificates)
     - [3.4.1 Zenhub Application TLS](#341-zenhub-application-tls)
     - [3.4.2 Developer Site TLS](#342-developer-site-tls)
+  - [3.5 Private DNS](#35-private-dns)
 - [4. Application Deployment](#4-application-deployment)
   - [4.1 Run the Configuration Tool](#41-run-the-configuration-tool)
   - [4.2 Sanity Check](#42-sanity-check)
@@ -86,6 +87,10 @@
   - [12.3 Install the AI Components](#123-install-the-ai-components)
   - [12.4 AI Features Configuration](#124-ai-features-configuration)
   - [12.5 Verify the AI Setup is Complete](#125-verify-the-ai-setup-is-complete)
+- [13. Monitoring (Experimental)](#13-monitoring-experimental)
+  - [13.1 Install/Uninstall the Monitoring Components](#131-installuninstall-the-monitoring-components)
+  - [13.2 Accessing Grafana and Prometheus](#132-accessing-grafana-and-prometheus)
+  - [13.3 Metrics Storage Information](#133-metrics-storage-information)
 
 ## 1. Getting Started
 
@@ -271,11 +276,11 @@ zenhub_configuration:
   # AUTHV2_W3ID_CLIENT_SECRET:
   # AUTHV2_W3ID_DEFAULT_ENDPOINT_URL:
   # AUTHV2_W3ID_ISSUER_URL:
-## (Optional) Configure Azure AD as an authentication provider
-  # AUTHV2_AZURE_AD_ENABLED: true
-  # AUTHV2_AZURE_AD_CLIENT_ID:
-  # AUTHV2_AZURE_AD_CLIENT_SECRET:
-  # AUTHV2_AZURE_AD_TENANT_ID:
+## (Optional) Configure Entra ID as an authentication provider
+  # AUTHV2_ENTRA_ID_ENABLED: true
+  # AUTHV2_ENTRA_ID_CLIENT_ID:
+  # AUTHV2_ENTRA_ID_CLIENT_SECRET:
+  # AUTHV2_ENTRA_ID_TENANT_ID:
 ## (Optional) Configure LDAP as an authentication provider
   # AUTHV2_LDAP_ENABLED: true
   # AUTHV2_LDAP_HOST:
@@ -373,12 +378,13 @@ Zenhub Enterprise 4.0 and greater supports several external authentication metho
 - `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL`: W3ID default endpoint URL. Example: `https://acme.verify.ibm.com/v1.0/endpoint/default`
 - `AUTHV2_W3ID_ISSUER_URL`: W3ID issuer URL. Example: `https://acme.verify.ibm.com/oidc/endpoint/default`
 
-###### Azure AD
+###### ENTRA ID (Formerly Azure AD)
+> ⚠️ **NOTE:** If you are performing an upgrade and have previously configured Entra ID using `AUTHV2_AZURE_AD_*`, no changes to your configuration file are required. Your existing configuration will remain compatible and continue to function as expected.
 
-- `AUTHV2_AZURE_AD_ENABLED`: Enables Azure AD as an authentication provider
-- `AUTHV2_AZURE_AD_CLIENT_ID`: Azure AD client ID. Example: `12345678-abcd-1234-abcd-1234567890ab`
-- `AUTHV2_AZURE_AD_CLIENT_SECRET`: Azure AD client secret. Example: `U75zD5Zet4`
-- `AUTHV2_AZURE_AD_TENANT_ID`: Azure AD tenant ID. Example: `abcdefgh-4321-abcd-4321-abcdefgh1234`
+- `AUTHV2_ENTRA_ID_ENABLED`: Enables Entra ID as an authentication provider
+- `AUTHV2_ENTRA_ID_CLIENT_ID`: Entra ID client ID. Example: `12345678-abcd-1234-abcd-1234567890ab`
+- `AUTHV2_ENTRA_ID_CLIENT_SECRET`: Entra ID client secret. Example: `U75zD5Zet4`
+- `AUTHV2_ENTRA_ID_TENANT_ID`: Entra ID tenant ID. Example: `abcdefgh-4321-abcd-4321-abcdefgh1234`
 
 ###### LDAP
 
@@ -457,6 +463,30 @@ Copy the certificate and key pair to the following path:
 > ⚠️ **NOTE:** The application comes with self-signed certificates set up by default. If you want to provide your own certificates, you can safely replace the self-signed certificates with your own.
 
 > ⚠️ **NOTE:** The certificate and key must be named `tls.crt` and `tls.key` as in the example above.
+
+### 3.5 Private DNS
+
+When using a private DNS server, it is necessary to update the CoreDNS configuration for K3S to resolve private addresses. The Zenhub Enterprise VM sets the manifests directory for the K3S server at `/opt/k3s/server/manifests`. CoreDNS, which is utilized by K3S, automatically detects and applies configurations from a ConfigMap named `coredns-custom`. The filename for the Kubernetes resource specification can be any name, provided it resides within this directory.
+
+Here is an example of the `coredns-custom` Kubernetes spec.
+In this configuration, upstream queries for the private domains zenhub.app and zenhub.info will be forwarded to 169.254.169.254.
+
+```bash
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  private.server: |
+    zenhub.app:53 {
+      forward . 169.254.169.254
+    }
+    zenhub.info:53 { 
+      forward . 169.254.169.254
+    }
+```
+
 
 ## 4. Application Deployment
 
@@ -1061,7 +1091,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.2.1`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.3.0`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
@@ -1150,7 +1180,7 @@ In addition to these configuration values, there will be one more configuration 
 
 - This authentication option allows users to sign in through Microsoft Entra ID
 - An Microsoft Entra ID tenant is required to use this form of authentication
-- It can be enabled by setting the [Azure AD](#azure-ad) optional configuration
+- It can be enabled by setting the [Entra ID](#entra-ad) optional configuration
 
 To configure your Microsoft Entra ID Application for Zenhub, you will need to do the following:
 
@@ -1174,18 +1204,18 @@ Start by going to the Entra ID portal in Microsoft Azure. The URL for this will 
 
 There are three values that need to be obtained from your Microsoft Entra ID Application to enable Microsoft Entra ID authentication:
 
-- `AUTHV2_AZURE_AD_CLIENT_ID`
-- `AUTHV2_AZURE_AD_CLIENT_SECRET`
-- `AUTHV2_AZURE_AD_TENANT_ID`
+- `AUTHV2_ENTRA_ID_CLIENT_ID`
+- `AUTHV2_ENTRA_ID_CLIENT_SECRET`
+- `AUTHV2_ENTRA_ID_TENANT_ID`
 
-To obtain `AUTHV2_AZURE_AD_CLIENT_ID` and `AUTHV2_AZURE_AD_TENANT_ID`, go to **App registrations > All applications > Your application > Overview**
+To obtain `AUTHV2_ENTRA_ID_CLIENT_ID` and `AUTHV2_ENTRA_ID_TENANT_ID`, go to **App registrations > All applications > Your application > Overview**
 
-- The value for `AUTHV2_AZURE_AD_CLIENT_ID` will be the value for `Application (client) ID` found on the page.
-- The value for `AUTHV2_AZURE_AD_TENANT_ID` will be the value for `Directory (tenant) ID` found on the page.
+- The value for `AUTHV2_ENTRA_ID_CLIENT_ID` will be the value for `Application (client) ID` found on the page.
+- The value for `AUTHV2_ENTRA_ID_TENANT_ID` will be the value for `Directory (tenant) ID` found on the page.
 
-To obtain `AUTHV2_AZURE_AD_CLIENT_SECRET`, go to **App registrations > All applications > Your application > Certificates & secrets**
+To obtain `AUTHV2_ENTRA_ID_CLIENT_SECRET`, go to **App registrations > All applications > Your application > Certificates & secrets**
 
-- The value for `AUTHV2_AZURE_AD_CLIENT_SECRET` will be the value for `Value` found on the page. Click the copy button to copy the value to your clipboard.
+- The value for `AUTHV2_ENTRA_ID_CLIENT_SECRET` will be the value for `Value` found on the page. Click the copy button to copy the value to your clipboard.
 
 In addition to these configuration values, there will be one more configuration value to set in your Zenhub configuration file to enable Microsoft Entra ID authentication. See [Optional Values](#332-optional-values) for which value to set. Then, apply the updated configuration to the app as per section [4.1 Run the Configuration Tool](#41-run-the-configuration-tool). Please note that running the configuration tool will cause a brief downtime while the application restarts.
 
@@ -1291,13 +1321,24 @@ You can download the file to your instance directly using `curl`:
 curl -o zhe_ai_install.run "<link-to-ai-install-bundle>"
 ```
 
-Then, run the installation script:
+Then, run the installation script (Some components to be installed are large, so the installation process may take some time to complete):
 
 ```bash
 bash zhe_ai_install.run
 ```
 
-The package will install the necessary drivers, dependencies, and AI image for you. Once the installation is complete, you will need to restart your Zenhub VM to apply the changes. Some components to be installed are large, so the installation process may take some time to complete.
+The package will install the necessary drivers, dependencies, and the AI container image for you.
+Lastly, once the installation is complete, you will need to restart the K3S service:
+
+```bash
+sudo systemctl restart k3s
+```
+
+You can confirm the state of the installation by running the following:
+
+```bash
+sudo kubectl get deploy llama -n zenhub
+```
 
 > ⚠️ **NOTE:** The current version of the AI installation package requires an active internet connection to download the necessary components. Please ensure that your Zenhub VM has an active internet connection before running the installation script. The script will need to reach `developer.download.nvidia.com` and any domain listed in `/etc/apt/sources.list` to download the necessary components.
 
@@ -1312,3 +1353,49 @@ Then, apply the updated configuration to the app as per section [4.1 Run the Con
 ### 12.5 Verify the AI Setup is Complete
 
 Once you have completed the steps above, you can verify that the AI setup is complete by checking that the AI features are working within the Zenhub application. You can do this by creating a new issue within Zenhub and checking if there is a "Generate acceptance criteria" button available under the description field when creating the issue. Click the button to generate acceptance criteria for the issue. If the button is available, and you are able to generate acceptance criteria, the AI setup is complete. If you are unable to generate acceptance criteria, please [contact our team](mailto:enterprise@zenhub.com), and we will be happy to assist you!
+
+## 13. Monitoring (Experimental)
+
+![image](https://github.com/ZenHubHQ/devops-kubernetes/assets/16604327/1a803c72-bb6f-4d52-866b-b6fc14e0ff9b)
+
+This section provides steps to configure a basic monitoring stack.
+
+The components that will be installed are:
+1. [Prometheus](https://prometheus.io/docs/introduction/overview/) - Prometheus is a monitoring and alerting toolkit designed to capture and manage metrics data from Kubernetes clusters, providing insights into system performance and health.
+- [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/README.md) - Kube-state-metrics is a Kubernetes service that listens to the Kubernetes API server and generates metrics about the state of various Kubernetes objects, which can then be collected by Prometheus for monitoring purposes.
+- [node-exporter](https://prometheus.io/docs/guides/node-exporter/) - Node-exporter is a Prometheus exporter that collects hardware and operating system-level metrics from a Linux node, providing detailed insights into system performance and resource usage.
+3. [Grafana](https://grafana.com/docs/grafana/latest/) - Grafana is an open-source platform for monitoring and observability, providing tools for visualizing, querying, and analyzing metrics through customizable dashboards.
+
+### 13.1 Install/Uninstall the Monitoring Components
+
+> ⚠️ **NOTE:** The CPU, memory, and storage requirements for the monitoring stack will vary based on the volume of traffic and data processed by Zenhub Enterprise. The Enterprise Administrator is strongly recommended to closely monitor resource usage following installation. Also, please email
+
+
+The following command will deploy all components outlined above in the **monitoring** namespace: `zhe-config --monitoring-stack deploy`.
+To uninstall: `zhe-config --monitoring-stack destroy` will destroy all of the deployed resources in the **monitoring** namespace.
+
+The installation of Grafana comes pre-configured with 2 dashboards to get you started:
+1. **Sidekiq**: Provides you with Sidekiq metrics, such as queue latency and enqueued jobs
+2. **Zenhub Resource Dashboard**:
+   - Kubernetes node-level metrics, such as CPU/Memory utilization
+   - Kubernetes pod-level metrics
+![image](https://github.com/user-attachments/assets/e146b4c9-371b-4745-8f7e-e3f436b5e48d)
+![image](https://github.com/user-attachments/assets/6960f363-6246-4ee4-9654-058b7c92b617)
+
+### 13.2 Accessing Grafana and Prometheus
+
+> ⚠️ **NOTE:** Network access to Grafana and Prometheus is not managed by the installation process through `zhe-config --monitoring-stack deploy`. It will be the responsibility of your administrator to manage and restrict access to the Grafana and Prometheus endpoints.
+
+Once configured, you may navigate to the following endpoints to connect:
+1. Prometheus UI - `https://<subdomain_suffix>.<domain_tld>:8443/admin/prometheus`
+2. Grafana UI - `https://<subdomain_suffix>.<domain_tld>:8443/admin/grafana`
+   - On a fresh install, your credentials will be username **admin** password **admin**
+   - It will be the responsibility of your administrator to ensure the password is rotated to a secure one
+
+### 13.3 Metrics Storage Information
+
+Installing the monitoring stack provisions the following Kubernetes PersistentVolumeClaims on the VM: **prometheus-data** (20Gi), mapped to `/opt/monitoring/prometheus` to store WAL data
+
+The configured data retention for both data is 7 days.
+
+> ⚠️ **NOTE:** As the monitoring stack installation is considered experimental, we recommend that the administrator keep a close eye on the growth of the above directories.
