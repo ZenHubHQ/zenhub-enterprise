@@ -50,10 +50,9 @@
 - [7. Developer Site](#7-developer-site)
 - [8. Platform Authentication](#8-platform-authentication)
   - [8.1 GitHub](#81-github)
-  - [8.2 IBM W3ID](#82-ibm-w3id)
-  - [8.3 Microsoft Entra ID](#83-microsoft-entra-id)
-  - [8.4 LDAP](#84-ldap)
-  - [8.5 SAML](#85-saml)
+  - [8.2 Microsoft Entra ID](#82-microsoft-entra-id)
+  - [8.3 LDAP](#83-ldap)
+  - [8.4 SAML](#84-saml)
 - [9. Integrations](#9-integrations)
   - [9.1 Notion](#91-notion)
 - [10. AI Features](#10-ai-features)
@@ -848,56 +847,7 @@ Of the authentication methods listed below, the only one that is enabled by defa
 - This classic authentication option allows users to sign in via their GitHub account
 - This is the default authentication method for Zenhub and cannot be disabled
 
-### 8.2 IBM W3ID
-
-- This authentication option allows users to sign in through IBM W3ID
-- An IBM Security Verify tenant is required to use this form of authentication
-- It can be enabled by following instructions for `w3id_enabled` in the main `kustomization.yaml`
-
-  To configure your W3ID Application for Zenhub, you will need to do the following:
-
-#### Add a New Application via IBM Security Verify
-
-Start by going to your IBM Security Verify tenant and switching to the **Admin Console**. The URL for this will be `https://<tenant_hostname>/ui/admin`. Then, follow the steps below:
-
-- Navigate to **Applications** and click `Add Application` > `Connect to an app`
-  - Select `Custom Application`, then click `Add application`
-
-#### Configure the Application
-
-- Under **General**, set the application name, description, and company name to whatever you prefer.
-- Under **Sign-on**, there are several things to configure:
-  - Set the **Sign-on method** to `Open ID Connect 1.0`
-  - Set the **Application URL** to `https://<subdomain_suffix>.<domain_tld>/`
-  - Ensure **Require proof key for code exchange (PKCE) verification** is disabled
-  - Set the **Redirect URL** to `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/w3id/callback`
-  - Under **Token settings**
-    - Set **Access token expiry (secs)** to whatever you prefer. 7200 seconds is a normal default.
-    - Enable **Generate refresh token** if it's not already enabled.
-      - Set **Refresh token expiry (secs)** to whatever you prefer. This will be the maximum amount of time a user can stay logged in without having to log in again.
-
-> ⚠️ **NOTE:** Zenhub will check W3ID every 30 minutes to see if the user's access token has expired. If it has, Zenhub will use the refresh token to get a new access token. If the refresh token has expired, Zenhub will prompt the user to log in again.
-
-#### Obtain configuration values
-
-There are four values that need to be obtained from your W3ID Application to enable W3ID authentication:
-
-- `w3id_client_id`
-- `w3id_client_secret`
-- `w3id_default_endpoint_url`
-- `w3id_issuer_url`
-
-To obtain `w3id_client_id` and `w3id_client_secret`, go to **Applications > Applications > Your application > Settings > Sign-on**
-
-- The value for `w3id_client_id` will be the value for `Client ID` found on the page.
-- The value for `w3id_client_secret` will be the value for `Client secret` found on the page.
-
-To obtain `w3id_default_endpoint_url` and `w3id_issuer_url`, go to **Applications > Application settings > OIDC general settings** and obtain your `Issuer hostname`.
-
-- The value for `w3id_default_endpoint_url` will be `https://<issuer_hostname>/v1.0/endpoint/default`
-- The value for `w3id_issuer_url` will be `https://<issuer_hostname>/oidc/endpoint/default`
-
-### 8.3 Microsoft Entra ID
+### 8.2 Microsoft Entra ID
 
 - This authentication option allows users to sign in through Microsoft Entra ID
 - An Microsoft Entra ID tenant is required to use this form of authentication
@@ -940,7 +890,7 @@ To obtain `entra_id_client_secret`, go to **App registrations > All applications
 
 > ⚠️ **NOTE:** The login option will say Azure AD instead of Microsoft Entra ID since that name change was recent and not yet reflected in the Zenhub UI.
 
-### 8.4 LDAP
+### 8.3 LDAP
 
 - This authentication option allows users to sign in using LDAP
 - An existing LDAP server is required to use this form of authentication
@@ -948,7 +898,7 @@ To obtain `entra_id_client_secret`, go to **App registrations > All applications
 
   Ensure that there is an LDAP Bind DN user in your directory being connected that has read access to the LDAP directory. This user will be used to search for the users attempting to sign in.
 
-### 8.5 SAML
+### 8.4 SAML
 
 - This authentication option allows users to sign in using SAML
 - An SSO with SAML provider is required to use this form of authentication

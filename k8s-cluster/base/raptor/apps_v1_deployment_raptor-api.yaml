@@ -58,38 +58,6 @@ spec:
               name: configuration
         - name: CABLE_URL
           value: raptor-cable
-        - name: AUTHV2_W3ID_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              key: w3id_client_secret
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_client_id
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_enabled
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_DEFAULT_ENDPOINT_URL
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_default_endpoint_url
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_ISSUER_URL
-          valueFrom:
-            configMapKeyRef:
-              key: w3id_issuer_url
-              name: configuration
-              optional: true
-        - name: AUTHV2_W3ID_CHECK_ACCESS_INTERVAL
-          value: "1800"
         - name: AUTHV2_AZURE_AD_ENABLED
           valueFrom:
             configMapKeyRef:
@@ -209,6 +177,8 @@ spec:
               key: ai_features_enabled
               name: configuration
               optional: true
+        - name: TOAD_APP_URL
+          value: toad-api
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
@@ -223,8 +193,6 @@ spec:
             configMapKeyRef:
               key: web_concurrency
               name: raptor-api
-        - name: TOAD_APP_URL
-          value: $(POD_NAMESPACE)-toad-api
         - name: RUBYOPT
           value: -W0
         - name: HOST_IP
@@ -366,6 +334,11 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: hubspot_pmf_survey_form_guid
+              name: raptor
+        - name: HUBSPOT_NPS_SURVEY_FORM_GUID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_nps_survey_form_guid
               name: raptor
         - name: HUBSPOT_ZORG_OBJECT_ID
           valueFrom:
@@ -542,28 +515,10 @@ spec:
               key: azure_private_openai_endpoint
               name: raptor
               optional: true
-        - name: AZURE_PRIVATE_OPENAI_ENDPOINT_16K
-          valueFrom:
-            configMapKeyRef:
-              key: azure_private_openai_endpoint_16k
-              name: raptor
-              optional: true
-        - name: AZURE_PRIVATE_OPENAI_ENDPOINT_GPT4
-          valueFrom:
-            configMapKeyRef:
-              key: azure_private_openai_endpoint_gpt4
-              name: raptor
-              optional: true
         - name: AZURE_PRIVATE_OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
               key: azure_private_openai_api_key
-              name: raptor
-              optional: true
-        - name: AZURE_PRIVATE_OPENAI_GPT4_API_KEY
-          valueFrom:
-            secretKeyRef:
-              key: azure_private_openai_gpt4_api_key
               name: raptor
               optional: true
         - name: PROMETHEUS_EXPORTER_HOST

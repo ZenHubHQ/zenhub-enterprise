@@ -89,6 +89,7 @@ data:
   hubspot_admin_association_type_id: ""
   hubspot_external_user_association_type_id: ""
   hubspot_licensed_user_association_type_id: ""
+  hubspot_nps_survey_form_guid: ""
   hubspot_paid_user_form_guid: ""
   hubspot_platform_signup_form_guid: ""
   hubspot_pmf_survey_form_guid: ""

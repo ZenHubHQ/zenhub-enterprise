@@ -26,6 +26,7 @@
   - [3.3 Configure Zenhub](#33-configure-zenhub)
     - [3.3.1 Required Values](#331-required-values)
     - [3.3.2 Optional Values](#332-optional-values)
+    - [3.3.3 Rightsizing Postgres](#333-rightsizing-postgres)
   - [3.4 SSL/TLS Ingress Certificates](#34-ssltls-ingress-certificates)
     - [3.4.1 Zenhub Application TLS](#341-zenhub-application-tls)
     - [3.4.2 Developer Site TLS](#342-developer-site-tls)
@@ -39,6 +40,7 @@
   - [5.1 Prerequisites](#51-prerequisites)
   - [5.2 Preparing to Upgrade](#52-preparing-to-upgrade)
   - [5.3 Upgrading](#53-upgrading)
+  - [5.4 Resuming Upgrades after a Failure](#54-resuming-upgrades-after-a-failure)
 - [6. Maintenance and Operational Tasks](#6-maintenance-and-operational-tasks)
   - [6.1 Tasks in the Admin UI](#61-tasks-in-the-admin-ui)
     - [6.1.1 Publishing the Chrome and Firefox Extensions](#611-publishing-the-chrome-and-firefox-extensions)
@@ -75,10 +77,9 @@
 - [9. Developer Site](#9-developer-site)
 - [10. Platform Authentication](#10-platform-authentication)
   - [10.1 GitHub](#101-github)
-  - [10.2 IBM W3ID](#102-ibm-w3id)
-  - [10.3 Microsoft Entra ID](#103-microsoft-entra-id)
-  - [10.4 LDAP](#104-ldap)
-  - [10.5 SAML](#105-saml)
+  - [10.2 Microsoft Entra ID](#102-microsoft-entra-id)
+  - [10.3 LDAP](#103-ldap)
+  - [10.4 SAML](#104-saml)
 - [11. Integrations](#11-integrations)
   - [11.1 Notion](#111-notion)
 - [12. AI Features](#12-ai-features)
@@ -270,12 +271,6 @@ zenhub_configuration:
   # NOTION_ENABLED:
   # NOTION_CLIENT_ID:
   # NOTION_CLIENT_SECRET:
-## (Optional) Configure W3ID as an authentication provider
-  # AUTHV2_W3ID_ENABLED: true
-  # AUTHV2_W3ID_CLIENT_ID:
-  # AUTHV2_W3ID_CLIENT_SECRET:
-  # AUTHV2_W3ID_DEFAULT_ENDPOINT_URL:
-  # AUTHV2_W3ID_ISSUER_URL:
 ## (Optional) Configure Entra ID as an authentication provider
   # AUTHV2_ENTRA_ID_ENABLED: true
   # AUTHV2_ENTRA_ID_CLIENT_ID:
@@ -327,6 +322,24 @@ zenhub_configuration:
 #   primary: 0.ubuntu.pool.ntp.org
 #   secondary:
 
+## To set custom Fail2Ban configuration
+##  Must set "custom: true"
+##  Can add your network IP as follows: "fail2ban_ignoreips: "127.0.0.1/8 ::1 <your-network-IP/32>"
+##  "fail2ban_ignore_users" should be a list format as provided below
+# fail2ban:
+#   custom: true
+#   fail2ban_loglevel: INFO
+#   fail2ban_logtarget: /var/log/fail2ban.log
+#   fail2ban_ignoreself: "true"
+#   fail2ban_ignoreips: "127.0.0.1/8 ::1 <network-IP>/32"
+#   fail2ban_bantime: 600
+#   fail2ban_findtime: 600
+#   fail2ban_maxretry: 6
+#   fail2ban_banaction: "ufw"
+#   fail2ban_ignore_users:
+#     - zenhub
+#     - ubuntu
+
 ## Credentials to upload support bundles to a secure S3 bucket
 # upload_bundle_vars:
 #   SUPPORT_BUNDLE_ACCESS_KEY:
@@ -369,14 +382,6 @@ These should be nested under zenhub_configuration along with the "Required Value
 ##### Authentication Providers
 
 Zenhub Enterprise 4.0 and greater supports several external authentication methods. You can enable one or more of these authentication methods by setting the corresponding environment variables.
-
-###### W3ID
-
-- `AUTHV2_W3ID_ENABLED`: Enables W3ID as an authentication provider
-- `AUTHV2_W3ID_CLIENT_ID`: W3ID client ID. Example: `hgfedcba-1234-abcd-1234-4321abcdefgh`
-- `AUTHV2_W3ID_CLIENT_SECRET`: W3ID client secret. Example: `U75zD5Zet4`
-- `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL`: W3ID default endpoint URL. Example: `https://acme.verify.ibm.com/v1.0/endpoint/default`
-- `AUTHV2_W3ID_ISSUER_URL`: W3ID issuer URL. Example: `https://acme.verify.ibm.com/oidc/endpoint/default`
 
 ###### ENTRA ID (Formerly Azure AD)
 > ⚠️ **NOTE:** If you are performing an upgrade and have previously configured Entra ID using `AUTHV2_AZURE_AD_*`, no changes to your configuration file are required. Your existing configuration will remain compatible and continue to function as expected.
@@ -427,6 +432,58 @@ These should be in their own sections, not nested under zenhub_configuration. Co
 - `upload_bundle_vars`: Configuration for uploading support bundles to a secure s3 bucket
   - `SUPPORT_BUNDLE_ACCESS_KEY`: AWS access key provided by Zenhub Support
   - `SUPPORT_BUNDLE_SECRET_KEY`: AWS secret key provided by Zenhub Support
+
+### 3.3.3 Rightsizing Postgres
+
+Zenhub Enterprise includes a pre-configured Postgres database with default settings optimized for typical usage. However, as your data volume and query frequency increase, you may need to adjust these settings to ensure optimal performance.
+
+To rightsize Postgres, monitor its memory usage during peak activity periods. Based on this analysis, determine the necessary adjustments to CPU and memory allocations to accommodate your workload effectively.
+
+Once the necessary CPU and memory values are determined, please adjust and save the below file to `/opt/zenhub/configuration/postgres-config.yaml`. Replace `<input>` with your determined values.
+
+
+```yaml
+# Postgres ConfigMap
+# max_stack_depth = maximum is 7MB
+# shared_buffers = ~25% of requested memory for Postgres
+# effective_cache_size = ~70% of total memory
+# work_mem = ~5% of total memory
+# max_connections = 100, since pgbouncer has default_pool_size set to 90
+# maintenance_work_mem = ~10% of total memory
+# random_page_cost = 1.1 for SSD
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: zhe-postgres-conf
+data:
+  zhe-postgres.conf: |-
+    max_stack_depth = '<input>MB'
+    shared_buffers = '<input>MB'
+    effective_cache_size = '<input>GB'
+    work_mem = '<input>MB'
+    max_connections = '100'
+    maintenance_work_mem = '<input>MB'
+    random_page_cost = '1.1'
+---
+# raptor-postgresql
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database-raptor-postgresql
+spec:
+  template:
+    spec:
+      containers:
+        - name: postgresql
+          resources:
+            requests:
+              cpu: <input>m
+              memory: <input>G
+            limits:
+              memory: <input>G
+```
+
+Lastly, update Postgres with the new settings by running: `zhe-config --reload`
 
 ### 3.4 SSL/TLS Ingress Certificates
 
@@ -577,6 +634,33 @@ You can list all tmux sessions by running: `tmux ls`
 > If you are unable to use a VM or disk snapshot to revert, there is a data backup created during the start of the upgrade process that you can use to restore your instance to the previous version. You can find the backup in `/opt/snapshots` timestamped with the date the upgrade was run. In this situation, please [contact our team](mailto:enterprise@zenhub.com) for assistance.
 
 3. Publish an update to the Chrome and Firefox extensions. See section [6.1.1](#611-publishing-the-chrome-and-firefox-extensions) for more information.
+
+### 5.4 Resuming Upgrades After a Failure
+
+We have added an option to resume from a failing upgrade. This functionality was introduced because upgrades can take a long time to complete.
+
+> ⚠️ **NOTE:** Before resuming the upgrade, please contact [enterprise@zenhub.com](mailto:enterprise@zenhub.com) to ensure that your environment can safely resume from where it failed.
+
+To resume from a failed upgrade, follow these steps:
+
+1. Run the following command:
+  ```bash
+  ./<upgrade bundle file> resume <zhe version you are upgrading from>
+  ```
+  - Example:
+    ```bash
+    ./zhe_upgrade_4.4.0.run resume
+    ```
+
+2. The command will prompt you to select the stage from which you wish to resume the upgrade. Refer to the output of your previous upgrade run to identify the last printed stage.
+  - Example log:
+    ```
+    Stage 5 | Deploy Zenhub
+    ```
+
+Example:
+![alt text](resuming-upgrade.png)
+
 
 ## 6. Maintenance and Operational Tasks
 
@@ -983,6 +1067,7 @@ Options:
   --config-example                Show a configuration file example
   --config-file    FILE_PATH      Deploy Zenhub from a configuration file
   --dhcp                          Configure the VM to use DHCP
+  --fail2ban                      Configure fail2ban using configuration supplied to /opt/zenhub/configuration/configuration.yaml
   --health-check                  Run a health check to validate the status of Zenhub Enterprise
   --help                          Show this help message
   --images-import                 Re-import container images
@@ -1091,7 +1176,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.3.1`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.4.0`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
@@ -1125,58 +1210,7 @@ Of the authentication methods listed below, the only one that is enabled by defa
 - This classic authentication option allows users to sign in via their GitHub account
 - This is the default authentication method for Zenhub and cannot be disabled
 
-### 10.2 IBM W3ID
-
-- This authentication option allows users to sign in through IBM W3ID
-- An IBM Security Verify tenant is required to use this form of authentication
-- It can be enabled by setting the [W3ID](#w3id) optional configuration
-
-  To configure your W3ID Application for Zenhub, you will need to do the following:
-
-#### Add a New Application via IBM Security Verify
-
-Start by going to your IBM Security Verify tenant and switching to the **Admin Console**. The URL for this will be `https://<tenant_hostname>/ui/admin`. Then, follow the steps below:
-
-- Navigate to **Applications** and click `Add Application` > `Connect to an app`
-  - Select `Custom Application`, then click `Add application`
-
-#### Configure the Application
-
-- Under **General**, set the application name, description, and company name to whatever you prefer.
-- Under **Sign-on**, there are several things to configure:
-  - Set the **Sign-on method** to `Open ID Connect 1.0`
-  - Set the **Application URL** to `https://<subdomain_suffix>.<domain_tld>/`
-  - Ensure **Require proof key for code exchange (PKCE) verification** is disabled
-  - Set the **Redirect URL** to `https://<subdomain_suffix>.<domain_tld>/api/zenhub_users/auth/w3id/callback`
-  - Under **Token settings**
-    - Set **Access token expiry (secs)** to whatever you prefer. 7200 seconds is a normal default.
-    - Enable **Generate refresh token** if it's not already enabled.
-      - Set **Refresh token expiry (secs)** to whatever you prefer. This will be the maximum amount of time a user can stay logged in without having to log in again.
-
-> ⚠️ **NOTE:** Zenhub will check W3ID every 30 minutes to see if the user's access token has expired. If it has, Zenhub will use the refresh token to get a new access token. If the refresh token has expired, Zenhub will prompt the user to log in again.
-
-#### Obtain configuration values
-
-There are four values that need to be obtained from your W3ID Application to enable W3ID authentication:
-
-- `AUTHV2_W3ID_CLIENT_ID`
-- `AUTHV2_W3ID_CLIENT_SECRET`
-- `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL`
-- `AUTHV2_W3ID_ISSUER_URL`
-
-To obtain `AUTHV2_W3ID_CLIENT_ID` and `AUTHV2_W3ID_CLIENT_SECRET`, go to **Applications > Applications > Your application > Settings > Sign-on**
-
-- The value for `AUTHV2_W3ID_CLIENT_ID` will be the value for `Client ID` found on the page.
-- The value for `AUTHV2_W3ID_CLIENT_SECRET` will be the value for `Client secret` found on the page.
-
-To obtain `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL` and `AUTHV2_W3ID_ISSUER_URL`, go to **Applications > Application settings > OIDC general settings** and obtain your `Issuer hostname`.
-
-- The value for `AUTHV2_W3ID_DEFAULT_ENDPOINT_URL` will be `https://<issuer_hostname>/v1.0/endpoint/default`
-- The value for `AUTHV2_W3ID_ISSUER_URL` will be `https://<issuer_hostname>/oidc/endpoint/default`
-
-In addition to these configuration values, there will be one more configuration value to set in your Zenhub configuration file to enable W3ID authentication. See [Optional Values](#332-optional-values) for which value to set. Then, apply the updated configuration to the app as per section [4.1 Run the Configuration Tool](#41-run-the-configuration-tool). Please note that running the configuration tool will cause a brief downtime while the application restarts.
-
-### 10.3 Microsoft Entra ID
+### 10.2 Microsoft Entra ID
 
 - This authentication option allows users to sign in through Microsoft Entra ID
 - An Microsoft Entra ID tenant is required to use this form of authentication
@@ -1221,7 +1255,7 @@ In addition to these configuration values, there will be one more configuration 
 
 > ⚠️ **NOTE:** The login option will say Azure AD instead of Microsoft Entra ID since that name change was recent and not yet reflected in the Zenhub UI.
 
-### 10.4 LDAP
+### 10.3 LDAP
 
 - This authentication option allows users to sign in using LDAP
 - An existing LDAP server is required to use this form of authentication
@@ -1231,7 +1265,7 @@ In addition to these configuration values, there will be one more configuration 
 
   See the [Optional Values](#332-optional-values) section for which values to set to configure your Zenhub instance to use LDAP user authentication.
 
-### 10.5 SAML
+### 10.4 SAML
 
 - This authentication option allows users to sign in using SAML
 - An SSO with SAML provider is required to use this form of authentication

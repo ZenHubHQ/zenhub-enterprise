@@ -16,7 +16,6 @@ export `grep -hir "github_hostname=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "chrome_extension_webstore_url=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "graphiql_explorer_subdomain_prefix=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "email_pw_enabled=" kustomization.yaml | awk '{print $2}'`
-export `grep -hir "w3id_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "entra_id_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "ldap_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "saml_enabled=" kustomization.yaml | awk '{print $2}'`
@@ -29,7 +28,6 @@ devsite_zhe_hostname="$graphiql_explorer_subdomain_prefix-$zhe_hostname"
 https_admin_zhe_hostname="https://$admin_zhe_hostname"
 cable_allowed_origins="$https_zhe_hostname, $github_hostname, null"
 auth_options_email_pw=$email_pw_enabled
-auth_options_w3id=$w3id_enabled
 auth_options_entra_id=$entra_id_enabled
 auth_options_ldap=$ldap_enabled
 auth_options_saml=$saml_enabled
@@ -73,8 +71,6 @@ EOL
 # Replace base/kustomization.yaml placeholder for zhe_hostname
 sed_wrap "s/%%zhe_hostname%%/$zhe_hostname/g" base/kustomization.yaml
 
-# Replace W3ID value in base/kraken/configmaps.yaml
-sed_wrap "s/\"W3ID\": .*,/\"W3ID\": $auth_options_w3id,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"AzureAD\": .*,/\"AzureAD\": $auth_options_entra_id,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"LDAP\": .*,/\"LDAP\": $auth_options_ldap,/g" base/kraken/configmaps.yaml
 sed_wrap "s/\"SAML\": .*,/\"SAML\": $auth_options_saml,/g" base/kraken/configmaps.yaml
