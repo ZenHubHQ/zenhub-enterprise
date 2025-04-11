@@ -147,6 +147,7 @@ data:
       "webappPrefix": "",
       "webappURL": "https://%%subdomain_suffix%%.%%domain_tld%%",
       "ZENHUB_SERVER_ADDRESS": "https://%%subdomain_suffix%%.%%domain_tld%%/api",
+      "ZENHUB_RAPTOR_ADDRESS": "https://%%subdomain_suffix%%.%%domain_tld%%/raptorApi",
       "ZENHUB_WEBAPP_ADDRESS": "https://%%subdomain_suffix%%.%%domain_tld%%",
       "ZENHUB_DEVSITE_ADDRESS": "https://%%devsite_zhe_hostname%%",
       "ZENHUB_CHROME_EXT_WEBSTORE_URL": "%%chrome_extension_webstore_url%%",
@@ -155,7 +156,6 @@ data:
       "authOptions": {
         "GitHub": true,
         "Google": false,
-        "W3ID": false,
         "AzureAD": false,
         "LDAP": false,
         "SAML": false,

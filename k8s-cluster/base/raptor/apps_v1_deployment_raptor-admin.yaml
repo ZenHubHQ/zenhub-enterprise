@@ -63,6 +63,8 @@ spec:
             configMapKeyRef:
               key: github_app_id
               name: configuration
+        - name: TOAD_APP_URL
+          value: toad-api
         - name: RAILS_MAX_THREADS
           valueFrom:
             configMapKeyRef:
@@ -238,6 +240,11 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: hubspot_pmf_survey_form_guid
+              name: raptor
+        - name: HUBSPOT_NPS_SURVEY_FORM_GUID
+          valueFrom:
+            configMapKeyRef:
+              key: hubspot_nps_survey_form_guid
               name: raptor
         - name: HUBSPOT_ZORG_OBJECT_ID
           valueFrom:
@@ -419,28 +426,10 @@ spec:
               key: azure_private_openai_endpoint
               name: raptor
               optional: true
-        - name: AZURE_PRIVATE_OPENAI_ENDPOINT_16K
-          valueFrom:
-            configMapKeyRef:
-              key: azure_private_openai_endpoint_16k
-              name: raptor
-              optional: true
-        - name: AZURE_PRIVATE_OPENAI_ENDPOINT_GPT4
-          valueFrom:
-            configMapKeyRef:
-              key: azure_private_openai_endpoint_gpt4
-              name: raptor
-              optional: true
         - name: AZURE_PRIVATE_OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
               key: azure_private_openai_api_key
-              name: raptor
-              optional: true
-        - name: AZURE_PRIVATE_OPENAI_GPT4_API_KEY
-          valueFrom:
-            secretKeyRef:
-              key: azure_private_openai_gpt4_api_key
               name: raptor
               optional: true
         - name: PROMETHEUS_EXPORTER_HOST

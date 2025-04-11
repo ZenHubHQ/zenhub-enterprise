@@ -63,6 +63,11 @@ spec:
             configMapKeyRef:
               key: raptoradmin
               name: zhe-gw-vars
+        - name: RAPTORAPI
+          valueFrom:
+            configMapKeyRef:
+              key: raptor-api
+              name: zhe-gw-vars
         image: nginx
         imagePullPolicy: IfNotPresent
         livenessProbe:

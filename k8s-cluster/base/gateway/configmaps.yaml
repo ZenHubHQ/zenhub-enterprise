@@ -32,25 +32,26 @@ apiVersion: v1
 data:
   default.conf.template: "upstream webapp {\n  server ${WEBAPP};\n}\n\nupstream api
     {\n  server ${API};\n}\n\nupstream webhook {\n  server ${WEBHOOK};\n}\n\nupstream
-    action-cable {\n  server ${ACTIONCABLE};\n}\n\nupstream raptor-admin {\n  server
-    ${RAPTORADMIN};\n}\n\nupstream api-socket {\n  hash $remote_addr consistent;\n
-    \ server ${SOCKET};\n}\n\ninclude conf.d/include-upstream-bucket.conf;\n\n\nserver
-    {\n    server_tokens off;\n    listen 80;\n\n    include conf.d/include-ssl.conf;\n\n
-    \   access_log /var/log/nginx/access.log main;\n    error_log /var/log/nginx/error.log
-    error;\n    server_name _;\n\n    error_page 503 /maintenance.html;\n    error_page
-    418 /ghe-status.html;\n    error_page 419 /license-status.html;\n\n    location
-    /ghe-status.html {\n        root /usr/share/nginx/html;\n        internal;\n    }\n\n
-    \   location /license-status.html {\n        root /usr/share/nginx/html;\n        internal;\n
-    \   }\n\n    location /maintenance.html {\n        root /usr/share/nginx/html;\n
-    \       internal;\n    }\n\n    location /healthcheck {\n        access_log\toff;\n
-    \       error_log\toff;\n        return 200 'ok';\n        add_header Content-Type
-    text/plain;\n    }\n\n    location /status {\n\n        if (-f /data/zhe-monitor/maintenance-status)
-    {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
-    {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        access_log\toff;\n        error_log\toff;\n
-    \       return 200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n
-    \   location /usage {\n        access_log\toff;\n        error_log\toff;\n        return
-    404;\n    }\n\n    keepalive_timeout 70;\n\n    add_header Strict-Transport-Security
+    action-cable {\n  server ${ACTIONCABLE};\n}\n\nupstream raptor-api{\n    server
+    ${RAPTORAPI};\n  }\n\nupstream raptor-admin {\n  server ${RAPTORADMIN};\n}\n\nupstream
+    api-socket {\n  hash $remote_addr consistent;\n  server ${SOCKET};\n}\n\ninclude
+    conf.d/include-upstream-bucket.conf;\n\n\nserver {\n    server_tokens off;\n    listen
+    80;\n\n    include conf.d/include-ssl.conf;\n\n    access_log /var/log/nginx/access.log
+    main;\n    error_log /var/log/nginx/error.log error;\n    server_name _;\n\n    error_page
+    503 /maintenance.html;\n    error_page 418 /ghe-status.html;\n    error_page 419
+    /license-status.html;\n\n    location /ghe-status.html {\n        root /usr/share/nginx/html;\n
+    \       internal;\n    }\n\n    location /license-status.html {\n        root
+    /usr/share/nginx/html;\n        internal;\n    }\n\n    location /maintenance.html
+    {\n        root /usr/share/nginx/html;\n        internal;\n    }\n\n    location
+    /healthcheck {\n        access_log\toff;\n        error_log\toff;\n        return
+    200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n    location
+    /status {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return
+    503;\n        }\n        if (-f /data/zhe-monitor/ghe-status) {\n            return
+    418;\n        }\n        if (-f /data/zhe-monitor/license-status) {\n            return
+    419;\n        }\n\n        access_log\toff;\n        error_log\toff;\n        return
+    200 'ok';\n        add_header Content-Type text/plain;\n    }\n\n    location
+    /usage {\n        access_log\toff;\n        error_log\toff;\n        return 404;\n
+    \   }\n\n    keepalive_timeout 70;\n\n    add_header Strict-Transport-Security
     \"max-age=31536000; includeSubdomains\";\n    add_header X-Frame-Options DENY;\n
     \   add_header X-Robots-Tag \"noindex, nofollow, noarchive, nosnippet\";\n    proxy_set_header
     X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n
@@ -99,10 +100,18 @@ data:
     1.1;\n\n        client_max_body_size 100M;\n\n        proxy_redirect off;\n        proxy_next_upstream
     off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade
     $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering
-    off;\n    }\n\n    location /upload/ {\n\n        if (-f /data/zhe-monitor/maintenance-status)
+    off;\n    }\n\n    location /raptorApi/ {\n\n        if (-f /data/zhe-monitor/maintenance-status)
     {\n            return 503;\n        }\n        if (-f /data/zhe-monitor/ghe-status)
     {\n            return 418;\n        }\n        if (-f /data/zhe-monitor/license-status)
-    {\n            return 419;\n        }\n\n        proxy_pass http://api;\n        proxy_http_version
+    {\n            return 419;\n        }\n\n        proxy_pass http://raptor-api/;\n
+    \       proxy_http_version 1.1;\n\n        client_max_body_size 100M;\n\n        proxy_redirect
+    off;\n        proxy_next_upstream off;\n        proxy_set_header Host $http_host;\n
+    \       proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection
+    \"upgrade\";\n        proxy_buffering off;\n    }\n    \n    location /upload/
+    {\n\n        if (-f /data/zhe-monitor/maintenance-status) {\n            return
+    503;\n        }\n        if (-f /data/zhe-monitor/ghe-status) {\n            return
+    418;\n        }\n        if (-f /data/zhe-monitor/license-status) {\n            return
+    419;\n        }\n\n        proxy_pass http://api;\n        proxy_http_version
     1.1;\n\n        client_max_body_size 100M;\n\n        proxy_redirect off;\n        proxy_next_upstream
     off;\n        proxy_set_header Host $http_host;\n        proxy_set_header Upgrade
     $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_buffering
@@ -228,6 +237,7 @@ data:
   action-cable: raptor-cable
   api: toad-api
   files: toad-api
+  raptor-api: raptor-api
   raptoradmin: raptor-admin
   socket: toad-websocket
   webapp: kraken-webapp
