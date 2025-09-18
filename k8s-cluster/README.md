@@ -107,7 +107,7 @@ To get started with Zenhub, you must have an existing Kubernetes cluster set up.
 
 ### 2.4 PostgreSQL
 
-Zenhub will require a connection to a PostgreSQL 11 database. We recommend the latest 11.x version. At the moment Zenhub supports up to PostgreSQL 13.x and does **not** support PostgreSQL 14.0 or greater.
+Zenhub will require a connection to a PostgreSQL 15 database. We recommend the latest 15.x version. At the moment Zenhub supports up to PostgreSQL 15.x and does **not** support PostgreSQL 15.0 or greater.
 
 > ⚠️ **NOTE:** We strongly recommend running this database outside the Kubernetes cluster via a database provider.
 
