@@ -32,7 +32,7 @@ spec:
           value: verify-full
         - name: SERVER_TLS_CA_FILE
           value: /var/ca-bundle/postgres/postgres-ca.pem
-        image: us.gcr.io/zenhub-public/pgbouncer:zhe-4.4.2
+        image: us.gcr.io/zenhub-public/pgbouncer:zhe-4.4.3
         imagePullPolicy: IfNotPresent
         lifecycle:
           preStop:
