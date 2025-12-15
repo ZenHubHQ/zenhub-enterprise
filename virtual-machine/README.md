@@ -649,7 +649,7 @@ To resume from a failed upgrade, follow these steps:
   ```
   - Example:
     ```bash
-    ./zhe_upgrade_4.4.3.run resume
+    ./zhe_upgrade_4.4.4.run resume
     ```
 
 2. The command will prompt you to select the stage from which you wish to resume the upgrade. Refer to the output of your previous upgrade run to identify the last printed stage.
@@ -1176,7 +1176,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.4.3`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.4.4`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site
