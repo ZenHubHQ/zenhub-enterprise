@@ -152,7 +152,7 @@ data:
     ARGS+=("--masterauth" "${REDIS_PASSWORD}")
     ARGS+=("--include" "/opt/bitnami/redis/etc/redis.conf")
     ARGS+=("--include" "/opt/bitnami/redis/etc/master.conf")
-    ARGS+=("--maxmemory-policy allkeys-lru")
+    ARGS+=("--maxmemory-policy allkeys-lfu")
     exec redis-server "${ARGS[@]}"
 kind: ConfigMap
 metadata:
