@@ -4,9 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/component: master
     app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-17.3.15
   name: cache-toad-redis-master
   namespace: default
 spec:
@@ -19,17 +17,10 @@ spec:
   serviceName: cache-toad-redis-headless
   template:
     metadata:
-      annotations:
-        checksum/configmap: e65b08c758c5dc7bb5c468a1252ea47bfdddc1a54ba90406a910b3436b9a004b
-        checksum/health: 3165cebd38e03af06afc2fa0554f1d4a1f12755e245cecb2cd335a6cdfbe2122
-        checksum/scripts: 34cbe0dbb446ad168a8650f03168725889212a1cf48a0a4d3c1e26fbc60f84a4
-        checksum/secret: 8802c316a4012a7af31fab6cecefdd6e6f11d8ee778ee64054fd94b522ae0e96
       labels:
         app.kubernetes.io/component: master
         app.kubernetes.io/instance: cache
-        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: toad-redis
-        helm.sh/chart: toadRedis-17.3.15
     spec:
       affinity:
         podAntiAffinity:
@@ -43,28 +34,20 @@ spec:
               topologyKey: kubernetes.io/hostname
             weight: 1
       containers:
-      - args:
+      - command:
+        - /bin/sh
         - -c
-        - /opt/bitnami/scripts/start-scripts/start-master.sh
-        command:
-        - /bin/bash
+        - redis-server /usr/local/etc/redis/redis.conf --requirepass "${REDIS_PASSWORD}"
+          --port "${REDIS_PORT}"
         env:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               key: toad_redis_password
               name: internal
-        - name: BITNAMI_DEBUG
-          value: "false"
-        - name: REDIS_REPLICATION_MODE
-          value: master
-        - name: ALLOW_EMPTY_PASSWORD
-          value: "no"
-        - name: REDIS_TLS_ENABLED
-          value: "no"
         - name: REDIS_PORT
           value: "6379"
-        image: docker.io/bitnamilegacy/redis:7.0.15
+        image: redis:7.4.11
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -98,27 +81,16 @@ spec:
         securityContext:
           runAsUser: 1001
         volumeMounts:
-        - mountPath: /opt/bitnami/scripts/start-scripts
-          name: start-scripts
         - mountPath: /health
           name: health
         - mountPath: /data
           name: redis-data
-        - mountPath: /opt/bitnami/redis/mounted-etc
+        - mountPath: /usr/local/etc/redis
           name: config
-        - mountPath: /opt/bitnami/redis/etc/
-          name: redis-tmp-conf
-        - mountPath: /tmp
-          name: tmp
       securityContext:
         fsGroup: 1001
-      serviceAccountName: cache-toad-redis
       terminationGracePeriodSeconds: 30
       volumes:
-      - configMap:
-          defaultMode: 493
-          name: cache-toad-redis-scripts
-        name: start-scripts
       - configMap:
           defaultMode: 493
           name: cache-toad-redis-health
@@ -127,11 +99,6 @@ spec:
           name: cache-toad-redis-configuration
         name: config
       - emptyDir: {}
-        name: redis-tmp-conf
-      - emptyDir: {}
-        name: tmp
-      - emptyDir: {}
         name: redis-data
   updateStrategy:
     type: RollingUpdate
-  volumeClaimTemplates: []

@@ -1,36 +1,10 @@
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  labels:
-    app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: raptor-redis
-    helm.sh/chart: raptorCacheRedis-17.3.15
-  name: cache-raptor-redis
-  namespace: default
----
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  labels:
-    app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-17.3.15
-  name: cache-toad-redis
-  namespace: default
----
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
     app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: raptor-redis
-    helm.sh/chart: raptorCacheRedis-17.3.15
   name: cache-raptor-redis-headless
   namespace: default
 spec:
@@ -50,9 +24,7 @@ metadata:
   labels:
     app.kubernetes.io/component: master
     app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: raptor-redis
-    helm.sh/chart: raptorCacheRedis-17.3.15
   name: cache-raptor-redis-master
   namespace: default
 spec:
@@ -74,9 +46,7 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-17.3.15
   name: cache-toad-redis-headless
   namespace: default
 spec:
@@ -96,9 +66,7 @@ metadata:
   labels:
     app.kubernetes.io/component: master
     app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: toad-redis
-    helm.sh/chart: toadRedis-17.3.15
   name: cache-toad-redis-master
   namespace: default
 spec:

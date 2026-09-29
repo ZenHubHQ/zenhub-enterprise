@@ -4,9 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/component: master
     app.kubernetes.io/instance: cache
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: raptor-redis
-    helm.sh/chart: raptorCacheRedis-17.3.15
   name: cache-raptor-redis-master
   namespace: default
 spec:
@@ -19,17 +17,10 @@ spec:
   serviceName: cache-raptor-redis-headless
   template:
     metadata:
-      annotations:
-        checksum/configmap: c2135dfa9b9e9e7e17660dcd954d2e2fa009570e7aa5f7ef36a002a81cb83bd9
-        checksum/health: 8e5b34d800253aac7ee68510a6ee512e1afadbd4ce97e904bc3a3893d20d7e53
-        checksum/scripts: f458e006aabd24f423ec26aae911df0c92686e7ac903dd146cd99e34a251fe66
-        checksum/secret: 6da4308424b28198e1db055eaff30f747c769b63453035a9e7013d58bb7b037d
       labels:
         app.kubernetes.io/component: master
         app.kubernetes.io/instance: cache
-        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: raptor-redis
-        helm.sh/chart: raptorCacheRedis-17.3.15
     spec:
       affinity:
         podAntiAffinity:
@@ -43,28 +34,20 @@ spec:
               topologyKey: kubernetes.io/hostname
             weight: 1
       containers:
-      - args:
+      - command:
+        - /bin/sh
         - -c
-        - /opt/bitnami/scripts/start-scripts/start-master.sh
-        command:
-        - /bin/bash
+        - redis-server /usr/local/etc/redis/redis.conf --requirepass "${REDIS_PASSWORD}"
+          --port "${REDIS_PORT}"
         env:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               key: raptor_redis_password
               name: internal
-        - name: BITNAMI_DEBUG
-          value: "false"
-        - name: REDIS_REPLICATION_MODE
-          value: master
-        - name: ALLOW_EMPTY_PASSWORD
-          value: "no"
-        - name: REDIS_TLS_ENABLED
-          value: "no"
         - name: REDIS_PORT
           value: "6379"
-        image: docker.io/bitnamilegacy/redis:7.0.15
+        image: redis:7.4.11
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -98,27 +81,16 @@ spec:
         securityContext:
           runAsUser: 1001
         volumeMounts:
-        - mountPath: /opt/bitnami/scripts/start-scripts
-          name: start-scripts
         - mountPath: /health
           name: health
         - mountPath: /data
           name: redis-data
-        - mountPath: /opt/bitnami/redis/mounted-etc
+        - mountPath: /usr/local/etc/redis
           name: config
-        - mountPath: /opt/bitnami/redis/etc/
-          name: redis-tmp-conf
-        - mountPath: /tmp
-          name: tmp
       securityContext:
         fsGroup: 1001
-      serviceAccountName: cache-raptor-redis
       terminationGracePeriodSeconds: 30
       volumes:
-      - configMap:
-          defaultMode: 493
-          name: cache-raptor-redis-scripts
-        name: start-scripts
       - configMap:
           defaultMode: 493
           name: cache-raptor-redis-health
@@ -127,11 +99,6 @@ spec:
           name: cache-raptor-redis-configuration
         name: config
       - emptyDir: {}
-        name: redis-tmp-conf
-      - emptyDir: {}
-        name: tmp
-      - emptyDir: {}
         name: redis-data
   updateStrategy:
     type: RollingUpdate
-  volumeClaimTemplates: []

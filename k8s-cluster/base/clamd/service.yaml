@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clamd
+spec:
+  ports:
+  - name: clamd
+    port: 3310
+    targetPort: clamd
+  selector:
+    app.kubernetes.io/component: clamd
+  type: ClusterIP
+---

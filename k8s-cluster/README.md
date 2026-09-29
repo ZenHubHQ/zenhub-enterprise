@@ -783,6 +783,8 @@ For detailed instructions, please visit the Zenhub Enterprise Admin UI (`https:/
 
 > ⚠️ **NOTE:** After the Chrome extension is published, you will need to get the URL of the published extension and put it into your configuration file as `CHROME_EXTENSION_WEBSTORE_URL`. With this value entered, re-run your configuration. This will ensure the link to download the Chrome extension on the application landing page is active.
 
+> ⚠️ **NOTE:** Set `chrome_extension_id` at the same time — the ID of that same extension, which is the last path segment of its webstore URL. Signing in to Zenhub from the extension does not work until this is set.
+
 ### 6.2 Setting the first Zenhub Admin (License Governance)
 
 Zenhub provides a method of license governance that is enforced across the entire set of GitHub Enterprise users. By default, any user of the connected GitHub Enterprise Server can access, install, and use Zenhub Enterprise On-Premise. If you would like to control access to Zenhub, you will need to promote one or more users to be Zenhub Admins.

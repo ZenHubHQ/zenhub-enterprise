@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clamd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: clamd
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: clamd
+    spec:
+      containers:
+      - env:
+        - name: CLAMAV_NO_MILTERD
+          value: "true"
+        image: us.gcr.io/zenhub-public/clamav:zhe-4.5.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          periodSeconds: 30
+          tcpSocket:
+            port: clamd
+        name: clamd
+        ports:
+        - containerPort: 3310
+          name: clamd
+        readinessProbe:
+          periodSeconds: 10
+          tcpSocket:
+            port: clamd
+        resources:
+          limits:
+            cpu: "1"
+            memory: 3Gi
+          requests:
+            cpu: 250m
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          failureThreshold: 60
+          periodSeconds: 10
+          tcpSocket:
+            port: clamd
+        volumeMounts:
+        - mountPath: /etc/clamav/clamd.conf
+          name: configuration
+          subPath: clamd.conf
+      volumes:
+      - configMap:
+          name: clamd-configuration-84b7cdgg69
+        name: configuration

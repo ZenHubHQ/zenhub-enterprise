@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: internal-mcp
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: internal-mcp
+  name: internal-mcp
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 3333
+  selector:
+    app.kubernetes.io/component: internal-mcp
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: internal-mcp
+  type: ClusterIP
+---

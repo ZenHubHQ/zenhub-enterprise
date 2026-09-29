@@ -3,6 +3,7 @@ data:
   bucket_access_key_id: ""
   bucket_domain: ""
   bucket_region: ""
+  chrome_extension_id: ""
   chrome_extension_webstore_url: ""
   files_bucket_name: ""
   images_bucket_name: ""

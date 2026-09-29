@@ -14,6 +14,7 @@ export `grep -hir "subdomain_suffix=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "admin_ui_subdomain=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "github_hostname=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "chrome_extension_webstore_url=" kustomization.yaml | awk '{print $2}'`
+export `grep -hir "chrome_extension_id=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "graphiql_explorer_subdomain_prefix=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "email_pw_enabled=" kustomization.yaml | awk '{print $2}'`
 export `grep -hir "entra_id_enabled=" kustomization.yaml | awk '{print $2}'`
@@ -54,6 +55,7 @@ sed_wrap "s/%%subdomain_suffix%%/$subdomain_suffix/g" base/kraken/configmaps.yam
 sed_wrap "s/%%devsite_zhe_hostname%%/$devsite_zhe_hostname/g" base/kraken/configmaps.yaml
 sed_wrap "s/%%github_hostname%%/$(echo $github_hostname | sed 's_\/_\\/_g')/g" base/kraken/configmaps.yaml
 sed_wrap "s/%%chrome_extension_webstore_url%%/$(echo $chrome_extension_webstore_url | sed 's_\/_\\/_g')/g" base/kraken/configmaps.yaml
+sed_wrap "s/%%chrome_extension_id%%/${chrome_extension_id}/g" base/kraken/configmaps.yaml
 
 # Replace malformed double quotes
 sed_wrap 's/""""/""/g' base/kraken/configmaps.yaml

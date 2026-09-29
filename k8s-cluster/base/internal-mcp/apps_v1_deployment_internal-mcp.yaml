@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: internal-mcp
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: internal-mcp
+  name: internal-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: internal-mcp
+      app.kubernetes.io/managed-by: kustomize
+      app.kubernetes.io/name: internal-mcp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: internal-mcp
+        app.kubernetes.io/managed-by: kustomize
+        app.kubernetes.io/name: internal-mcp
+    spec:
+      containers:
+      - env:
+        - name: GQL_ENDPOINT
+          value: http://raptor-api/public/graphql
+        image: us.gcr.io/zenhub-public/internal-mcp:zhe-4.5.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 3333
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: internal-mcp
+        ports:
+        - containerPort: 3333
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 3333
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 25m
+            memory: 96Mi

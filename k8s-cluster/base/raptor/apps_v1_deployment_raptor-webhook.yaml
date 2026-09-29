@@ -197,60 +197,10 @@ spec:
             configMapKeyRef:
               key: action_cable_workers_pool_size
               name: raptor
-        - name: HUBSPOT_PORTAL_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_portal_id
-              name: raptor
-        - name: HUBSPOT_PLATFORM_SIGNUP_FORM_GUID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_platform_signup_form_guid
-              name: raptor
         - name: MIXPANEL_PROJECT_ID
           valueFrom:
             configMapKeyRef:
               key: mixpanel_project_id
-              name: raptor
-        - name: HUBSPOT_PAID_USER_FORM_GUID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_paid_user_form_guid
-              name: raptor
-        - name: HUBSPOT_PMF_SURVEY_FORM_GUID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_pmf_survey_form_guid
-              name: raptor
-        - name: HUBSPOT_NPS_SURVEY_FORM_GUID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_nps_survey_form_guid
-              name: raptor
-        - name: HUBSPOT_ZORG_OBJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_zorg_object_id
-              name: raptor
-        - name: HUBSPOT_UNLICENSED_MEMBER_ASSOCIATION_TYPE_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_unlicensed_member_association_type_id
-              name: raptor
-        - name: HUBSPOT_LICENSED_USER_ASSOCIATION_TYPE_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_licensed_user_association_type_id
-              name: raptor
-        - name: HUBSPOT_EXTERNAL_USER_ASSOCIATION_TYPE_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_external_user_association_type_id
-              name: raptor
-        - name: HUBSPOT_ADMIN_ASSOCIATION_TYPE_ID
-          valueFrom:
-            configMapKeyRef:
-              key: hubspot_admin_association_type_id
               name: raptor
         - name: AUTH_ISSUER_URLS
           valueFrom:
@@ -287,6 +237,16 @@ spec:
             configMapKeyRef:
               key: stripe_yearly_price_id
               name: raptor
+        - name: STRIPE_CLOUD_ENTERPRISE_PRICE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_cloud_enterprise_price_id
+              name: raptor
+        - name: STRIPE_YEARLY_CLOUD_ENTERPRISE_PRICE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: stripe_yearly_cloud_enterprise_price_id
+              name: raptor
         - name: S3_ACCESS_KEY_ID
           valueFrom:
             configMapKeyRef:
@@ -318,6 +278,12 @@ spec:
               key: files_upload_path
               name: raptor
               optional: true
+        - name: FILE_UPLOAD_PATH
+          valueFrom:
+            configMapKeyRef:
+              key: file_upload_path
+              name: raptor
+              optional: true
         - name: IS_UPLOAD_FILE_TO_LOCAL
           valueFrom:
             configMapKeyRef:
@@ -328,11 +294,90 @@ spec:
             configMapKeyRef:
               key: file_download_url
               name: raptor
+              optional: true
         - name: TOAD_PUBLIC_URL
           valueFrom:
             configMapKeyRef:
               key: toad_public_url
               name: raptor
+        - name: S3_USER_FILES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_bucket
+              name: toad
+              optional: true
+        - name: S3_USER_FILES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_region
+              name: toad
+              optional: true
+        - name: S3_USER_FILES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_key
+              name: toad
+              optional: true
+        - name: S3_USER_FILES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_files_secret
+              name: toad
+              optional: true
+        - name: S3_USER_FILES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_upload_expiration
+              name: toad
+              optional: true
+        - name: S3_USER_FILES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_files_download_expiration
+              name: toad
+              optional: true
+        - name: S3_USER_IMAGES_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_bucket
+              name: toad
+              optional: true
+        - name: S3_USER_IMAGES_REGION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_region
+              name: toad
+              optional: true
+        - name: S3_USER_IMAGES_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_key
+              name: toad
+              optional: true
+        - name: S3_USER_IMAGES_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: s3_user_images_secret
+              name: toad
+              optional: true
+        - name: S3_USER_IMAGES_UPLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_upload_expiration
+              name: toad
+              optional: true
+        - name: S3_USER_IMAGES_DOWNLOAD_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              key: s3_user_images_download_expiration
+              name: toad
+              optional: true
+        - name: USER_IMAGE_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: user_image_host
+              name: toad
+              optional: true
         - name: OPENAI_ORGANIZATION_ID
           valueFrom:
             configMapKeyRef:
@@ -401,6 +446,60 @@ spec:
               key: ai_acceptance_criteria_model
               name: raptor
               optional: true
+        - name: GCP_VERTEX_PROJECT
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_project
+              name: raptor
+              optional: true
+        - name: GCP_VERTEX_LOCATION
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_location
+              name: raptor
+              optional: true
+        - name: GCP_VERTEX_SPRINT_REVIEW_LOCATION
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_sprint_review_location
+              name: raptor
+              optional: true
+        - name: GCP_VERTEX_PUBLISHER
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_publisher
+              name: raptor
+              optional: true
+        - name: GCP_VERTEX_DEFAULT_MODEL
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_default_model
+              name: raptor
+              optional: true
+        - name: GCP_VERTEX_LABELS_MODEL
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_labels_model
+              name: raptor
+              optional: true
+        - name: GCP_VERTEX_SPRINT_REVIEW_MODEL
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_sprint_review_model
+              name: raptor
+              optional: true
+        - name: GCP_VERTEX_ACCEPTANCE_CRITERIA_MODEL
+          valueFrom:
+            configMapKeyRef:
+              key: gcp_vertex_acceptance_criteria_model
+              name: raptor
+              optional: true
+        - name: AI_PROVIDER
+          valueFrom:
+            configMapKeyRef:
+              key: ai_provider
+              name: raptor
+              optional: true
         - name: AZURE_PRIVATE_OPENAI_ENDPOINT
           valueFrom:
             configMapKeyRef:
@@ -424,6 +523,8 @@ spec:
             secretKeyRef:
               key: redis_url
               name: configuration
+        - name: CLAMD_URL
+          value: tcp://clamd:3310
         - name: GRAPHQL_REDIS_URL
           valueFrom:
             secretKeyRef:
@@ -499,26 +600,12 @@ spec:
             secretKeyRef:
               key: mixpanel_service_account_secret
               name: raptor
-        - name: FRESHWORKS_API_KEY
+        - name: ATTIO_API_KEY
           valueFrom:
             secretKeyRef:
-              key: freshworks_api_key
+              key: attio_api_key
               name: raptor
-        - name: FRESH_SUCCESS_API_KEY
-          valueFrom:
-            secretKeyRef:
-              key: fresh_success_api_key
-              name: raptor
-        - name: PRODUCT_BOARD_KEY
-          valueFrom:
-            secretKeyRef:
-              key: product_board_key
-              name: raptor
-        - name: HUBSPOT_ACCESS_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: hubspot_access_token
-              name: raptor
+              optional: true
         - name: AUTH_MANAGEMENT_API_CLIENT_ID
           valueFrom:
             secretKeyRef:
@@ -599,7 +686,7 @@ spec:
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
-            path: /ping/all
+            path: /ping
             port: http
           initialDelaySeconds: 40
           periodSeconds: 10
