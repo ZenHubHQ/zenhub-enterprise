@@ -82,7 +82,7 @@ spec:
           name: kraken-nginx-base-config
           subPath: nginx.conf
       - env:
-        - name: WEBAPP_ADDRESS
+        - name: ZENHUB_WEBAPP_ADDRESS
           valueFrom:
             configMapKeyRef:
               key: zenhub_webapp_address
@@ -95,7 +95,7 @@ spec:
         - name: GITHUB_SERVER_ADDRESS
           value: $(github_hostname)
         - name: MANIFEST_FIREFOX_UPDATE_URL
-          value: $(WEBAPP_ADDRESS)/zhe-public/ff-ext-signed/update.json
+          value: $(ZENHUB_WEBAPP_ADDRESS)/zhe-public/ff-ext-signed/update.json
         - name: MANIFEST_FIREFOX_ID
           valueFrom:
             configMapKeyRef:

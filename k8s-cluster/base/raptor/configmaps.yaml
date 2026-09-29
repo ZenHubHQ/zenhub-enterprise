@@ -116,8 +116,10 @@ data:
   sentry_dsn: ""
   sentry_environment: ""
   slack_client_id: ""
+  stripe_cloud_enterprise_price_id: ""
   stripe_monthly_price_id: ""
   stripe_trial_price_id: ""
+  stripe_yearly_cloud_enterprise_price_id: ""
   stripe_yearly_price_id: ""
   toad_public_url: $(https_zhe_hostname)/api
   webapp_url: $(https_zhe_hostname)

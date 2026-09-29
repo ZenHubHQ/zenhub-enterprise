@@ -117,11 +117,6 @@ spec:
             configMapKeyRef:
               key: github_app_id
               name: configuration
-        - name: SLACK_APP_ID
-          valueFrom:
-            configMapKeyRef:
-              key: slack_app_id
-              name: toad
         - name: MAILGUN_KEY
           valueFrom:
             secretKeyRef:
@@ -162,27 +157,6 @@ spec:
             configMapKeyRef:
               key: ghwebhook_whitelist
               name: toad
-        - name: NEW_RELIC_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: new_relic_enabled
-              name: toad
-        - name: NEWRELIC_APP_NAME
-          valueFrom:
-            configMapKeyRef:
-              key: newrelic_app_name
-              name: toad
-        - name: NEWRELIC_TRACE
-          valueFrom:
-            configMapKeyRef:
-              key: newrelic_trace
-              name: toad
-        - name: NEW_RELIC_LOG_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: new_relic_log_enabled
-              name: toad
-              optional: true
         - name: NODE_OPTIONS
           valueFrom:
             configMapKeyRef:
@@ -289,11 +263,6 @@ spec:
             secretKeyRef:
               key: slack_webhook
               name: toad
-        - name: SLACK_APP_SECRET
-          valueFrom:
-            secretKeyRef:
-              key: slack_app_secret
-              name: toad
         - name: MIXPANEL_SECRET
           valueFrom:
             secretKeyRef:
@@ -319,11 +288,6 @@ spec:
             secretKeyRef:
               key: ghwebhook_pass
               name: internal
-        - name: NEWRELIC_LICENCE_KEY
-          valueFrom:
-            secretKeyRef:
-              key: newrelic_licence_key
-              name: toad
         - name: S3_USER_IMAGES_SECRET
           valueFrom:
             secretKeyRef:
@@ -367,11 +331,11 @@ spec:
           timeoutSeconds: 5
         resources:
           limits:
-            cpu: 805m
-            memory: 650Mi
-          requests:
             cpu: 200m
-            memory: 500Mi
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
       initContainers:
       - command:
         - sh

@@ -19,7 +19,7 @@ spec:
             - bundle
             - exec
             - rake
-            - zhe:migrate_4_2
+            - zhe:migrate_4_5
           env:
             - name: MONGO_IS_DOCUMENTDB
               valueFrom:
@@ -389,7 +389,7 @@ spec:
                 secretKeyRef:
                   key: clickhouse_url
                   name: raptor
-          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.4.6
+          image: us.gcr.io/zenhub-public/raptor-backend:zhe-4.5.0
           imagePullPolicy: Always
           name: data-migration
           resources:

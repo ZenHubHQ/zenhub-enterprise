@@ -261,6 +261,7 @@ zenhub_configuration:
   ENTERPRISE_LICENSE_TOKEN:
   ADMIN_UI_PASS:
   CHROME_EXTENSION_WEBSTORE_URL:
+  CHROME_EXTENSION_ID:
   MANIFEST_FIREFOX_ID: zenhub-enterprise@<your-company-domain.com>
 ## (Optional) Configure API Rate Limits
   # GRAPHQL_OPERATION_LIMIT:
@@ -358,6 +359,7 @@ zenhub_configuration:
 - `ENTERPRISE_LICENSE_TOKEN` : The Zenhub license (JWT) you should have received by email from the Zenhub team. If you do not have a license, reach out to enterprise@zenhub.com.
 - `ADMIN_UI_PASS` : The password to the Zenhub Admin UI, which runs on port 8443 and is used to execute several administrative tasks such as publishing extensions, usage reporting, and creating a Zenhub Admin for license administration.
 - `CHROME_EXTENSION_WEBSTORE_URL` : The URL of your published Chrome extension. If you have not published a Zenhub extension before, this will be blank for your first configuration. After publishing the extension, set this variable and re-run your configuration to activate the Chrome extension installation link on Zenhub's landing page.
+- `CHROME_EXTENSION_ID` : The ID of that same Chrome extension — the last path segment of the URL above, or the ID shown against your extension on `chrome://extensions`. Signing in to Zenhub from the extension requires this value, so set it and re-run your configuration once the extension exists. Leave it blank for your first configuration.
 - `MANIFEST_FIREFOX_ID` : The UUID used by the Firefox add-on store to uniquely identify your Firefox extension. Ex. zenhub-enterprise@your-company-domain.com
 
 > ⚠️ **NOTE:** Always use the same `MANIFEST_FIREFOX_ID`. This enables your users to receive an automatic update rather than reinstalling the extension. You can find this value in the [Mozilla Add-On Developer Hub](https://addons.mozilla.org/developers/) by clicking Edit Product Page and scrolling down to UUID on your existing extension.
@@ -649,7 +651,7 @@ To resume from a failed upgrade, follow these steps:
   ```
   - Example:
     ```bash
-    ./zhe_upgrade_4.4.6.run resume
+    ./zhe_upgrade_4.5.0.run resume
     ```
 
 2. The command will prompt you to select the stage from which you wish to resume the upgrade. Refer to the output of your previous upgrade run to identify the last printed stage.
@@ -1176,7 +1178,7 @@ If you wish to remove your log aggregator setup and revert to our default out-of
 
 1. Undo the changes made in section 6.1.3
    - Set fluentdconf to be `fluentd.conf`
-   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.4.6`
+   - Run `kustomize edit set image fluentd=us.gcr.io/zenhub-public/fluentd:zhe-4.5.0`
 2. Perform the steps in section 6.1.4
 
 ## 9. Developer Site

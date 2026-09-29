@@ -32,32 +32,32 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 commonAnnotations:
-  app.kubernetes.io/version: 4.4.6
+  app.kubernetes.io/version: 4.5.0
 
 # [EDIT] If your cluster does not have access to our public Docker registry,
 # update the `newName` values with paths to your own private Docker registry.
 images:
   - name: kraken-webapp
     newName: us.gcr.io/zenhub-public/kraken-webapp
-    newTag: zhe-4.4.6
+    newTag: zhe-4.5.0
   - name: kraken-extension
     newName: us.gcr.io/zenhub-public/kraken-extension
-    newTag: zhe-4.4.6
+    newTag: zhe-4.5.0
   - name: kraken-zhe-admin
     newName: us.gcr.io/zenhub-public/kraken-zhe-admin
-    newTag: zhe-4.4.6
+    newTag: zhe-4.5.0
   - name: raptor-backend
     newName: us.gcr.io/zenhub-public/raptor-backend
-    newTag: zhe-4.4.6
+    newTag: zhe-4.5.0
   - name: toad-backend
     newName: us.gcr.io/zenhub-public/toad-backend
-    newTag: zhe-4.4.6
+    newTag: zhe-4.5.0
   - name: sanitycheck
     newName: us.gcr.io/zenhub-public/sanitycheck
-    newTag: zhe-4.4.6
+    newTag: zhe-4.5.0
   - name: devsite
     newName: us.gcr.io/zenhub-public/devsite
-    newTag: zhe-4.4.6
+    newTag: zhe-4.5.0
   - name: busybox
     newName: docker.io/library/busybox
     newTag: latest
@@ -109,6 +109,9 @@ configMapGenerator:
 
       # [EDIT] Link to your Chome Extension download page. Obtained by configuring your Chrome Extension through the Zenhub Admin User Interface
       - chrome_extension_webstore_url=<your_chrome_extension_url> # e.g. https://chrome.google.com/webstore/detail/your-extension-name/id
+      # The id of that same extension — the last path segment of the URL above. Leave
+      # blank until the extension is created; set it and re-run to enable extension sign-in.
+      - chrome_extension_id=<your_chrome_extension_id>
       #
       # [EDIT] Firefox extension UUID used to publish Firefox extensions.
       # NOTE: Always use the same UUID to allow for automatic extension updates for your users

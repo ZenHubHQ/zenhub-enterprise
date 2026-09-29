@@ -1,0 +1,87 @@
+apiVersion: v1
+data:
+  clamd.conf: |
+    Foreground yes
+    LogTime yes
+    TCPSocket 3310
+    TCPAddr 0.0.0.0
+    # Required by the image, not by us. clamav/clamav's entrypoint (/init) starts clamd and
+    # then polls for /tmp/clamd.sock or /run/clamav/clamd.sock; if neither appears within
+    # CLAMD_STARTUP_TIMEOUT (default 1800 s) it prints "Failed to start clamd" and exits 1,
+    # taking the container down -- with clamd healthy on TCP the whole time. That was #8886:
+    # the "Socket for clamd not found yet, retrying (N/1800) ..." loop on every start, a
+    # container that died 30 minutes later, and 503s on uploads until it was back up. This
+    # file replaces the image's own clamd.conf wholesale, so any image default we depend on
+    # has to be restated here. Nothing in Raptor uses the Unix socket; TCPSocket above is
+    # the app-facing interface. spec/k8s/clamd_conf_spec.rb fails if this line is removed.
+    LocalSocket /tmp/clamd.sock
+    # Raptor accepts video uploads up to 100 MB (ZenhubOrganizations::FileValidator), and
+    # clamd 1.5 defaults StreamMaxLength and MaxFileSize to exactly 100M -- no headroom at
+    # our own ceiling. Raised to 150M so a file we accept is a file we actually scanned.
+    # Exceeding MaxFileSize is the dangerous one: clamd skips the file and still answers
+    # OK. Exceeding StreamMaxLength is not -- it closes the connection, which this code
+    # already treats as a failed scan.
+    StreamMaxLength 150M
+    MaxFileSize 150M
+    # The scan is synchronous and in-request, so the budget that matters is wall-clock,
+    # not bytes. clamd's own default is 120000 -- far past any timeout worth holding a
+    # Puma thread for.
+    #
+    # Sized by measurement. Times below are at 1 CPU with fresh content every run --
+    # clamd caches verdicts by content hash (CacheSize 65536), so repeat scans of one
+    # file are ~25x faster and measure nothing useful; production uploads are unique.
+    #
+    #   p50   0.12 MB          0.014s
+    #   p95   3.62 MB          0.104s
+    #   p99   31.2 MB          0.969s
+    #   real 10 MB JPEG        1.23s     structured content costs more than random bytes
+    #   real 100 MB MP4        8.5s      ~0.09 s/MB
+    #
+    # Every upload over 25 MB in production is video (676 in 90 days), and FileValidator
+    # permits 100 MB of it, so the cap has to clear the cost of scanning one. A 2000ms
+    # cap rejected all of them.
+    #
+    # Video scan cost is raw signature matching over the bytes and nothing here changes
+    # it. Measured against a 100 MB MP4, all flat: ScanImageFuzzyHash, Bytecode, the
+    # file-type parsers, and more CPU (8.34s at 1 core vs 8.81s at 4 -- a single scan is
+    # single-threaded, so raising the limit buys nothing). ScanArchive no was the only
+    # setting that moved, and it MISSED EICAR inside a zip, so it is not an option.
+    #
+    # ScanImageFuzzyHash no is a real 2.8x on images -- 0.94s to 0.34s on a 10 MB JPEG,
+    # interleaved A/B -- but it drops detection of known-bad images embedded in files.
+    # Evaluated and deliberately declined: breadth matters more here than latency.
+    #
+    # So the only remaining lever for video is scanning fewer bytes, i.e. lowering
+    # FileValidator's 100 MB video ceiling. Also declined -- the tail is accepted.
+    #
+    # Exceeding it is NOT treated as clean: with AlertExceedsMax the reply is
+    # Heuristics.Limits.Exceeded.MaxScanTime, which MalwareScanner rejects as
+    # unscannable. Lowering this below ~12000 means deciding to reject large video --
+    # a product call, not a tuning one.
+    MaxScanTime 20000
+    # Byte and entry backstops behind the time limit. Below clamd's 400M default because
+    # a scan that cannot finish inside the time budget should stop sooner, not later.
+    MaxScanSize 300M
+    # Pinned at their current defaults rather than left implicit: the replica-count
+    # reasoning below depends on MaxThreads, and MaxFiles is the other half of the
+    # scan-cost bound above.
+    MaxThreads 10
+    MaxFiles 10000
+    # These three exist for the SIGNAL, not to block anything. With them off, clamd
+    # answers a plain "OK" for a file it never managed to inspect and nobody is any the
+    # wiser. With them on it names the reason, and MalwareScanner admits the upload while
+    # logging that the bytes went unscanned.
+    #
+    # Uploads are not refused on this basis: a password-protected zip is a supported
+    # action -- application/zip is in FileValidator::ALLOWED_FILE_TYPES and nothing
+    # rejected one before this scanner existed -- and the pentest finding asks for
+    # scanning to exist, not for unscannable files to be turned away. Archives and
+    # documents are both covered so the two cannot diverge; an encrypted PDF is exactly
+    # as uninspectable as an encrypted zip.
+    AlertExceedsMax yes
+    AlertEncryptedArchive yes
+    AlertEncryptedDoc yes
+kind: ConfigMap
+metadata:
+  name: clamd-configuration-84b7cdgg69
+---
