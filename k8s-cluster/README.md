@@ -679,6 +679,46 @@ kustomize build . | kubectl apply -f-
 
 #### 5.1.2 Application Updates
 
+##### ZHE 4.5.0 to 4.5.1 security update
+
+The 4.5.1 Brotli fix also updates the gateway and admin TLS proxy. Changing only
+the Zenhub application tags leaves those containers on the old nginx image.
+
+Use the 4.5.1 manifests while preserving your deployment configuration, or update
+your existing `images` section to include:
+
+```yaml
+  - name: nginx
+    newName: docker.io/library/nginx
+    newTag: 1.31.8-trixie
+```
+
+If you use a private registry, sync `nginx:1.31.8-trixie` there and set `newName`
+to its path before applying the update. Set the rebuilt application images to
+`zhe-4.5.1` and the version annotation to `4.5.1`; retain the unchanged
+`sanitycheck:zhe-4.5.0` image. Then follow the diff/apply steps below and wait
+for the gateway and admin UI deployments to finish rolling out:
+
+```bash
+kubectl -n <your_dedicated_namespace> rollout status deployment/nginx-gateway --timeout=300s
+kubectl -n <your_dedicated_namespace> rollout status deployment/admin-ui --timeout=300s
+```
+
+The 4.5.1 full bundle also patches MongoDB's OS Brotli library while retaining
+MongoDB 7.0.41, patches the dump/restore runtime, and repackages Grafana 13.2.1.
+External database and monitoring operators must patch their own runtimes; applying
+Zenhub application manifests does not update externally managed databases. For a
+bundled MongoDB StatefulSet, use `us.gcr.io/zenhub-public/mongodb:zhe-4.5.1` for
+both the `mongodb` container and `init-datadir`, then wait for its rollout. Preserve
+the existing PVC and MongoDB version; this OS-package patch requires no data
+migration. Update backup/restore Jobs to
+`us.gcr.io/zenhub-public/dump-restore:zhe-4.5.1`. If you use the bundled monitoring
+manifests, apply `us.gcr.io/zenhub-public/grafana:zhe-4.5.1` to the existing Grafana
+Deployment and wait for its rollout, retaining the Grafana PVC.
+
+Upgrades from 4.4.6 must follow the full 4.5 infrastructure/database upgrade
+procedure before applying this application update.
+
 Application updates are related to the Zenhub application code — the containers Zenhub is running on.
 
 Quite often, we will release a new version of the Zenhub Enterprise application in the form of new Docker tags to pull from our public Docker Registry.

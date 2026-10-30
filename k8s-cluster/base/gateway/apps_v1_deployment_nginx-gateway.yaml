@@ -79,6 +79,10 @@ spec:
         - containerPort: 80
           name: http
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: http
         resources:
           limits:
             cpu: 500m
