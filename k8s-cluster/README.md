@@ -546,7 +546,7 @@ If your Postgres database is relatively large and the [default PgBouncer configu
 
 ### 3.9 JWT session signing key
 
-Zenhub 4.5.1 requires a nonempty JWT signing key. This is separate from
+Zenhub requires a nonempty JWT signing key. This is separate from
 `secret_key_base`. Use one private key per installation and preserve it across
 upgrades and configuration changes.
 
@@ -750,8 +750,6 @@ kustomize build . | kubectl apply -f-
 
 #### 5.1.2 Application Updates
 
-##### ZHE 4.5.0 to 4.5.1 security update
-
 If updating image tags in an existing checkout, first copy `prepare-jwt-secret.py`
 from the target release's `k8s-cluster` directory into your configured directory.
 Preserve your existing Kustomization and private key file. Add
@@ -759,12 +757,13 @@ Preserve your existing Kustomization and private key file. Add
 ignore rules, before creating or copying the key. A new release checkout already
 includes this ignore rule.
 
-Before applying 4.5.1, complete [JWT signing-key preparation](#39-jwt-session-signing-key),
+Before applying an application update, complete [JWT signing-key preparation](#39-jwt-session-signing-key),
 including the `raptor` Secret generator entry if retaining your existing
-Kustomization. The same requirement applies to direct upgrades from 4.3.x or
-4.4.x. Preserve any existing nonempty signing key. A successfully running Pod
+Kustomization. Preserve any existing nonempty signing key. A successfully running Pod
 alone does not prove JWT signing works; verify login and session refresh after
 the rollout.
+
+##### ZHE 4.5.0 to 4.5.1 security update
 
 The 4.5.1 Brotli fix also updates the gateway and admin TLS proxy. Changing only
 the Zenhub application tags leaves those containers on the old nginx image.
