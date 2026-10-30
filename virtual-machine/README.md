@@ -651,7 +651,7 @@ To resume from a failed upgrade, follow these steps:
   ```
   - Example:
     ```bash
-    ./zhe_upgrade_4.5.0.run resume
+    ./zhe_upgrade_4.5.1.run resume
     ```
 
 2. The command will prompt you to select the stage from which you wish to resume the upgrade. Refer to the output of your previous upgrade run to identify the last printed stage.

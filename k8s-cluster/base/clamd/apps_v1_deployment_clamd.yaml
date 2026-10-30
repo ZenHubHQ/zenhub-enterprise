@@ -16,7 +16,7 @@ spec:
       - env:
         - name: CLAMAV_NO_MILTERD
           value: "true"
-        image: us.gcr.io/zenhub-public/clamav:zhe-4.5.0
+        image: us.gcr.io/zenhub-public/clamav:zhe-4.5.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           periodSeconds: 30

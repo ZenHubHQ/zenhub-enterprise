@@ -50,6 +50,13 @@ spec:
               key: ai_features_enabled
               name: configuration
               optional: true
+        - name: SIDEKIQ_REDIS_USE_VALKEY
+          value: "false"
+        - name: SIDEKIQ_REDIS_URL_VALKEY
+          valueFrom:
+            secretKeyRef:
+              key: redis_url
+              name: configuration
         - name: TOAD_APP_URL
           value: toad-api
         - name: DATABASE_URL

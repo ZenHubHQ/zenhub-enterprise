@@ -24,7 +24,7 @@ spec:
       - env:
         - name: GQL_ENDPOINT
           value: http://raptor-api/public/graphql
-        image: us.gcr.io/zenhub-public/internal-mcp:zhe-4.5.0
+        image: us.gcr.io/zenhub-public/internal-mcp:zhe-4.5.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
