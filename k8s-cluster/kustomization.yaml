@@ -177,6 +177,15 @@ configMapGenerator:
       - zhe-urls.env
 
 secretGenerator:
+  # Prepare this private file with prepare-jwt-secret.py before rendering.
+  # Preserve it and the active signing key across upgrades; never commit it.
+  - name: raptor
+    behavior: merge
+    files:
+      - devise_jwt_secret_key=devise-jwt-secret.key
+    options:
+      disableNameSuffixHash: true
+
   - name: configuration
     behavior: merge
     literals:

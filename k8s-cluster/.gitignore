@@ -1,0 +1,2 @@
+# Per-installation session signing key; preserve securely outside Git.
+devise-jwt-secret.key

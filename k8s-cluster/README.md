@@ -33,6 +33,7 @@
     - [3.7.1 GraphQL API](#371-graphql-api)
     - [3.7.2 Legacy REST API](#372-legacy-rest-api)
   - [3.8 PgBouncer](#38-pgbouncer)
+  - [3.9 JWT session signing key](#39-jwt-session-signing-key)
 - [4. Deployment](#4-deployment)
   - [4.1 Sanity Check](#41-sanity-check)
   - [4.2 Application Check](#42-application-check)
@@ -543,7 +544,72 @@ PgBouncer, the lightweight connection pooler for PostgreSQL, is enabled by defau
 
 If your Postgres database is relatively large and the [default PgBouncer configuration](https://www.pgbouncer.org/config.html) is not sufficient, you can customize the PgBouncer configuration by following the PgBouncer configuration section in the main [kustomization.yaml](kustomization.yaml). For example, if your database has a connection limit set to something well above 100, you may want to increase the PgBouncer client connection limit and pool size to suit. Reach out to Zenhub Enterprise Support if you need advice on PgBouncer configuration settings for your database size.
 
+### 3.9 JWT session signing key
+
+Zenhub requires a nonempty JWT signing key. This is separate from
+`secret_key_base`. Use one private key per installation and preserve it across
+upgrades and configuration changes.
+
+From the directory containing your configured `kustomization.yaml`, verify the
+Kubernetes context and prepare the key file (requires Python 3 and permission to
+read the `raptor` Secret in your configured namespace):
+
+```bash
+kubectl config current-context
+python3 prepare-jwt-secret.py
+```
+
+The helper reads the namespace from `kustomization.yaml`. It copies an existing
+nonempty cluster key byte-for-byte, reuses a matching local key, or generates a
+key when both are absent. It never updates the cluster or prints the key. A
+cluster access error, empty local file, or conflicting local/cluster keys stops
+preparation without replacing the key. For an explicit context, use
+`--context <context>` and use that same context for subsequent kubectl commands.
+
+The supplied Kustomization merges the private file into the `raptor` Secret.
+If retaining your own Kustomization, add this entry under `secretGenerator`, or
+add its `files` mapping to your existing `raptor` entry:
+
+```yaml
+  - name: raptor
+    behavior: merge
+    files:
+      - devise_jwt_secret_key=devise-jwt-secret.key
+    options:
+      disableNameSuffixHash: true
+```
+
+Do not also supply this key through a `literals` or `envs` entry. If your
+existing configuration already supplies a nonempty key, you may preserve that
+configuration instead of adopting this file-based entry. If you manage
+Secrets externally, preserve your existing nonempty key there instead and keep
+your existing Secret integration; do not add this file-based entry.
+
+Keep `devise-jwt-secret.key` beside the Kustomization, with file permissions
+`0600`, and back it up securely with your installation configuration. It is
+ignored by Git. Copy it securely into each new release checkout before running
+the helper. Do not delete or regenerate it during routine upgrades. If the
+local and cluster keys conflict, stop and reconcile them from your backups;
+do not overwrite the active key to get past the check.
+
+After applying a key change, restart the running Raptor deployments so their
+environment variables pick it up, for example:
+
+```bash
+kubectl -n <your_dedicated_namespace> rollout restart deployment/raptor-api
+kubectl -n <your_dedicated_namespace> rollout restart deployment/raptor-cable
+```
+
+Also restart any other running Raptor deployments that reference this Secret,
+including admin, webhook, and workers. Wait for their rollouts and verify sign-in,
+session refresh, and sign-out. When replacing a previously empty key, users
+must sign in again; preserving an existing nonempty key avoids key rotation.
+
 ## 4. Deployment
+
+Complete [JWT signing-key preparation](#39-jwt-session-signing-key) before
+rendering or applying the manifests. The file-based configuration intentionally
+fails to render if its key file is missing.
 
 Once you have set up all the configurations in your copy of `kustomization.yaml` and are ready to deploy to your cluster, you must run the `configmap-generator.sh` script that will fill placeholders in our Kubernetes manifests with your configuration values.
 
@@ -649,6 +715,11 @@ kustomize build . | kubectl diff -f-
 * Check out the `zenhub-enterprise` repo at the tag of the target release
 * Populate the new `kustomization.yaml` with your existing configuration values, adding any new required values for the new version.
 
+Before diffing or applying, preserve the existing signing-key file and follow
+[JWT signing-key preparation](#39-jwt-session-signing-key) in the new checkout.
+This also recovers the key from an existing cluster if no local copy is available.
+Do not generate a replacement key simply because you changed release directories.
+
 ##### 3. Diff and apply
 
 * First, delete the `raptor-db-migrate` and `sanitycheck` jobs so they may be recreated without errors:
@@ -678,6 +749,19 @@ kustomize build . | kubectl apply -f-
 * Securely store the updated `kustomization.yaml`
 
 #### 5.1.2 Application Updates
+
+If updating image tags in an existing checkout, first copy `prepare-jwt-secret.py`
+from the target release's `k8s-cluster` directory into your configured directory.
+Preserve your existing Kustomization and private key file. Add
+`devise-jwt-secret.key` to that directory's `.gitignore`, preserving any existing
+ignore rules, before creating or copying the key. A new release checkout already
+includes this ignore rule.
+
+Before applying an application update, complete [JWT signing-key preparation](#39-jwt-session-signing-key),
+including the `raptor` Secret generator entry if retaining your existing
+Kustomization. Preserve any existing nonempty signing key. A successfully running Pod
+alone does not prove JWT signing works; verify login and session refresh after
+the rollout.
 
 ##### ZHE 4.5.0 to 4.5.1 security update
 
