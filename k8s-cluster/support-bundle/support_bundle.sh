@@ -36,6 +36,9 @@ fi
 
 echo "### Generating a ZHE support bundle for namespace: $namespace"
 
+# The bundle can hold sensitive operational data, keep it private to its owner
+umask 077
+
 # Set up a temp directory to store everything we will tar up
 tempdir=$(mktemp -d)
 # Always delete the temp directory when the script exits
@@ -92,13 +95,120 @@ mkdir $journalctl_dir
 journalctl -b 0 > $journalctl_dir/boot-current.log
 journalctl -b -1 > $journalctl_dir/boot-previous.log
 
+# Never archive /opt/zenhub/configuration directly, its files hold the
+# deployment's secrets. Only a file listing and a copy of configuration.yaml
+# that keeps the values of known non-secret settings go into the bundle.
+if [ "$on_vm" = true ]; then
+  config_src="/opt/zenhub/configuration"
+  config_dir="$tempdir/configuration"
+  mkdir $config_dir
+
+  if [ -d "$config_src" ]; then
+    find "$config_src" -printf '%M %u %g %s %TY-%Tm-%Td %TH:%TM %p\n' > $config_dir/file_listing.log 2>&1
+  fi
+
+  if [ -f "$config_src/configuration.yaml" ]; then
+    if ! python3 - "$config_src/configuration.yaml" > $config_dir/configuration.redacted.yaml 2> $config_dir/redaction_error.log <<'EOF'
+import sys
+
+import yaml
+
+REDACTED = "<redacted>"
+
+# Key paths whose values are kept. Every other value is redacted.
+ALLOWED_PATHS = {
+    tuple(allowed_path.split("."))
+    for allowed_path in (
+        "zenhub_configuration.DOMAIN_TLD",
+        "zenhub_configuration.SUBDOMAIN_SUFFIX",
+        "zenhub_configuration.GITHUB_HOSTNAME",
+        "zenhub_configuration.GITHUB_APP_ID",
+        "zenhub_configuration.CHROME_EXTENSION_WEBSTORE_URL",
+        "zenhub_configuration.CHROME_EXTENSION_ID",
+        "zenhub_configuration.MANIFEST_FIREFOX_ID",
+        "zenhub_configuration.GRAPHQL_OPERATION_LIMIT",
+        "zenhub_configuration.GRAPHQL_RUNTIME_LIMIT",
+        "zenhub_configuration.REST_API_REQUEST_LIMIT",
+        "zenhub_configuration.REST_API_TIME_LIMIT",
+        "zenhub_configuration.NOTION_ENABLED",
+        "zenhub_configuration.NOTION_CLIENT_ID",
+        "zenhub_configuration.AUTHV2_ENTRA_ID_ENABLED",
+        "zenhub_configuration.AUTHV2_ENTRA_ID_CLIENT_ID",
+        "zenhub_configuration.AUTHV2_ENTRA_ID_TENANT_ID",
+        "zenhub_configuration.AUTHV2_LDAP_ENABLED",
+        "zenhub_configuration.AUTHV2_LDAP_HOST",
+        "zenhub_configuration.AUTHV2_LDAP_PORT",
+        "zenhub_configuration.AUTHV2_LDAP_METHOD",
+        "zenhub_configuration.AUTHV2_LDAP_BASE",
+        "zenhub_configuration.AUTHV2_LDAP_BIND_DN",
+        "zenhub_configuration.AUTHV2_LDAP_USER_FILTER",
+        "zenhub_configuration.AUTHV2_SAML_ENABLED",
+        "zenhub_configuration.AUTHV2_SAML_IDP_METADATA_URL",
+        "zenhub_configuration.AUTHV2_SAML_SP_ENTITY_ID",
+        "zenhub_configuration.AI_FEATURES_ENABLED",
+        "ssl_self_signed",
+        "k8s_cidr.cluster_cidr",
+        "k8s_cidr.service_cidr",
+        "ip.static",
+        "ip.dhcp",
+        "ip.address",
+        "ip.gateway",
+        "ip.dns",
+        "chrony.primary",
+        "chrony.secondary",
+        "fail2ban.custom",
+        "fail2ban.fail2ban_loglevel",
+        "fail2ban.fail2ban_logtarget",
+        "fail2ban.fail2ban_ignoreself",
+        "fail2ban.fail2ban_ignoreips",
+        "fail2ban.fail2ban_bantime",
+        "fail2ban.fail2ban_findtime",
+        "fail2ban.fail2ban_maxretry",
+        "fail2ban.fail2ban_banaction",
+    )
+}
+
+
+def redact(node, path):
+    if isinstance(node, dict):
+        return {str(key): redact(value, path + (key,)) for key, value in node.items()}
+    if isinstance(node, list):
+        return [REDACTED for _ in node]
+    if node is None:
+        return None
+    if path in ALLOWED_PATHS and isinstance(node, (str, int, float, bool)):
+        return node
+    return REDACTED
+
+
+with open(sys.argv[1], "r") as config_file:
+    raw_configuration = config_file.read()
+
+# An alias under an allowed key would copy the value of a redacted anchor
+if any(isinstance(event, yaml.AliasEvent) for event in yaml.parse(raw_configuration)):
+    sys.exit("configuration.yaml uses YAML aliases")
+
+configuration = yaml.safe_load(raw_configuration)
+
+if not isinstance(configuration, dict):
+    sys.exit("configuration.yaml is not a mapping")
+
+yaml.safe_dump(redact(configuration, ()), sys.stdout, default_flow_style=False, sort_keys=False)
+EOF
+    then
+      rm -f $config_dir/configuration.redacted.yaml
+      echo "### Could not write a redacted copy of configuration.yaml, it was left out of the bundle"
+    fi
+  fi
+fi
+
 echo "### Creating Tar archive"
 
 # Saves to /opt/zenhub/support-bundle/ on VM or the current directory on K8s
 tar_name="support_bundle_$(date +%Y-%m-%d-T%H%M%S-%Z).tar"
 if [ "$on_vm" = true ]; then
   tar_name="/opt/zenhub/support-bundle/$tar_name"
-  tar -czf $tar_name -C $tempdir --exclude=/opt/zenhub/configuration/ssl --exclude=/opt/zenhub/configuration/configuration.secret.env --exclude=/opt/zenhub/configuration/database-credentials.env --exclude=/opt/zenhub/configuration/internal.secret.env . /var/log/zenhub /opt/zenhub/configuration /var/log/nginx/
+  tar -czf $tar_name -C $tempdir . /var/log/zenhub /var/log/nginx/
 else
   tar -czf $tar_name -C $tempdir .
 fi
