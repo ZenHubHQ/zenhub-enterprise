@@ -60,6 +60,9 @@ module "zhe" {
     node_type = "cache.t3.small"
   }
 
+  # Security group(s) of the EKS nodes or pods that run Raptor
+  redis_client_security_group_ids = ["sg-0000aaaa11b2cc111"]
+
   documentdb_vars = {
     instance_class = "db.t3.medium"
     instance_count = "1"
@@ -71,6 +74,8 @@ module "zhe" {
   }
 }
 ```
+
+ElastiCache Redis is created with an auth token, in-transit (TLS) and at-rest encryption, and only accepts connections from `redis_client_security_group_ids`. Use the `zhe_redis_endpoint` output (a `rediss://` URL that includes the auth token) for `redis_url`, `cable_redis_url` and `graphql_redis_url` in `k8s-cluster/kustomization.yaml`, changing only the trailing database number.
 
 ---
 
@@ -130,6 +135,7 @@ cidrsubnet(data.aws_vpc.zhe.cidr_block, 8, count.index + var.cidr_netnum)
 | postgres_vars.instance_class | Variables for PostgreSQL | `object({ instance_class = string })` | `instance_class = "db.t3.small"`| NO |
 | create_redis | Create ElastiCache Redis resources | `bool` | `true` | NO |
 | redis_port | Redis port | `number` | `6379` | NO |
+| redis_client_security_group_ids | Security groups allowed to connect to Redis (e.g. the EKS node or pod security group). Pass `[]` when `create_redis` is `false` | `list(string)` | | YES |
 | redis_engine_version | Redis engine version | `string` | `5.0` | NO |
 | redis_vars.node_type | Variables for Redis | `string` | `cache.t3.small` | NO |
 | create_documentdb | Create DocumentDB resources | `bool` | `true` | NO |
@@ -153,7 +159,7 @@ cidrsubnet(data.aws_vpc.zhe.cidr_block, 8, count.index + var.cidr_netnum)
 |------|-------------|
 | zhe_postgresql_endpoint | PostgreSQL connection endpoint |
 | zhe_mongo_endpoint | MongoDB connection endpoint |
-| zhe_redis_endpoint | Redis connection endpoint |
+| zhe_redis_endpoint | Redis connection endpoint (`rediss://` URL including the auth token) |
 | zhe_rabbitmq_endpoint | RabbitMQ connection endpoint |
 | zhe_bucket_images_name | images bucket name |
 | zhe_bucket_images_region | bucket images region |

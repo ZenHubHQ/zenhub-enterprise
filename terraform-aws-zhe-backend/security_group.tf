@@ -47,13 +47,13 @@ resource "aws_security_group_rule" "zhe_ingress_docuemntdb" {
 }
 
 resource "aws_security_group_rule" "zhe_ingress_redis" {
-  count             = var.create_redis ? 1 : 0
-  type              = "ingress"
-  from_port         = var.redis_port
-  to_port           = var.redis_port
-  protocol          = "tcp"
-  cidr_blocks       = [data.aws_vpc.zhe.cidr_block]
-  security_group_id = aws_security_group.zhe_vpc.id
+  for_each                 = var.create_redis ? toset(var.redis_client_security_group_ids) : toset([])
+  type                     = "ingress"
+  from_port                = var.redis_port
+  to_port                  = var.redis_port
+  protocol                 = "tcp"
+  source_security_group_id = each.value
+  security_group_id        = aws_security_group.zhe_vpc.id
 }
 
 resource "aws_security_group_rule" "zhe_ingress_postgres" {

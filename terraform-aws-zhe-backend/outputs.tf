@@ -15,7 +15,7 @@ output "zhe_mongo_endpoint" {
 output "zhe_redis_endpoint" {
   description = "Redis connection endpoint"
   sensitive   = true
-  value       = var.create_redis ? "redis://${aws_elasticache_cluster.zhe_redis[0].cache_nodes.0.address}:${aws_elasticache_cluster.zhe_redis[0].cache_nodes.0.port}/0" : null
+  value       = try("rediss://:${random_password.redis_auth_token[0].result}@${aws_elasticache_replication_group.zhe_redis[0].primary_endpoint_address}:${var.redis_port}/0", null)
 }
 
 output "zhe_rabbitmq_endpoint" {
