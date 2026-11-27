@@ -31,9 +31,8 @@
 
 #### File and Image Storage Requirement
 - [ ] Deploy an S3 API compatible object storage bucket to store **images** uploaded to Zenhub
-    - [ ] Setup bucket policy  allowing list and get operations from your Kubernetes deployment
 - [ ] Deploy an S3 API compatible object storage bucket to store **files** uploaded to Zenhub
-    - [ ] Setup bucket policy  allowing list and get operations from your Kubernetes deployment
+    - [ ] Do not grant list or get to all principals ("Principal": "*") on either bucket, even if limited to your VPC or VPC endpoint
 - [ ] Create an IAM user `access_key` and `access_key_secret` with read and write access to the buckets
 
 ## Configuration

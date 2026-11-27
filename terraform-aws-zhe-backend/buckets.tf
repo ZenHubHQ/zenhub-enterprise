@@ -51,79 +51,10 @@ resource "aws_s3_bucket" "zhe_images" {
   }
 }
 
+# The cluster reaches the buckets through this endpoint, but the endpoint does
+# not authorize anything: every read, including the gateway's, is signed by the
+# IAM user in iam_buckets.tf. Do not grant bucket access to Principal "*".
 data "aws_vpc_endpoint" "eks_s3" {
   vpc_id       = var.vpc_id
   service_name = "com.amazonaws.us-west-2.s3"
-}
-
-resource "aws_s3_bucket_policy" "AllowReadFromVPCE" {
-  bucket = aws_s3_bucket.zhe_images.id
-
-  policy = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "ZHEAllowVPCEndpointLIST",
-            "Principal": "*",
-            "Effect": "Allow",
-            "Action": "s3:ListBucket",
-            "Resource": ["${aws_s3_bucket.zhe_images.arn}"],
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": "${data.aws_vpc_endpoint.eks_s3.id}"
-              }
-            }
-        },
-        {
-            "Sid": "ZHEAllowVPCEndpointREAD",
-            "Principal": "*",
-            "Effect": "Allow",
-            "Action": "s3:GetObject",
-            "Resource": ["${aws_s3_bucket.zhe_images.arn}/*"],
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": "${data.aws_vpc_endpoint.eks_s3.id}"
-              }
-            }
-        }
-    ]
-}
-POLICY
-}
-
-resource "aws_s3_bucket_policy" "AllowReadFromVPCEFiles" {
-  bucket = aws_s3_bucket.zhe_files.id
-
-  policy = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "ZHEAllowVPCEndpointLIST",
-            "Principal": "*",
-            "Effect": "Allow",
-            "Action": "s3:ListBucket",
-            "Resource": ["${aws_s3_bucket.zhe_files.arn}"],
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": "${data.aws_vpc_endpoint.eks_s3.id}"
-              }
-            }
-        },
-        {
-            "Sid": "ZHEAllowVPCEndpointREAD",
-            "Principal": "*",
-            "Effect": "Allow",
-            "Action": "s3:GetObject",
-            "Resource": ["${aws_s3_bucket.zhe_files.arn}/*"],
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": "${data.aws_vpc_endpoint.eks_s3.id}"
-              }
-            }
-        }
-    ]
-}
-POLICY
 }
