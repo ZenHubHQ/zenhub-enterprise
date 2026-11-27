@@ -195,7 +195,7 @@ secretGenerator:
       - pgbouncer_url=postgresql://<postgres_username>:<postgres_password>@<postgres_hostname>:<postgres_port>/raptor_production
       # [EDIT] The full standard full credentials URI for MongoDB
       - mongo_url=mongodb://<mongo_username>:<mongo_password>@<mongo_hostname>:<mongo_port>/zenhub
-      # [EDIT] The full standard full credentials URI for Redis
+      # [EDIT] The full standard full credentials URI for Redis. Use rediss:// if Redis requires TLS (the terraform-aws-zhe-backend zhe_redis_endpoint output does; its URL has an empty username).
       - redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/0
       # [EDIT] The full standard full credentials URI for Redis
       - cable_redis_url=redis://<redis_username>:<redis_password>@<redis_hostname>:<redis_port>/1

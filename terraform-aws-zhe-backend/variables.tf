@@ -94,6 +94,11 @@ variable "redis_port" {
   default     = 6379
 }
 
+variable "redis_client_security_group_ids" {
+  description = "Security groups allowed to connect to Redis, e.g. the EKS node or pod security group running Raptor. Pass [] when create_redis is false."
+  type        = list(string)
+}
+
 variable "redis_engine_version" {
   description = "Redis engine version"
   type        = string

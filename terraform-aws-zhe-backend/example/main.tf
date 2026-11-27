@@ -13,6 +13,8 @@ module "zhe" {
     node_type = "cache.t3.small"
   }
 
+  redis_client_security_group_ids = ["sg-0000aaaa11b2cc111"]
+
   documentdb_vars = {
     instance_class = "db.t3.medium"
     instance_count = "1"
