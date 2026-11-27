@@ -141,7 +141,6 @@ Resources required:
   - `images` bucket
 - IAM user `access_key_id`
 - IAM user `access_key_secret`
-- Bucket policy or permissions allowing bucket `list` and objects `get` from Kubernetes nodes
 
 > ⚠️ **NOTE:** At the moment, only AWS S3 API is supported for buckets. S3-compatible APIs should also work.
 
@@ -149,9 +148,9 @@ To access and write these objects Zenhub also requires CLI/API credentials (`acc
 
 > ⚠️ **NOTE:** At the moment, only authentication via IAM credentials is supported. Support for role-based authentication is planned for a future release.
 
-IAM credentials are used by Zenhub to write (`put`) objects and to create temporary pre-signed links.
+IAM credentials are used by Zenhub to write (`put`) objects and to create temporary pre-signed links. The `nginx-gateway` also uses them to sign (AWS Signature Version 4) its reads (`get`) of the images and files it serves, so the IAM user needs `s3:GetObject` on both buckets.
 
-To read (`get`) images and allow users to see uploaded images embedded in the issue page, the cluster nodes or network need to have proper access. Take a look at our [Terraform](https://github.com/ZenhubHQ/zenhub-enterprise/blob/master/terraform-aws-zhe-backend/buckets.tf) for an example bucket policy.
+> ⚠️ **NOTE:** Do not add a bucket policy that grants `list` or `get` to every principal (`"Principal": "*"`), even when it is limited to your VPC, VPC endpoint or nodes. Any workload on that network could then list and download every uploaded file without credentials. If you added such a policy for an earlier version, remove it after the gateway is upgraded.
 
 
 ### 2.9 Zenhub Enterprise On-Premise License
@@ -459,11 +458,7 @@ secret:
 
 IAM credentials are used by Zenhub to write (`put`) objects and to create temporary pre-signed links.
 
-To read (`get`) images and allow users to see uploaded images embedded in issues, the cluster nodes or network needs to have proper access. This access can be provided in several different ways:
-
-- Bucket policy/permissions allowing bucket `list` and objects `get` to K8s cluster VPC
-- Bucket policy/permissions allowing bucket `list` and objects `get` to K8s cluster VPC S3 Endpoint
-- Bucket policy/permissions allowing bucket `list` and objects `get` to K8s nodes role
+To read (`get`) images and files so users can see uploads embedded in issues, the `nginx-gateway` signs its bucket requests with the same credentials and `bucket_region`. No bucket policy for the cluster VPC, VPC S3 endpoint or nodes role is needed. Do not grant `list` or `get` to `"Principal": "*"`; remove any such policy left from an earlier version once the gateway is upgraded.
 
 ### 3.6 AWS DocumentDB as MongoDB
 

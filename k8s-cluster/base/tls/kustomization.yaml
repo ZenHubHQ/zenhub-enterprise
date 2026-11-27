@@ -34,6 +34,9 @@ configMapGenerator:
     behavior: replace
     files:
       - include-location-ff-extension.conf.template
+  - name: zhe-gw-s3-sign
+    files:
+      - s3-sign.js
 
 generatorOptions:
   disableNameSuffixHash: true

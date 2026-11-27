@@ -1,3 +1,10 @@
+js_path /etc/nginx/njs/;
+js_import s3sign from s3-sign.js;
+js_set $s3_uri s3sign.objectUri;
+js_set $s3_amz_date s3sign.amzDate;
+js_set $s3_content_sha256 s3sign.contentSha256;
+js_set $s3_authorization s3sign.authorization;
+
 upstream bucket-images {
     keepalive 64;
     server ${IMAGES_BUCKET_NAME}.${BUCKET_DOMAIN}:443;

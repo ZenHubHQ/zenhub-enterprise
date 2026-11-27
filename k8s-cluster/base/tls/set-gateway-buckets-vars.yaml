@@ -29,3 +29,26 @@ spec:
                   name: admin-ui
                   key: firefox_ext_s3_bucket_dir
               # value: ff-extension
+            - name: BUCKET_REGION
+              valueFrom:
+                configMapKeyRef:
+                  key: bucket_region
+                  name: configuration
+            - name: BUCKET_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: bucket_access_key_id
+                  name: configuration
+            - name: BUCKET_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: bucket_secret_access_key
+                  name: configuration
+          volumeMounts:
+            - mountPath: /etc/nginx/njs/s3-sign.js
+              name: zhe-gw-s3-sign-volume
+              subPath: s3-sign.js
+      volumes:
+        - configMap:
+            name: zhe-gw-s3-sign
+          name: zhe-gw-s3-sign-volume
