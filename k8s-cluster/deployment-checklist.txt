@@ -43,6 +43,7 @@
    - [ ] Adjust cluster scaling and pod resource usage if desired
    - [ ] Expose Zenhub through your preferred Ingress
    - [ ] Configure a TLS connection with your Postgres database
+   - [ ] Create the PgBouncer TLS certificate files in pgbouncer-tls/ (README section 3.4)
    - [ ] Configure Zenhub to use previously created object storage buckets
    - [ ] Set connection strings and passwords
 

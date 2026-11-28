@@ -429,6 +429,32 @@ TLS connection with Postgres utilizes the `secretGenerator` near the end of the 
     - <some_path>/<some_pem>
 ```
 
+#### PgBouncer
+
+Zenhub connects to the in-cluster PgBouncer service with `sslmode=verify-full`, so PgBouncer needs a certificate valid for the DNS name `pgbouncer`, and every Zenhub pod needs the CA that issued it. The [kustomization.yaml](kustomization.yaml) reads these files from a `pgbouncer-tls` directory beside it:
+
+- `pgbouncer-tls/pgbouncer.crt` and `pgbouncer-tls/pgbouncer.key`: the PgBouncer certificate and private key (`pgbouncer-tls` Secret, mounted only in the PgBouncer pod)
+- `pgbouncer-tls/ca.crt`: the issuing CA certificate (added to the `postgres-ca-bundle` Secret as `pgbouncer-ca.pem`)
+
+You may issue the certificate from your own CA. Otherwise, create a private CA and certificate from the directory containing `kustomization.yaml`, replacing `<your_dedicated_namespace>`:
+
+```bash
+NAMESPACE=<your_dedicated_namespace>
+mkdir -p pgbouncer-tls && cd pgbouncer-tls
+openssl req -x509 -newkey rsa:4096 -nodes -days 3650 -subj "/CN=Zenhub PgBouncer CA" \
+  -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign" \
+  -keyout ca.key -out ca.crt
+openssl req -new -newkey rsa:2048 -nodes -subj "/CN=pgbouncer" -keyout pgbouncer.key -out pgbouncer.csr
+printf 'subjectAltName=DNS:pgbouncer,DNS:pgbouncer.%s,DNS:pgbouncer.%s.svc,DNS:pgbouncer.%s.svc.cluster.local\nbasicConstraints=CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\n' \
+  "$NAMESPACE" "$NAMESPACE" "$NAMESPACE" "$NAMESPACE" > pgbouncer.ext
+openssl x509 -req -in pgbouncer.csr -CA ca.crt -CAkey ca.key -CAcreateserial -days 825 \
+  -extfile pgbouncer.ext -out pgbouncer.crt
+chmod 600 ca.key pgbouncer.key
+cd ..
+```
+
+`ca.key` is not used by the cluster. Store it securely outside the cluster (you need it to reissue `pgbouncer.crt` before it expires) or delete it and create a new CA when reissuing. Keep the host in `postgres_url` as `pgbouncer` and the `sslmode=verify-full&sslrootcert=/var/ca-bundle/postgres/pgbouncer-ca.pem` parameters unchanged. PgBouncer does not start if these files are missing or invalid.
+
 #### MongoDB
 
 TLS connection with Postgres utilizes the `secretGenerator` near the end of the [kustomization.yaml](kustomization.yaml)
@@ -719,6 +745,12 @@ Before diffing or applying, preserve the existing signing-key file and follow
 [JWT signing-key preparation](#39-jwt-session-signing-key) in the new checkout.
 This also recovers the key from an existing cluster if no local copy is available.
 Do not generate a replacement key simply because you changed release directories.
+
+When upgrading from a release whose `postgres_url` ends in `sslmode=disable`, create the
+[PgBouncer TLS files](#pgbouncer) and update `postgres_url` to use
+`sslmode=verify-full&sslrootcert=/var/ca-bundle/postgres/pgbouncer-ca.pem`. If you use
+`options/pgbouncer/pgbouncer.ini`, add its `client_tls_*` settings to your copy as well.
+After applying, restart PgBouncer first, then the Raptor deployments, so they pick up the new configuration.
 
 ##### 3. Diff and apply
 
