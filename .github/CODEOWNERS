@@ -1,0 +1,12 @@
+# Owners are product owners per the handbook DACI. One owner per path. Later rules win.
+
+/assets/ @m62534
+/.gitignore @m62534
+/k8s-cluster/ @m62534
+/LICENSE @m62534
+/logo.png @m62534
+/README.md @m62534
+/services.jpg @m62534
+/terraform-aws-zhe-backend/ @m62534
+/virtual-machine/ @m62534
+/.github/ @evhaus
