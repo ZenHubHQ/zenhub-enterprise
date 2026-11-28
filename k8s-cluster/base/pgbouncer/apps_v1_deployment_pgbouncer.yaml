@@ -32,6 +32,12 @@ spec:
           value: verify-full
         - name: SERVER_TLS_CA_FILE
           value: /var/ca-bundle/postgres/postgres-ca.pem
+        - name: CLIENT_TLS_SSLMODE
+          value: require
+        - name: CLIENT_TLS_CERT_FILE
+          value: /etc/pgbouncer-tls/pgbouncer.crt
+        - name: CLIENT_TLS_KEY_FILE
+          value: /etc/pgbouncer-tls/pgbouncer.key
         image: us.gcr.io/zenhub-public/pgbouncer:zhe-4.5.0
         imagePullPolicy: IfNotPresent
         lifecycle:
@@ -62,3 +68,11 @@ spec:
           capabilities:
             drop:
             - all
+        volumeMounts:
+        - mountPath: /etc/pgbouncer-tls
+          name: pgbouncer-tls
+          readOnly: true
+      volumes:
+      - name: pgbouncer-tls
+        secret:
+          secretName: pgbouncer-tls
