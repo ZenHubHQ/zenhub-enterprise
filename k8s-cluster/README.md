@@ -465,6 +465,8 @@ To read (`get`) images and allow users to see uploaded images embedded in issues
 - Bucket policy/permissions allowing bucket `list` and objects `get` to K8s cluster VPC S3 Endpoint
 - Bucket policy/permissions allowing bucket `list` and objects `get` to K8s nodes role
 
+The `nginx-gateway` reaches the buckets at `https://<bucket_name>.<bucket_domain>` and verifies the TLS certificate they present. The certificate must be valid for that hostname and chain to a CA in the system bundle of the gateway's nginx image (`/etc/ssl/certs/ca-certificates.crt`). If your S3-compatible storage uses a certificate from a private CA, mount a bundle that contains the public CAs and your CA at `/etc/ssl/certs/ca-certificates.crt` in the `nginx-gateway` container.
+
 ### 3.6 AWS DocumentDB as MongoDB
 
 To utilize AWS DocumentDB as MongoDB:
