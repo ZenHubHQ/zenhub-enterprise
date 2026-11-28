@@ -1,2 +1,4 @@
 # Per-installation session signing key; preserve securely outside Git.
 devise-jwt-secret.key
+# Per-installation PgBouncer TLS certificate and private keys.
+pgbouncer-tls/

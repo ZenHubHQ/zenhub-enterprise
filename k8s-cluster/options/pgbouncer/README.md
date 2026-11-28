@@ -84,6 +84,8 @@ Find and replace the following variables with values relevant to your deployment
 
 `my-default-pool-size` - The size of the connection pool that will interact directly with Postgres. Set this to the number of available client PostgreSQL connections. Do not occupy all connections, as some connections may need to be left available for the database administrator. For example, if your PostgreSQL max_connections is 515, save 15 connections for administration by setting `my-default-pool-size` to `500`.
 
+Keep the `client_tls_sslmode`, `client_tls_cert_file` and `client_tls_key_file` settings. Zenhub connects to PgBouncer with `sslmode=verify-full`, using the certificate described in the PgBouncer section of [Database CA certificates](../../README.md#34-database-ca-certificates).
+
 ## How to Upgrade from MD5 to SCRAM-SHA-256 Encryption
 
 Since Postgres Version 14, the default encryption method for authentication is SCRAM-SHA-256. PgBouncer will fail to communicate to the Postgres server unless the configuration is updated to match this restriction.

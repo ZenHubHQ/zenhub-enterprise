@@ -40,6 +40,11 @@ secretGenerator:
   - name: postgres-ca-bundle
     literals:
       - postgres-ca.pem=""
+      - pgbouncer-ca.pem=""
+  - name: pgbouncer-tls
+    literals:
+      - pgbouncer.crt=""
+      - pgbouncer.key=""
   - name: mongo-ca-bundle
     literals:
       - mongo-ca.pem=""
